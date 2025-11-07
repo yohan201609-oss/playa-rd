@@ -1,0 +1,242 @@
+{
+  "@@locale": "es",
+  
+  "appTitle": "Playas RD",
+  "appDescription": "Descubre las mejores playas de República Dominicana",
+  "loading": "Cargando...",
+  "error": "Error",
+  "retry": "Reintentar",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "search": "Buscar",
+  "filter": "Filtrar",
+  "share": "Compartir",
+  "yes": "Sí",
+  "no": "No",
+  "ok": "OK",
+  
+  "navHome": "Inicio",
+  "navMap": "Mapa",
+  "navReport": "Reportar",
+  "navProfile": "Perfil",
+  
+  "homeTitle": "Playas RD",
+  "homeSearchHint": "Buscar playas...",
+  "homeFilterAll": "Todas",
+  "homeFilterFavorites": "Favoritos",
+  "homeFilters": "Filtros",
+  "homeClearFilters": "Limpiar",
+  "homeSortBy": "Ordenar por",
+  "homeSortRating": "Calificación",
+  "homeSortName": "Nombre",
+  "homeSortCondition": "Condición",
+  "homeApplyFilters": "Aplicar",
+  "homeLoginToSaveFavorites": "Inicia sesión para guardar favoritos",
+  "homeNoBeaches": "No se encontraron playas",
+  "homeBeachesCount": "{count} playas encontradas",
+  "@homeBeachesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "beachCondition": "Condición",
+  "beachActivities": "Actividades",
+  "beachAmenities": "Servicios",
+  "beachLocation": "Ubicación",
+  "beachWeather": "Clima",
+  "beachReports": "Reportes",
+  "beachNoReports": "No hay reportes aún",
+  "beachGetDirections": "Cómo llegar",
+  "beachAddToFavorites": "Agregar a favoritos",
+  "beachRemoveFromFavorites": "Quitar de favoritos",
+  "beachShareBeach": "Compartir playa",
+  
+  "conditionExcellent": "Excelente",
+  "conditionGood": "Bueno",
+  "conditionModerate": "Moderado",
+  "conditionDanger": "Peligroso",
+  "conditionUnknown": "Desconocido",
+  
+  "activitySwimming": "Natación",
+  "activitySurfing": "Surf",
+  "activitySnorkeling": "Snorkel",
+  "activityDiving": "Buceo",
+  "activityKayaking": "Kayak",
+  "activityFishing": "Pesca",
+  "activityVolleyball": "Voleibol",
+  "activityJetski": "Moto acuática",
+  
+  "mapTitle": "Mapa",
+  "mapTitleWithCount": "Mapa de Playas ({count})",
+  "@mapTitleWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapShowList": "Mostrar lista",
+  "mapMyLocation": "Mi ubicación",
+  "mapError": "Error al cargar el mapa",
+  "mapLocationPermission": "Permiso de ubicación denegado",
+  "mapClear": "Limpiar",
+  "mapProvince": "Provincia",
+  "mapApplyFilters": "Aplicar filtros",
+  
+  "reportTitle": "Reportar Condición",
+  "reportHelpCommunity": "Ayuda a la comunidad",
+  "reportHelpDescription": "Reporta las condiciones actuales de una playa y gana 10 puntos",
+  "reportWhichBeach": "¿Qué playa visitaste?",
+  "reportSelectBeach": "Selecciona una playa",
+  "reportHowConditions": "¿Cómo están las condiciones?",
+  "reportCondition": "Condición de la playa",
+  "reportAddComment": "Agrega un comentario",
+  "reportCommentOptional": "Comentario (opcional)",
+  "reportDescription": "Descripción (opcional)",
+  "reportDescriptionHint": "Describe las condiciones actuales...",
+  "reportAddPhotos": "Agregar fotos",
+  "reportPhotos": "Fotos",
+  "reportPhotoFrom": "Foto desde",
+  "reportCamera": "Cámara",
+  "reportGallery": "Galería",
+  "reportMaxPhotos": "Máximo 3 fotos",
+  "reportSubmit": "Enviar reporte",
+  "reportSubmitting": "Enviando...",
+  "reportSuccess": "Reporte enviado correctamente",
+  "reportError": "Error al enviar el reporte",
+  "reportSelectBeachFirst": "Por favor selecciona una playa primero",
+  "reportSelectCondition": "Por favor selecciona una condición",
+  "reportPoints": "Has ganado {points} puntos",
+  "@reportPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "profileTitle": "Mi Perfil",
+  "profileWelcome": "Bienvenido a",
+  "profileDiscoverBeaches": "Descubre las mejores playas",
+  "profileLogin": "Iniciar sesión",
+  "profileSignup": "Crear cuenta nueva",
+  "profileSaveBeaches": "Guarda tus playas favoritas",
+  "profileCheckWeather": "Consulta el clima en tiempo real",
+  "profileShareCommunity": "Comparte con la comunidad",
+  "profilePoints": "{points} puntos",
+  "@profilePoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFavorites": "Favoritos",
+  "profileReports": "Reportes",
+  "profileVisited": "Visitadas",
+  "profileMyFavorites": "Mis Favoritos",
+  "profileFavoritesBeaches": "Playas que me gustan",
+  "profileMyReports": "Mis Reportes",
+  "profileReportsSent": "Reportes enviados",
+  "profileAchievements": "Logros",
+  "profileAchievementsBadges": "Ver mis logros y badges",
+  "profileSettings": "Configuración",
+  "profileSettingsPreferences": "Preferencias de la app",
+  "profileHelp": "Ayuda",
+  "profileHelpFAQ": "Preguntas frecuentes",
+  "profileAbout": "Acerca de",
+  "profileAboutVersion": "Versión y créditos",
+  "profileLogout": "Cerrar sesión",
+  "profileLogoutConfirm": "¿Estás seguro que deseas cerrar sesión?",
+  "profileLoginPrompt": "Inicia sesión para disfrutar",
+  "profileLoginDescription": "Guarda tus playas favoritas y\ncomparte con la comunidad",
+  
+  "settingsTitle": "Configuración",
+  "settingsAppearance": "Apariencia",
+  "settingsTheme": "Tema",
+  "settingsThemeSystem": "Según el sistema",
+  "settingsThemeLight": "Claro",
+  "settingsThemeDark": "Oscuro",
+  "settingsThemeAuto": "Sistema",
+  "settingsUnits": "Unidades",
+  "settingsTemperature": "Unidad de temperatura",
+  "settingsCelsius": "Celsius (°C)",
+  "settingsFahrenheit": "Fahrenheit (°F)",
+  "settingsNotifications": "Notificaciones y Permisos",
+  "settingsNotificationsEnable": "Notificaciones",
+  "settingsNotificationsDesc": "Recibir alertas y actualizaciones",
+  "settingsLocation": "Ubicación",
+  "settingsLocationDesc": "Permitir acceso a tu ubicación",
+  "settingsDataSync": "Datos y Sincronización",
+  "settingsAutoSync": "Sincronización automática",
+  "settingsAutoSyncDesc": "Sincronizar datos automáticamente",
+  "settingsDataCollection": "Recopilación de datos",
+  "settingsDataCollectionDesc": "Ayudar a mejorar la app",
+  "settingsLanguage": "Idioma",
+  "settingsLanguageSpanish": "Español",
+  "settingsLanguageEnglish": "English",
+  "settingsAdvanced": "Avanzado",
+  "settingsClearCache": "Limpiar caché",
+  "settingsClearCacheDesc": "Liberar espacio de almacenamiento",
+  "settingsClearCacheConfirm": "¿Estás seguro que deseas limpiar el caché? Esto eliminará las imágenes y datos temporales para liberar espacio.",
+  "settingsClearCacheSuccess": "Caché limpiado correctamente",
+  "settingsResetSettings": "Restablecer configuración",
+  "settingsResetSettingsDesc": "Volver a valores por defecto",
+  "settingsResetConfirm": "¿Estás seguro que deseas restablecer todas las configuraciones a sus valores por defecto?",
+  "settingsResetSuccess": "Configuración restablecida",
+  
+  "weatherCurrent": "Clima Actual",
+  "weatherFeelsLike": "Sensación {temp}",
+  "@weatherFeelsLike": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherHumidity": "Humedad",
+  "weatherWind": "Viento",
+  "weatherUVIndex": "Índice UV",
+  "weatherPressure": "Presión",
+  "weatherVisibility": "Visibilidad",
+  "weatherCloudiness": "Nubosidad",
+  "weatherSunrise": "Amanecer",
+  "weatherSunset": "Atardecer",
+  "weatherLoading": "Cargando clima...",
+  "weatherError": "Error al cargar clima",
+  "weatherRefresh": "Actualizar",
+  
+  "authLogin": "Iniciar Sesión",
+  "authSignup": "Crear Cuenta",
+  "authEmail": "Correo electrónico",
+  "authPassword": "Contraseña",
+  "authName": "Nombre completo",
+  "authForgotPassword": "¿Olvidaste tu contraseña?",
+  "authNoAccount": "¿No tienes cuenta?",
+  "authHaveAccount": "¿Ya tienes cuenta?",
+  "authSignInWith": "O inicia sesión con",
+  "authGoogle": "Google",
+  "authEmailError": "Por favor ingresa un correo válido",
+  "authPasswordError": "La contraseña debe tener al menos 6 caracteres",
+  "authNameError": "Por favor ingresa tu nombre",
+  "authSuccess": "¡Bienvenido!",
+  "authError": "Error al autenticar",
+  
+  "aboutVersion": "Versión 1.0.0",
+  "aboutDescription": "Descubre las mejores playas de República Dominicana 🇩🇴",
+  "aboutDevelopedWith": "Desarrollado con amor para los dominicanos",
+  
+  "errorGeneric": "Ocurrió un error inesperado",
+  "errorNetwork": "Error de conexión",
+  "errorNoInternet": "Sin conexión a internet",
+  "errorLocationPermission": "Permiso de ubicación denegado",
+  "errorLocationDisabled": "Ubicación desactivada",
+  "errorCameraPermission": "Permiso de cámara denegado",
+  "errorPhotoLibrary": "Error al acceder a la galería"
+}

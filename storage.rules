@@ -1,0 +1,63 @@
+rules_version = '2';
+// ========================================
+// STORAGE SECURITY RULES - PLAYAS RD
+// ========================================
+// Aplicación: Playas RD
+// Descripción: Descubre las mejores playas de República Dominicana
+// Proyecto: playas-rd-2b475
+// Fecha: Octubre 2025
+// ========================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Función de ayuda
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // FOTOS DE REPORTES
+    // Máximo 5MB por imagen
+    match /reports/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && 
+        isOwner(userId) &&
+        isImage() &&
+        request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // FOTOS DE PERFIL
+    // Máximo 2MB por imagen
+    match /profiles/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && 
+        isOwner(userId) &&
+        isImage() &&
+        request.resource.size < 2 * 1024 * 1024;
+    }
+    
+    // FOTOS DE PLAYAS (solo admins o sistema)
+    match /beaches/{beachId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    // FOTOS DE VISITANTES (feedback de usuarios)
+    // Máximo 5MB por imagen
+    match /beach_photos/{beachId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && 
+        isImage() &&
+        request.resource.size < 5 * 1024 * 1024;
+    }
+  }
+}
+

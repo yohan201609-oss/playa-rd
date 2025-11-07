@@ -1,0 +1,60 @@
+rules_version = '2';
+// ========================================
+// FIRESTORE SECURITY RULES - PLAYAS RD
+// ========================================
+// Aplicación: Playas RD
+// Descripción: Descubre las mejores playas de República Dominicana
+// Proyecto: playas-rd-2b475
+// Fecha: Octubre 2025
+// ========================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funciones de ayuda
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // PLAYAS - Lectura y escritura pública (TEMPORAL PARA DESARROLLO)
+    // ⚠️ ADVERTENCIA: Esto permite que cualquiera escriba en la base de datos
+    // TODO: Cambiar a 'allow write: if isSignedIn();' en producción
+    match /beaches/{beachId} {
+      allow read: if true;
+      allow write: if true; // Permitir escritura sin autenticación
+    }
+    
+    // REPORTES - Los usuarios pueden crear y editar sus propios reportes
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // USUARIOS - Solo pueden ver y editar su propia información
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isOwner(userId);
+      allow delete: if false; // No permitir borrar usuarios
+    }
+    
+    // FOTOS DE VISITANTES - Todos pueden ver, usuarios autenticados pueden crear
+    match /beach_photos/{photoId} {
+      allow read: if true;
+      allow create: if isSignedIn() && 
+        request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && 
+        resource.data.uid == request.auth.uid;
+      allow update: if false; // No permitir actualizar fotos
+    }
+  }
+}
+

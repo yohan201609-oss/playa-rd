@@ -1,0 +1,242 @@
+{
+  "@@locale": "en",
+  
+  "appTitle": "Playas RD",
+  "appDescription": "Discover the best beaches in the Dominican Republic",
+  "loading": "Loading...",
+  "error": "Error",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "close": "Close",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "search": "Search",
+  "filter": "Filter",
+  "share": "Share",
+  "yes": "Yes",
+  "no": "No",
+  "ok": "OK",
+  
+  "navHome": "Home",
+  "navMap": "Map",
+  "navReport": "Report",
+  "navProfile": "Profile",
+  
+  "homeTitle": "Playas RD",
+  "homeSearchHint": "Search beaches...",
+  "homeFilterAll": "All",
+  "homeFilterFavorites": "Favorites",
+  "homeFilters": "Filters",
+  "homeClearFilters": "Clear",
+  "homeSortBy": "Sort by",
+  "homeSortRating": "Rating",
+  "homeSortName": "Name",
+  "homeSortCondition": "Condition",
+  "homeApplyFilters": "Apply",
+  "homeLoginToSaveFavorites": "Sign in to save favorites",
+  "homeNoBeaches": "No beaches found",
+  "homeBeachesCount": "{count} beaches found",
+  "@homeBeachesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "beachCondition": "Condition",
+  "beachActivities": "Activities",
+  "beachAmenities": "Amenities",
+  "beachLocation": "Location",
+  "beachWeather": "Weather",
+  "beachReports": "Reports",
+  "beachNoReports": "No reports yet",
+  "beachGetDirections": "Get directions",
+  "beachAddToFavorites": "Add to favorites",
+  "beachRemoveFromFavorites": "Remove from favorites",
+  "beachShareBeach": "Share beach",
+  
+  "conditionExcellent": "Excellent",
+  "conditionGood": "Good",
+  "conditionModerate": "Moderate",
+  "conditionDanger": "Dangerous",
+  "conditionUnknown": "Unknown",
+  
+  "activitySwimming": "Swimming",
+  "activitySurfing": "Surfing",
+  "activitySnorkeling": "Snorkeling",
+  "activityDiving": "Diving",
+  "activityKayaking": "Kayaking",
+  "activityFishing": "Fishing",
+  "activityVolleyball": "Volleyball",
+  "activityJetski": "Jet Ski",
+  
+  "mapTitle": "Map",
+  "mapTitleWithCount": "Beach Map ({count})",
+  "@mapTitleWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapShowList": "Show list",
+  "mapMyLocation": "My location",
+  "mapError": "Error loading map",
+  "mapLocationPermission": "Location permission denied",
+  "mapClear": "Clear",
+  "mapProvince": "Province",
+  "mapApplyFilters": "Apply filters",
+  
+  "reportTitle": "Report Condition",
+  "reportHelpCommunity": "Help the community",
+  "reportHelpDescription": "Report current beach conditions and earn 10 points",
+  "reportWhichBeach": "Which beach did you visit?",
+  "reportSelectBeach": "Select a beach",
+  "reportHowConditions": "How are the conditions?",
+  "reportCondition": "Beach condition",
+  "reportAddComment": "Add a comment",
+  "reportCommentOptional": "Comment (optional)",
+  "reportDescription": "Description (optional)",
+  "reportDescriptionHint": "Describe the current conditions...",
+  "reportAddPhotos": "Add photos",
+  "reportPhotos": "Photos",
+  "reportPhotoFrom": "Photo from",
+  "reportCamera": "Camera",
+  "reportGallery": "Gallery",
+  "reportMaxPhotos": "Maximum 3 photos",
+  "reportSubmit": "Submit report",
+  "reportSubmitting": "Submitting...",
+  "reportSuccess": "Report submitted successfully",
+  "reportError": "Error submitting report",
+  "reportSelectBeachFirst": "Please select a beach first",
+  "reportSelectCondition": "Please select a condition",
+  "reportPoints": "You earned {points} points",
+  "@reportPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "profileTitle": "My Profile",
+  "profileWelcome": "Welcome to",
+  "profileDiscoverBeaches": "Discover the best beaches",
+  "profileLogin": "Sign in",
+  "profileSignup": "Create new account",
+  "profileSaveBeaches": "Save your favorite beaches",
+  "profileCheckWeather": "Check real-time weather",
+  "profileShareCommunity": "Share with the community",
+  "profilePoints": "{points} points",
+  "@profilePoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFavorites": "Favorites",
+  "profileReports": "Reports",
+  "profileVisited": "Visited",
+  "profileMyFavorites": "My Favorites",
+  "profileFavoritesBeaches": "Beaches I like",
+  "profileMyReports": "My Reports",
+  "profileReportsSent": "Reports sent",
+  "profileAchievements": "Achievements",
+  "profileAchievementsBadges": "View my achievements and badges",
+  "profileSettings": "Settings",
+  "profileSettingsPreferences": "App preferences",
+  "profileHelp": "Help",
+  "profileHelpFAQ": "Frequently asked questions",
+  "profileAbout": "About",
+  "profileAboutVersion": "Version and credits",
+  "profileLogout": "Sign out",
+  "profileLogoutConfirm": "Are you sure you want to sign out?",
+  "profileLoginPrompt": "Sign in to enjoy",
+  "profileLoginDescription": "Save your favorite beaches and\nshare with the community",
+  
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeAuto": "Auto",
+  "settingsUnits": "Units",
+  "settingsTemperature": "Temperature unit",
+  "settingsCelsius": "Celsius (°C)",
+  "settingsFahrenheit": "Fahrenheit (°F)",
+  "settingsNotifications": "Notifications and Permissions",
+  "settingsNotificationsEnable": "Notifications",
+  "settingsNotificationsDesc": "Receive alerts and updates",
+  "settingsLocation": "Location",
+  "settingsLocationDesc": "Allow access to your location",
+  "settingsDataSync": "Data and Sync",
+  "settingsAutoSync": "Auto-sync",
+  "settingsAutoSyncDesc": "Sync data automatically",
+  "settingsDataCollection": "Data collection",
+  "settingsDataCollectionDesc": "Help improve the app",
+  "settingsLanguage": "Language",
+  "settingsLanguageSpanish": "Español",
+  "settingsLanguageEnglish": "English",
+  "settingsAdvanced": "Advanced",
+  "settingsClearCache": "Clear cache",
+  "settingsClearCacheDesc": "Free up storage space",
+  "settingsClearCacheConfirm": "Are you sure you want to clear the cache? This will delete temporary images and data to free up space.",
+  "settingsClearCacheSuccess": "Cache cleared successfully",
+  "settingsResetSettings": "Reset settings",
+  "settingsResetSettingsDesc": "Return to default values",
+  "settingsResetConfirm": "Are you sure you want to reset all settings to their default values?",
+  "settingsResetSuccess": "Settings reset",
+  
+  "weatherCurrent": "Current Weather",
+  "weatherFeelsLike": "Feels like {temp}",
+  "@weatherFeelsLike": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherHumidity": "Humidity",
+  "weatherWind": "Wind",
+  "weatherUVIndex": "UV Index",
+  "weatherPressure": "Pressure",
+  "weatherVisibility": "Visibility",
+  "weatherCloudiness": "Cloudiness",
+  "weatherSunrise": "Sunrise",
+  "weatherSunset": "Sunset",
+  "weatherLoading": "Loading weather...",
+  "weatherError": "Error loading weather",
+  "weatherRefresh": "Refresh",
+  
+  "authLogin": "Sign In",
+  "authSignup": "Sign Up",
+  "authEmail": "Email",
+  "authPassword": "Password",
+  "authName": "Full name",
+  "authForgotPassword": "Forgot your password?",
+  "authNoAccount": "Don't have an account?",
+  "authHaveAccount": "Already have an account?",
+  "authSignInWith": "Or sign in with",
+  "authGoogle": "Google",
+  "authEmailError": "Please enter a valid email",
+  "authPasswordError": "Password must be at least 6 characters",
+  "authNameError": "Please enter your name",
+  "authSuccess": "Welcome!",
+  "authError": "Authentication error",
+  
+  "aboutVersion": "Version 1.0.0",
+  "aboutDescription": "Discover the best beaches in the Dominican Republic 🇩🇴",
+  "aboutDevelopedWith": "Developed with love for Dominicans",
+  
+  "errorGeneric": "An unexpected error occurred",
+  "errorNetwork": "Connection error",
+  "errorNoInternet": "No internet connection",
+  "errorLocationPermission": "Location permission denied",
+  "errorLocationDisabled": "Location disabled",
+  "errorCameraPermission": "Camera permission denied",
+  "errorPhotoLibrary": "Error accessing photo library"
+}

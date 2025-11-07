@@ -1,0 +1,43 @@
+# Configuración para Flutter Launcher Icons
+# Este archivo genera automáticamente los iconos de lanzamiento
+# para Android e iOS usando tu logo existente
+
+flutter_launcher_icons:
+  # Plataformas a generar
+  android: true
+  ios: true
+  
+  # Ruta a tu logo existente (1024x1024px recomendado)
+  image_path: "assets/logo.png"
+  
+  # Configuración para Android
+  # Genera iconos adaptativos (Android 8.0+)
+  adaptive_icon_background: "#00A9E0"  # Color de fondo (Azul océano de Playas RD)
+  adaptive_icon_foreground: "assets/logo.png"  # Tu logo como foreground
+  
+  # Opcionalidades para Android
+  # Si tu logo tiene transparencia, puedes agregar un fondo
+  # background_color_android: "#00A9E0"
+  
+  # Configuración para iOS
+  # Elimina el alfa channel (iOS no soporta transparencia en iconos)
+  remove_alpha_ios: true
+  
+  # Configuración para Web (opcional)
+  web:
+    generate: true
+    image_path: "assets/logo.png"
+    background_color: "#00A9E0"
+    theme_color: "#00A9E0"
+  
+  # Configuración para Windows (opcional)
+  windows:
+    generate: true
+    image_path: "assets/logo.png"
+    icon_size: 48
+  
+  # Configuración para macOS (opcional)
+  macos:
+    generate: true
+    image_path: "assets/logo.png"
+
