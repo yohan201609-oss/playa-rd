@@ -251,7 +251,7 @@ firebase deploy --only storage:rules
 1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
 2. Selecciona el proyecto: **playas-rd-2b475**
 3. Ve a **APIs & Services** > **Credentials**
-4. Busca la API Key: `AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus` (la del AndroidManifest)
+4. Busca tu API Key de Google Maps (la que está configurada en AndroidManifest)
 5. Haz clic en el nombre de la API Key para editarla
 6. En **Application restrictions**:
    - Selecciona **Android apps**

@@ -31,7 +31,7 @@ com.playasrd.playasrd
 
 ### API Keys a Configurar
 
-1. **Google Maps API Key**: `AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus`
+1. **Google Maps API Key**: [Tu API Key de Google Maps]
 2. **Android key** (Firebase): Se crea automáticamente por Firebase
 
 ---
@@ -49,14 +49,14 @@ com.playasrd.playasrd
 ## 🔑 Configurar API Key 1: Google Maps API Key
 
 ### Identificación
-- **Nombre:** `MAPS_API_KEY` o busca la key: `AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus`
+- **Nombre:** `MAPS_API_KEY` o busca tu API Key de Google Maps
 - **Uso:** Google Maps SDK y Geocoding API
 
 ### Pasos Detallados:
 
 #### 1. Editar la API Key
 - Haz clic en el nombre de la API Key (enlace morado/azul)
-- O busca la key por su valor: `AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus`
+- O busca la key por su nombre o valor
 
 #### 2. Configurar Restricciones de Aplicación
 En la sección **"Application restrictions"**:

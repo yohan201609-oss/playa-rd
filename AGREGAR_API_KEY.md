@@ -27,9 +27,9 @@ En Google Cloud Console, habilita:
 2. Reemplaza `tu_api_key_aqui` con tu API Key real:
 
 ```env
-OPENWEATHER_API_KEY=d66b4180476d327226625ebd7ed46a99
+OPENWEATHER_API_KEY=tu_openweather_api_key_aqui
 
-GOOGLE_MAPS_API_KEY=AIzaSy...tu_api_key_real_aqui
+GOOGLE_MAPS_API_KEY=tu_google_maps_api_key_aqui
 ```
 
 **Importante:**
@@ -74,10 +74,10 @@ GOOGLE_MAPS_API_KEY=AIzaSy...tu_api_key_real_aqui
 
 ```env
 # OpenWeather API Key (para el clima)
-OPENWEATHER_API_KEY=d66b4180476d327226625ebd7ed46a99
+OPENWEATHER_API_KEY=tu_openweather_api_key_aqui
 
 # Google Maps API Key (para geocodificación)
-GOOGLE_MAPS_API_KEY=AIzaSyCFt87v-m5pkKXVyPNLZ_EPCtxJH_p810Q
+GOOGLE_MAPS_API_KEY=tu_google_maps_api_key_aqui
 ```
 
 ## Después de agregar la API Key
