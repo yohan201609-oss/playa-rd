@@ -1,78 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'firebase_options.dart';
-import 'providers/beach_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/beach_provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/profile_screen.dart';
-import 'services/firebase_service.dart';
-import 'services/preferences_service.dart';
-import 'services/notification_service.dart';
+import 'screens/splash_screen.dart';
+import 'services/app_initializer.dart';
 import 'utils/constants.dart';
 import 'l10n/app_localizations.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar SharedPreferences
-  try {
-    await PreferencesService.init();
-    print('✅ Preferencias inicializadas');
-  } catch (e) {
-    print('⚠️ Error inicializando preferencias: $e');
-  }
-
-  // Cargar variables de entorno
-  try {
-    await dotenv.load(fileName: ".env");
-    print('✅ Variables de entorno cargadas');
-  } catch (e) {
-    print('⚠️ No se pudo cargar .env: $e');
-    print('El servicio de clima no estará disponible');
-  }
-
-  // Inicializar Firebase con configuración de plataforma
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('✅ Firebase inicializado correctamente');
-
-    // Sincronizar playas locales con Firestore (solo la primera vez)
-    try {
-      await FirebaseService.syncBeachesToFirestore();
-    } catch (e) {
-      print('⚠️ Error sincronizando playas: $e');
-    }
-  } catch (e) {
-    print('⚠️ Firebase no configurado: $e');
-    print('La app funcionará con datos locales sin autenticación');
-  }
-
-  // Inicializar servicio de notificaciones
-  try {
-    await NotificationService().initialize();
-    print('✅ Servicio de notificaciones inicializado');
-  } catch (e) {
-    print('⚠️ Error inicializando notificaciones: $e');
-    print('Las notificaciones no estarán disponibles');
-  }
-
   runApp(const PlayasRDApp());
 }
 
-class PlayasRDApp extends StatelessWidget {
+class PlayasRDApp extends StatefulWidget {
   const PlayasRDApp({super.key});
 
   @override
+  State<PlayasRDApp> createState() => _PlayasRDAppState();
+}
+
+class _PlayasRDAppState extends State<PlayasRDApp> {
+  late final Future<AppInitializationResult> _initializationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializationFuture = AppInitializer().initialize();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return FutureBuilder<AppInitializationResult>(
+      future: _initializationFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: SimpleSplashScreen(),
+          );
+        }
+
+        if (snapshot.hasError || !(snapshot.data?.isReady ?? false)) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: _InitializationErrorScreen(error: snapshot.error),
+          );
+        }
+
+        return _buildMainApp();
+      },
+    );
+  }
+
+  Widget _buildMainApp() {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -81,10 +68,8 @@ class PlayasRDApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => BeachProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
-        // Conectar AuthProvider con BeachProvider para sincronizar favoritos
         ProxyProvider2<AuthProvider, BeachProvider, void>(
           update: (context, auth, beach, _) {
-            // Configurar el callback una sola vez
             if (auth.onFavoritesChanged == null) {
               auth.onFavoritesChanged = (favoriteIds) {
                 print(
@@ -93,7 +78,6 @@ class PlayasRDApp extends StatelessWidget {
                 beach.syncFavorites(favoriteIds);
               };
             }
-            // Sincronizar favoritos cada vez que auth cambie
             if (auth.appUser != null) {
               print('👤 Usuario: ${auth.appUser!.email}');
               print(
@@ -110,11 +94,14 @@ class PlayasRDApp extends StatelessWidget {
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
+          final locale = settings.getLocale();
+
           return MaterialApp(
+            key: ValueKey('app_${settings.language}'),
             title: 'Playas RD',
             debugShowCheckedModeBanner: false,
             themeMode: settings.getFlutterThemeMode(),
-            locale: settings.getLocale(),
+            locale: locale,
             supportedLocales: const [Locale('es', ''), Locale('en', '')],
             localizationsDelegates: const [
               AppLocalizations.delegate,
@@ -124,7 +111,7 @@ class PlayasRDApp extends StatelessWidget {
             ],
             theme: _buildLightTheme(),
             darkTheme: _buildDarkTheme(),
-            home: const MainScreen(),
+            home: MainScreen(key: ValueKey('main_${settings.language}')),
           );
         },
       ),
@@ -223,12 +210,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static final List<Widget> _screens = <Widget>[
-    const HomeScreen(),
-    const MapScreen(),
-    const ReportScreen(),
-    const ProfileScreen(),
-  ];
+  List<Widget> _buildScreens(String language) {
+    return <Widget>[
+      HomeScreen(key: ValueKey('home_$language')),
+      MapScreen(key: ValueKey('map_$language')),
+      ReportScreen(key: ValueKey('report_$language')),
+      ProfileScreen(key: ValueKey('profile_$language')),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -239,9 +228,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final settings = Provider.of<SettingsProvider>(context);
+    final screens = _buildScreens(settings.language);
 
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -272,6 +263,57 @@ class _MainScreenState extends State<MainScreen> {
             label: l10n.navProfile,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InitializationErrorScreen extends StatelessWidget {
+  final Object? error;
+
+  const _InitializationErrorScreen({this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    final details = error != null ? 'Detalles: $error' : '';
+
+    return Scaffold(
+      backgroundColor: AppColors.primary,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                color: Colors.white,
+                size: 72,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No pudimos preparar la app',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                details.isEmpty
+                    ? 'Revisa tu conexión e intenta nuevamente.'
+                    : 'Revisa tu conexión e intenta nuevamente.\n$details',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

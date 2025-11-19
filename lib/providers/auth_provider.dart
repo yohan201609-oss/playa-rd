@@ -36,8 +36,18 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadUserData() async {
     if (_user != null) {
       _appUser = await FirebaseService.getUserData(_user!.uid);
-      // Notificar cambio en favoritos
+      
+      // Sincronizar contador de reportes si está desactualizado
       if (_appUser != null) {
+        final realCount = await FirebaseService.getUserReportsCount(_user!.uid);
+        if (_appUser!.reportsCount != realCount) {
+          // El contador está desactualizado, sincronizarlo
+          await FirebaseService.syncUserReportsCount(_user!.uid);
+          // Recargar datos del usuario para obtener el contador actualizado
+          _appUser = await FirebaseService.getUserData(_user!.uid);
+        }
+        
+        // Notificar cambio en favoritos
         onFavoritesChanged?.call(_appUser!.favoriteBeaches);
       }
       

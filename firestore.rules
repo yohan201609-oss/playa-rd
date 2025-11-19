@@ -5,6 +5,7 @@ rules_version = '2';
 // Aplicación: Playas RD
 // Descripción: Descubre las mejores playas de República Dominicana
 // Proyecto: playas-rd-2b475
+// Entorno: PRODUCCIÓN
 // Fecha: Octubre 2025
 // ========================================
 
@@ -20,12 +21,12 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // PLAYAS - Lectura y escritura pública (TEMPORAL PARA DESARROLLO)
-    // ⚠️ ADVERTENCIA: Esto permite que cualquiera escriba en la base de datos
-    // TODO: Cambiar a 'allow write: if isSignedIn();' en producción
+    // PLAYAS - Producción
+    // Lectura pública, escritura solo para usuarios autenticados
+    // En el futuro, se puede agregar verificación de rol de admin
     match /beaches/{beachId} {
-      allow read: if true;
-      allow write: if true; // Permitir escritura sin autenticación
+      allow read: if true; // Todos pueden leer playas
+      allow write: if isSignedIn(); // Solo usuarios autenticados pueden escribir
     }
     
     // REPORTES - Los usuarios pueden crear y editar sus propios reportes
@@ -54,6 +55,14 @@ service cloud.firestore {
       allow delete: if isSignedIn() && 
         resource.data.uid == request.auth.uid;
       allow update: if false; // No permitir actualizar fotos
+    }
+    
+    // SOLICITUDES DE SOPORTE - Cualquiera puede crear (incluso sin autenticación)
+    // Solo lectura para usuarios autenticados (para admins en el futuro)
+    match /support_requests/{requestId} {
+      allow read: if isSignedIn(); // Solo usuarios autenticados pueden leer
+      allow create: if true; // Cualquiera puede crear solicitudes de soporte
+      allow update, delete: if false; // Solo las Cloud Functions pueden actualizar
     }
   }
 }

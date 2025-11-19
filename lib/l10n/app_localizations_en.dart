@@ -109,6 +109,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNoBeaches => 'No beaches found';
 
   @override
+  String get homeNoFavorites => 'You have no favorite beaches yet';
+
+  @override
   String homeBeachesCount(int count) {
     return '$count beaches found';
   }
@@ -145,6 +148,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get beachShareBeach => 'Share beach';
+
+  @override
+  String get beachMarkAsVisited => 'Mark as visited';
+
+  @override
+  String get beachAlreadyVisited => 'Already visited';
+
+  @override
+  String get beachDescription => 'Description';
 
   @override
   String get conditionExcellent => 'Excellent';
@@ -186,6 +198,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityJetski => 'Jet Ski';
 
   @override
+  String get activityEcotourism => 'Ecotourism';
+
+  @override
+  String get activityPhotography => 'Photography';
+
+  @override
+  String get activityRelaxation => 'Relaxation';
+
+  @override
+  String get activityTranquility => 'Tranquility';
+
+  @override
+  String get activityAdventure => 'Adventure';
+
+  @override
+  String get activityHiking => 'Hiking';
+
+  @override
+  String get activityNature => 'Nature';
+
+  @override
+  String get activitySunset => 'Sunset';
+
+  @override
+  String get activityRiver => 'River';
+
+  @override
+  String get activityFamilies => 'Families';
+
+  @override
   String get mapTitle => 'Map';
 
   @override
@@ -221,8 +263,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportHelpCommunity => 'Help the community';
 
   @override
-  String get reportHelpDescription =>
-      'Report current beach conditions and earn 10 points';
+  String get reportHelpDescription => 'Report current beach conditions';
 
   @override
   String get reportWhichBeach => 'Which beach did you visit?';
@@ -264,6 +305,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportGallery => 'Gallery';
 
   @override
+  String get reportTakePhoto => 'Take photo';
+
+  @override
+  String get reportSelectFromGallery => 'Select from gallery';
+
+  @override
   String get reportMaxPhotos => 'Maximum 3 photos';
 
   @override
@@ -283,11 +330,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportSelectCondition => 'Please select a condition';
-
-  @override
-  String reportPoints(int points) {
-    return 'You earned $points points';
-  }
 
   @override
   String get profileTitle => 'My Profile';
@@ -314,11 +356,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileShareCommunity => 'Share with the community';
 
   @override
-  String profilePoints(int points) {
-    return '$points points';
-  }
-
-  @override
   String get profileFavorites => 'Favorites';
 
   @override
@@ -338,12 +375,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileReportsSent => 'Reports sent';
-
-  @override
-  String get profileAchievements => 'Achievements';
-
-  @override
-  String get profileAchievementsBadges => 'View my achievements and badges';
 
   @override
   String get profileSettings => 'Settings';
@@ -517,6 +548,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherRefresh => 'Refresh';
+
+  @override
+  String get weatherRecommendationExcellent => 'Excellent for the beach';
+
+  @override
+  String weatherRecommendationNotRecommended(String reason) {
+    return 'Not recommended - $reason';
+  }
+
+  @override
+  String weatherRecommendationWarning(String reason) {
+    return 'Warning - $reason';
+  }
+
+  @override
+  String weatherRecommendationCaution(String reason) {
+    return 'Caution - $reason';
+  }
+
+  @override
+  String get weatherRecommendationCool => 'Cool - May be cold for swimming';
+
+  @override
+  String get weatherReasonThunderstorm => 'Thunderstorm';
+
+  @override
+  String get weatherReasonRain => 'Rain';
+
+  @override
+  String get weatherReasonStrongWinds => 'Strong winds';
+
+  @override
+  String get weatherReasonHighUV => 'Very high UV index';
+
+  @override
+  String get weatherReasonHighTemperature => 'Very high temperature';
 
   @override
   String get authLogin => 'Sign In';

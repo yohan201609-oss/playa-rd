@@ -109,6 +109,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeNoBeaches => 'No se encontraron playas';
 
   @override
+  String get homeNoFavorites => 'Aún no tienes playas favoritas';
+
+  @override
   String homeBeachesCount(int count) {
     return '$count playas encontradas';
   }
@@ -145,6 +148,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get beachShareBeach => 'Compartir playa';
+
+  @override
+  String get beachMarkAsVisited => 'Marcar como visitada';
+
+  @override
+  String get beachAlreadyVisited => 'Ya visitada';
+
+  @override
+  String get beachDescription => 'Descripción';
 
   @override
   String get conditionExcellent => 'Excelente';
@@ -186,6 +198,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get activityJetski => 'Moto acuática';
 
   @override
+  String get activityEcotourism => 'Ecoturismo';
+
+  @override
+  String get activityPhotography => 'Fotografía';
+
+  @override
+  String get activityRelaxation => 'Relajación';
+
+  @override
+  String get activityTranquility => 'Tranquilidad';
+
+  @override
+  String get activityAdventure => 'Aventura';
+
+  @override
+  String get activityHiking => 'Caminata';
+
+  @override
+  String get activityNature => 'Naturaleza';
+
+  @override
+  String get activitySunset => 'Atardecer';
+
+  @override
+  String get activityRiver => 'Río';
+
+  @override
+  String get activityFamilies => 'Familias';
+
+  @override
   String get mapTitle => 'Mapa';
 
   @override
@@ -222,7 +264,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get reportHelpDescription =>
-      'Reporta las condiciones actuales de una playa y gana 10 puntos';
+      'Reporta las condiciones actuales de una playa';
 
   @override
   String get reportWhichBeach => '¿Qué playa visitaste?';
@@ -264,6 +306,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reportGallery => 'Galería';
 
   @override
+  String get reportTakePhoto => 'Tomar foto';
+
+  @override
+  String get reportSelectFromGallery => 'Seleccionar de galería';
+
+  @override
   String get reportMaxPhotos => 'Máximo 3 fotos';
 
   @override
@@ -283,11 +331,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get reportSelectCondition => 'Por favor selecciona una condición';
-
-  @override
-  String reportPoints(int points) {
-    return 'Has ganado $points puntos';
-  }
 
   @override
   String get profileTitle => 'Mi Perfil';
@@ -314,11 +357,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileShareCommunity => 'Comparte con la comunidad';
 
   @override
-  String profilePoints(int points) {
-    return '$points puntos';
-  }
-
-  @override
   String get profileFavorites => 'Favoritos';
 
   @override
@@ -338,12 +376,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get profileReportsSent => 'Reportes enviados';
-
-  @override
-  String get profileAchievements => 'Logros';
-
-  @override
-  String get profileAchievementsBadges => 'Ver mis logros y badges';
 
   @override
   String get profileSettings => 'Configuración';
@@ -517,6 +549,43 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get weatherRefresh => 'Actualizar';
+
+  @override
+  String get weatherRecommendationExcellent => 'Excelente para la playa';
+
+  @override
+  String weatherRecommendationNotRecommended(String reason) {
+    return 'No recomendado - $reason';
+  }
+
+  @override
+  String weatherRecommendationWarning(String reason) {
+    return 'Advertencia - $reason';
+  }
+
+  @override
+  String weatherRecommendationCaution(String reason) {
+    return 'Precaución - $reason';
+  }
+
+  @override
+  String get weatherRecommendationCool =>
+      'Fresco - Puede estar frío para nadar';
+
+  @override
+  String get weatherReasonThunderstorm => 'Tormenta eléctrica';
+
+  @override
+  String get weatherReasonRain => 'Lluvia';
+
+  @override
+  String get weatherReasonStrongWinds => 'Vientos fuertes';
+
+  @override
+  String get weatherReasonHighUV => 'Índice UV muy alto';
+
+  @override
+  String get weatherReasonHighTemperature => 'Temperatura muy alta';
 
   @override
   String get authLogin => 'Iniciar Sesión';

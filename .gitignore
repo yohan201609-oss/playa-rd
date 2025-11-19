@@ -58,6 +58,10 @@ app.*.map.json
 # Android local properties
 /android/local.properties
 /android/.gradle/
+# Android keystore (NUNCA subir al repositorio)
+/android/key.properties
+*.jks
+*.keystore
 
 # iOS
 **/ios/Pods/

@@ -1,0 +1,50 @@
+﻿[
+    {
+        "Category":  ".env",
+        "Item":  "WEATHER_API_KEY",
+        "Status":  "Advertencia",
+        "Message":  "Clave faltante: WEATHER_API_KEY"
+    },
+    {
+        "Category":  ".env",
+        "Item":  "MAPS_API_KEY",
+        "Status":  "Advertencia",
+        "Message":  "Clave faltante: MAPS_API_KEY"
+    },
+    {
+        "Category":  ".env",
+        "Item":  "API_BASE_URL",
+        "Status":  "Advertencia",
+        "Message":  "Clave faltante: API_BASE_URL"
+    },
+    {
+        "Category":  ".env",
+        "Item":  "FIREBASE_API_KEY",
+        "Status":  "Advertencia",
+        "Message":  "Clave faltante: FIREBASE_API_KEY"
+    },
+    {
+        "Category":  ".env",
+        "Item":  "Archivo",
+        "Status":  "OK",
+        "Message":  ".env localizado y analizado."
+    },
+    {
+        "Category":  "Firebase",
+        "Item":  "firebase_options.dart",
+        "Status":  "OK",
+        "Message":  "firebase_options.dart presente."
+    },
+    {
+        "Category":  "Firebase",
+        "Item":  "google-services.json",
+        "Status":  "OK",
+        "Message":  "google-services.json detectado para: com.playasrd.playasrd"
+    },
+    {
+        "Category":  "Firebase",
+        "Item":  "GoogleService-Info.plist",
+        "Status":  "OK",
+        "Message":  "GoogleService-Info.plist presente."
+    }
+]

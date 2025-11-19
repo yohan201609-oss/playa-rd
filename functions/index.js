@@ -18,6 +18,44 @@ const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
 const sharp = require("sharp");
 const axios = require("axios");
+const nodemailer = require("nodemailer");
+
+const SUPPORT_EMAIL = "soporteplayasrd@outlook.com";
+
+const getSupportEmailConfig = () => {
+  // Leer de variables de entorno (configuradas en Firebase Functions)
+  // Para Firebase Functions v2, usar functions.config() de v1
+  const functionsV1 = require("firebase-functions");
+  let config = {};
+  try {
+    config = functionsV1.config();
+  } catch (e) {
+    // Si no está disponible, usar process.env
+    logger.warn("functions.config() no disponible, usando process.env");
+  }
+
+  const user = (config.support && config.support.email_user) ||
+               process.env.SUPPORT_EMAIL_USER ||
+               "soporteplayasrd@outlook.com";
+  const pass = (config.support && config.support.email_pass) ||
+               process.env.SUPPORT_EMAIL_PASS;
+
+  return {
+    user,
+    pass,
+    host: (config.support && config.support.smtp_host) ||
+          process.env.SUPPORT_SMTP_HOST ||
+          "smtp.office365.com",
+    port: Number((config.support && config.support.smtp_port) ||
+                 process.env.SUPPORT_SMTP_PORT ||
+                 587),
+    // Outlook usa STARTTLS (587) no SSL directo
+    secure: ((config.support &&
+              config.support.smtp_secure === "true") ||
+             process.env.SUPPORT_SMTP_SECURE === "true") || false,
+    requireTLS: true, // Requerir TLS para Outlook
+  };
+};
 
 // Inicializar Firebase Admin
 admin.initializeApp();
@@ -522,6 +560,123 @@ exports.notifyNewReport = onDocumentCreated(
         return response;
       } catch (error) {
         logger.error("Error notificando nuevo reporte:", error);
+        return null;
+      }
+    },
+);
+
+/**
+ * Envía un correo al equipo cuando un usuario envía soporte
+ */
+exports.processSupportRequest = onDocumentCreated(
+    {
+      document: "support_requests/{requestId}",
+      region: "us-central1",
+    },
+    async (event) => {
+      const supportConfig = getSupportEmailConfig();
+
+      // Log para debugging (sin mostrar la contraseña completa)
+      logger.info("Configuración SMTP:", {
+        user: supportConfig.user,
+        host: supportConfig.host,
+        port: supportConfig.port,
+        secure: supportConfig.secure,
+        passLength: supportConfig.pass ? supportConfig.pass.length : 0,
+        passPrefix: supportConfig.pass ?
+          supportConfig.pass.substring(0, 5) + "..." : "undefined",
+      });
+
+      if (!supportConfig.user || !supportConfig.pass) {
+        logger.error(
+            "Credenciales de correo para soporte no configuradas. " +
+            "Configura SUPPORT_EMAIL_USER y SUPPORT_EMAIL_PASS.",
+        );
+        logger.error("Variables de entorno disponibles:", {
+          SUPPORT_EMAIL_USER: process.env.SUPPORT_EMAIL_USER || "undefined",
+          SUPPORT_EMAIL_PASS: process.env.SUPPORT_EMAIL_PASS ?
+            "***" + process.env.SUPPORT_EMAIL_PASS.substring(
+                process.env.SUPPORT_EMAIL_PASS.length - 5,
+            ) : "undefined",
+        });
+        return null;
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: supportConfig.host,
+        port: supportConfig.port,
+        // false para puerto 587 (STARTTLS), true para 465 (SSL)
+        secure: supportConfig.secure,
+        requireTLS: supportConfig.requireTLS || false,
+        auth: {
+          user: supportConfig.user,
+          pass: supportConfig.pass,
+        },
+        authMethod: "PLAIN", // Especificar método de autenticación
+        tls: {
+          // No rechazar certificados no autorizados (útil para desarrollo)
+          rejectUnauthorized: false,
+          ciphers: "SSLv3", // Forzar compatibilidad
+        },
+        // Configuración adicional para Outlook
+        connectionTimeout: 10000, // 10 segundos
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+      });
+
+      try {
+        const requestId = event.params.requestId;
+        const data = event.data.data();
+
+        const subject = data.type === "suggestion" ?
+          "Nueva sugerencia desde Playas RD" :
+          "Nuevo reporte de problema desde Playas RD";
+
+        const htmlBody = `
+          <h2>${subject}</h2>
+          <p><strong>Mensaje:</strong></p>
+          <p>${(data.message || "").replace(/\n/g, "<br>")}</p>
+          <hr />
+          <p><strong>Contacto:</strong> ${data.contact || "No provisto"}</p>
+          <p><strong>Usuario:</strong> ${data.userEmail || "Anónimo"}</p>
+          <p><strong>Nombre:</strong> ${data.userDisplayName || "N/A"}</p>
+          <p><strong>Plataforma:</strong> ${data.platform || "Desconocida"}</p>
+          <p><strong>ID de solicitud:</strong> ${requestId}</p>
+        `;
+
+        await transporter.sendMail({
+          from: `"Playas RD Soporte" <${supportConfig.user}>`,
+          to: SUPPORT_EMAIL,
+          subject: `${subject} · ${requestId}`,
+          html: htmlBody,
+          text: `
+${subject}
+
+Mensaje:
+${data.message || ""}
+
+Contacto: ${data.contact || "No provisto"}
+Usuario: ${data.userEmail || "Anónimo"}
+Nombre: ${data.userDisplayName || "N/A"}
+Plataforma: ${data.platform || "Desconocida"}
+ID: ${requestId}
+          `,
+        });
+
+        await event.data.ref.update({
+          status: "sent",
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        logger.info(`Soporte procesado y enviado para ${requestId}`);
+        return null;
+      } catch (error) {
+        logger.error("Error enviando correo de soporte:", error);
+        await event.data.ref.update({
+          status: "error",
+          error: error.message,
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
         return null;
       }
     },

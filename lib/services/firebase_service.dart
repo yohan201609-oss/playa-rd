@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../models/beach.dart';
 import '../utils/notification_helper.dart';
 import 'beach_service.dart';
+import 'google_places_service.dart';
 
 class FirebaseService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -149,6 +150,33 @@ class FirebaseService {
     }
   }
 
+  // Obtener el conteo real de reportes de un usuario
+  static Future<int> getUserReportsCount(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('reports')
+          .where('userId', isEqualTo: userId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error obteniendo conteo de reportes: $e');
+      return 0;
+    }
+  }
+
+  // Sincronizar el contador de reportes del usuario con el conteo real
+  static Future<void> syncUserReportsCount(String userId) async {
+    try {
+      final realCount = await getUserReportsCount(userId);
+      await _firestore.collection('users').doc(userId).update({
+        'reportsCount': realCount,
+      });
+      print('✅ Contador de reportes sincronizado para usuario $userId: $realCount');
+    } catch (e) {
+      print('⚠️ Error sincronizando contador de reportes: $e');
+    }
+  }
+
   // Agregar playa a favoritos
   static Future<void> addFavoriteBeach(String userId, String beachId) async {
     await _firestore.collection('users').doc(userId).update({
@@ -228,6 +256,7 @@ class FirebaseService {
             'province': beach.province,
             'municipality': beach.municipality,
             'description': beach.description,
+            'descriptionEn': beach.descriptionEn,
             'latitude': beach.latitude,
             'longitude': beach.longitude,
             'imageUrls': beach.imageUrls,
@@ -240,6 +269,17 @@ class FirebaseService {
             'lastUpdated': FieldValue.serverTimestamp(),
           });
           print('✅ Playa ${beach.name} sincronizada con Firestore');
+        } else {
+          // Actualizar playa existente para asegurar que tenga descriptionEn
+          final existingData = doc.data() as Map<String, dynamic>;
+          if (existingData['descriptionEn'] == null || 
+              (existingData['descriptionEn'] as String).isEmpty) {
+            await _firestore.collection('beaches').doc(beach.id).update({
+              'descriptionEn': beach.descriptionEn,
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            print('✅ Descripción en inglés agregada a ${beach.name}');
+          }
         }
       }
     } catch (e) {
@@ -247,23 +287,235 @@ class FirebaseService {
     }
   }
 
+  // Actualizar todas las playas en Firestore con descripciones en inglés
+  // Esta función actualiza TODAS las playas en Firebase, incluso las que no están en el archivo local
+  static Future<void> updateAllBeachesWithEnglishDescriptions() async {
+    try {
+      print('🔄 Iniciando actualización de descripciones en inglés...');
+      
+      // Obtener todas las playas de Firestore
+      final snapshot = await _firestore.collection('beaches').get();
+      final allBeaches = snapshot.docs;
+      
+      print('📊 Encontradas ${allBeaches.length} playas en Firestore');
+      
+      // Obtener playas locales para mapear traducciones
+      final localBeaches = _getLocalBeaches();
+      final localBeachesMap = <String, Beach>{};
+      // También crear un mapa por nombre para buscar por nombre si no hay por ID
+      final localBeachesByName = <String, Beach>{};
+      for (final beach in localBeaches) {
+        localBeachesMap[beach.id] = beach;
+        localBeachesByName[beach.name.toLowerCase().trim()] = beach;
+      }
+      
+      int updated = 0;
+      int skipped = 0;
+      int notFound = 0;
+      int needsTranslation = 0;
+      
+      for (final doc in allBeaches) {
+        final data = doc.data();
+        final beachId = doc.id;
+        final beachName = data['name'] ?? 'Sin nombre';
+        final existingDescriptionEn = data['descriptionEn'];
+        final description = data['description'] ?? '';
+        
+        // Si ya tiene descriptionEn y no está vacío, saltar
+        if (existingDescriptionEn != null && 
+            existingDescriptionEn.toString().trim().isNotEmpty) {
+          skipped++;
+          continue;
+        }
+        
+        bool wasUpdated = false;
+        
+        // Buscar en playas locales por ID
+        if (localBeachesMap.containsKey(beachId)) {
+          final localBeach = localBeachesMap[beachId]!;
+          if (localBeach.descriptionEn != null && 
+              localBeach.descriptionEn!.trim().isNotEmpty) {
+            await _firestore.collection('beaches').doc(beachId).update({
+              'descriptionEn': localBeach.descriptionEn,
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            updated++;
+            wasUpdated = true;
+            print('✅ Actualizada por ID: $beachName (ID: $beachId)');
+          }
+        } 
+        // Si no se encontró por ID, intentar buscar por nombre
+        else if (localBeachesByName.containsKey(beachName.toLowerCase().trim())) {
+          final localBeach = localBeachesByName[beachName.toLowerCase().trim()]!;
+          if (localBeach.descriptionEn != null && 
+              localBeach.descriptionEn!.trim().isNotEmpty) {
+            await _firestore.collection('beaches').doc(beachId).update({
+              'descriptionEn': localBeach.descriptionEn,
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            updated++;
+            wasUpdated = true;
+            print('✅ Actualizada por nombre: $beachName (ID: $beachId)');
+          }
+        }
+        
+        // Si no se encontró en el archivo local
+        if (!wasUpdated) {
+          notFound++;
+          
+          // Si tiene descripción en español, usar la descripción en español como temporal
+          // Esto evita que se muestre "auto translate" o placeholder molesto
+          // El usuario verá la descripción en español mientras no haya traducción manual
+          if (description.isNotEmpty) {
+            // Usar la descripción en español directamente (sin prefijos molestos)
+            // En el futuro se puede mejorar con una API de traducción
+            await _firestore.collection('beaches').doc(beachId).update({
+              'descriptionEn': description, // Usar español temporalmente
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            updated++;
+            print('✅ Descripción temporal (español) agregada: $beachName (ID: $beachId)');
+          } else {
+            needsTranslation++;
+            print('⚠️ Playa sin descripción ni traducción: $beachName (ID: $beachId)');
+          }
+        }
+      }
+      
+      print('');
+      print('✅ Actualización completada:');
+      print('   - Actualizadas: $updated');
+      print('   - Omitidas (ya tenían traducción): $skipped');
+      print('   - No encontradas en archivo local: $notFound');
+      print('   - Necesitan traducción manual: $needsTranslation');
+      print('   - Total procesadas: ${allBeaches.length}');
+      
+      if (needsTranslation > 0) {
+        print('');
+        print('⚠️ ATENCIÓN: $needsTranslation playas aún necesitan traducción manual.');
+        print('   Considera agregarlas al archivo lib/services/beach_service.dart');
+      }
+    } catch (e) {
+      print('❌ Error actualizando descripciones: $e');
+      rethrow;
+    }
+  }
+  
+
   // Método auxiliar para obtener playas locales
   static List<Beach> _getLocalBeaches() {
     return BeachService.getDominicanBeaches();
   }
 
   // Obtener todas las playas
+  // Los datos de rating, reviewCount y currentCondition se calculan desde reportes reales
   static Stream<List<Beach>> getBeaches() {
     return _firestore
         .collection('beaches')
         .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => Beach.fromFirestore(doc)).toList(),
+        .asyncMap(
+          (snapshot) async {
+            final beaches = snapshot.docs
+                .map((doc) => Beach.fromFirestore(doc))
+                .toList();
+            
+            // Actualizar estadísticas desde reportes para todas las playas
+            // Hacerlo de forma asíncrona para no bloquear el stream
+            final updatedBeaches = await Future.wait(
+              beaches.map((beach) async {
+                try {
+                  final stats = await calculateBeachStatsFromReports(beach.id);
+                  
+                  // Solo actualizar si hay diferencias
+                  if (beach.reviewCount == 0 || 
+                      (stats['reviewCount'] as int) != beach.reviewCount ||
+                      (stats['currentCondition'] as String) != beach.currentCondition) {
+                    
+                    // Actualizar en Firestore de forma asíncrona (no esperar)
+                    _firestore.collection('beaches').doc(beach.id).update({
+                      'rating': stats['rating'],
+                      'reviewCount': stats['reviewCount'],
+                      'currentCondition': stats['currentCondition'],
+                      'lastUpdated': FieldValue.serverTimestamp(),
+                    }).catchError((e) {
+                      print('⚠️ Error actualizando estadísticas de ${beach.name}: $e');
+                    });
+                    
+                    // Retornar playa actualizada
+                    return beach.copyWith(
+                      rating: stats['rating'] as double,
+                      reviewCount: stats['reviewCount'] as int,
+                      currentCondition: stats['currentCondition'] as String,
+                    );
+                  }
+                  
+                  return beach;
+                } catch (e) {
+                  print('⚠️ Error calculando estadísticas para ${beach.name}: $e');
+                  return beach;
+                }
+              }),
+            );
+            
+            return updatedBeaches;
+          },
         );
   }
 
+  // Obtener todas las playas (una sola vez, no stream)
+  // Los datos de rating, reviewCount y currentCondition se calculan desde reportes reales
+  static Future<List<Beach>> getBeachesOnce() async {
+    try {
+      final snapshot = await _firestore.collection('beaches').get();
+      final beaches = snapshot.docs.map((doc) => Beach.fromFirestore(doc)).toList();
+      
+      // Actualizar estadísticas desde reportes para todas las playas
+      // Esto asegura que los datos estén siempre actualizados
+      final updatedBeaches = await Future.wait(
+        beaches.map((beach) async {
+          try {
+            final stats = await calculateBeachStatsFromReports(beach.id);
+            
+            // Solo actualizar si hay diferencias significativas o si no hay datos
+            if (beach.reviewCount == 0 || 
+                (stats['reviewCount'] as int) != beach.reviewCount ||
+                (stats['currentCondition'] as String) != beach.currentCondition) {
+              
+              // Actualizar en Firestore de forma asíncrona (no esperar)
+              _firestore.collection('beaches').doc(beach.id).update({
+                'rating': stats['rating'],
+                'reviewCount': stats['reviewCount'],
+                'currentCondition': stats['currentCondition'],
+                'lastUpdated': FieldValue.serverTimestamp(),
+              }).catchError((e) {
+                print('⚠️ Error actualizando estadísticas de ${beach.name}: $e');
+              });
+              
+              // Retornar playa actualizada
+              return beach.copyWith(
+                rating: stats['rating'] as double,
+                reviewCount: stats['reviewCount'] as int,
+                currentCondition: stats['currentCondition'] as String,
+              );
+            }
+            
+            return beach;
+          } catch (e) {
+            print('⚠️ Error calculando estadísticas para ${beach.name}: $e');
+            return beach;
+          }
+        }),
+      );
+      
+      return updatedBeaches;
+    } catch (e) {
+      print('Error obteniendo playas de Firestore: $e');
+      return [];
+    }
+  }
+
   // Obtener playa por ID
+  // Los datos de rating, reviewCount y currentCondition se calculan desde reportes reales
   static Future<Beach?> getBeachById(String beachId) async {
     try {
       DocumentSnapshot doc = await _firestore
@@ -271,7 +523,33 @@ class FirebaseService {
           .doc(beachId)
           .get();
       if (doc.exists) {
-        return Beach.fromFirestore(doc);
+        final beach = Beach.fromFirestore(doc);
+        
+        // Calcular estadísticas desde reportes
+        final stats = await calculateBeachStatsFromReports(beachId);
+        
+        // Actualizar en Firestore si hay diferencias
+        if (beach.reviewCount == 0 || 
+            (stats['reviewCount'] as int) != beach.reviewCount ||
+            (stats['currentCondition'] as String) != beach.currentCondition) {
+          
+          // Actualizar en Firestore
+          await _firestore.collection('beaches').doc(beachId).update({
+            'rating': stats['rating'],
+            'reviewCount': stats['reviewCount'],
+            'currentCondition': stats['currentCondition'],
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+          
+          // Retornar playa actualizada
+          return beach.copyWith(
+            rating: stats['rating'] as double,
+            reviewCount: stats['reviewCount'] as int,
+            currentCondition: stats['currentCondition'] as String,
+          );
+        }
+        
+        return beach;
       }
       return null;
     } catch (e) {
@@ -290,6 +568,221 @@ class FirebaseService {
           (snapshot) =>
               snapshot.docs.map((doc) => Beach.fromFirestore(doc)).toList(),
         );
+  }
+
+  // Actualizar o crear una playa (usa set con merge para crear si no existe)
+  static Future<void> updateBeach(Beach beach) async {
+    try {
+      await _firestore.collection('beaches').doc(beach.id).set({
+        'name': beach.name,
+        'province': beach.province,
+        'municipality': beach.municipality,
+        'postalCode': beach.postalCode,
+        'address': beach.address,
+        'description': beach.description,
+        'descriptionEn': beach.descriptionEn,
+        'latitude': beach.latitude,
+        'longitude': beach.longitude,
+        'imageUrls': beach.imageUrls,
+        'rating': beach.rating,
+        'reviewCount': beach.reviewCount,
+        'currentCondition': beach.currentCondition,
+        'amenities': beach.amenities,
+        'activities': beach.activities,
+        'isFavorite': beach.isFavorite,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)); // Usar merge para crear o actualizar
+      print('✅ Playa ${beach.name} guardada en Firestore');
+    } catch (e) {
+      print('❌ Error guardando playa en Firestore: $e');
+      rethrow;
+    }
+  }
+
+  // Actualizar solo la descripción en inglés de una playa específica
+  // Útil para actualizar playas individuales desde la app o scripts
+  static Future<void> updateBeachEnglishDescription(
+    String beachId, 
+    String englishDescription
+  ) async {
+    try {
+      await _firestore.collection('beaches').doc(beachId).update({
+        'descriptionEn': englishDescription,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+      print('✅ Descripción en inglés actualizada para playa ID: $beachId');
+    } catch (e) {
+      print('❌ Error actualizando descripción en inglés: $e');
+      rethrow;
+    }
+  }
+
+  // Actualizar descripción en inglés de una playa por nombre
+  static Future<void> updateBeachEnglishDescriptionByName(
+    String beachName, 
+    String englishDescription
+  ) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('beaches')
+          .where('name', isEqualTo: beachName)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isEmpty) {
+        print('⚠️ No se encontró playa con nombre: $beachName');
+        return;
+      }
+      
+      final doc = querySnapshot.docs.first;
+      await doc.reference.update({
+        'descriptionEn': englishDescription,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+      print('✅ Descripción en inglés actualizada para: $beachName');
+    } catch (e) {
+      print('❌ Error actualizando descripción en inglés: $e');
+      rethrow;
+    }
+  }
+
+  // Eliminar URLs de imágenes de las 45 playas originales (IDs 1-45)
+  static Future<void> removeImageUrlsFromOriginalBeaches() async {
+    try {
+      print('🔄 Iniciando eliminación de URLs de imágenes de las 45 playas originales...');
+      
+      int updated = 0;
+      int notFound = 0;
+      int errors = 0;
+      
+      // IDs de las 45 playas originales
+      final List<String> originalBeachIds = List.generate(45, (index) => '${index + 1}');
+      
+      for (final beachId in originalBeachIds) {
+        try {
+          final docRef = _firestore.collection('beaches').doc(beachId);
+          final doc = await docRef.get();
+          
+          if (doc.exists) {
+            final data = doc.data() as Map<String, dynamic>;
+            final beachName = data['name'] ?? 'Sin nombre';
+            
+            // Actualizar imageUrls a lista vacía
+            await docRef.update({
+              'imageUrls': <String>[],
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            
+            updated++;
+            print('✅ Eliminadas imágenes de: $beachName (ID: $beachId)');
+          } else {
+            notFound++;
+            print('⚠️ Playa no encontrada en Firebase: ID $beachId');
+          }
+        } catch (e) {
+          errors++;
+          print('❌ Error actualizando playa ID $beachId: $e');
+        }
+      }
+      
+      print('');
+      print('✅ Proceso completado:');
+      print('   - Actualizadas: $updated');
+      print('   - No encontradas: $notFound');
+      print('   - Errores: $errors');
+      print('   - Total procesadas: ${originalBeachIds.length}');
+      
+    } catch (e) {
+      print('❌ Error eliminando URLs de imágenes: $e');
+      rethrow;
+    }
+  }
+
+  // Obtener fotos de las 45 playas originales desde Google Places API
+  static Future<void> fetchPhotosFromGooglePlacesForOriginalBeaches({
+    Function(int current, int total, String name)? onProgress,
+  }) async {
+    try {
+      print('🔄 Iniciando obtención de fotos desde Google Places API para las 45 playas originales...\n');
+      
+      // Obtener playas locales (las 45 originales)
+      final localBeaches = _getLocalBeaches();
+      final originalBeaches = localBeaches.where((beach) {
+        final id = int.tryParse(beach.id);
+        return id != null && id >= 1 && id <= 45;
+      }).toList();
+      
+      print('📊 Total de playas a procesar: ${originalBeaches.length}\n');
+      
+      int updated = 0;
+      int notFound = 0;
+      int noPhotos = 0;
+      int errors = 0;
+      
+      for (int i = 0; i < originalBeaches.length; i++) {
+        final beach = originalBeaches[i];
+        
+        try {
+          // Reportar progreso
+          if (onProgress != null) {
+            onProgress(i + 1, originalBeaches.length, beach.name);
+          }
+          
+          print('🔄 [${i + 1}/${originalBeaches.length}] Buscando fotos para: ${beach.name}');
+          
+          // Buscar fotos usando Google Places API
+          final photos = await GooglePlacesService.getBeachPhotos(
+            beach.name,
+            province: beach.province,
+            municipality: beach.municipality,
+            latitude: beach.latitude,
+            longitude: beach.longitude,
+            maxPhotos: 5, // Obtener hasta 5 fotos
+          );
+          
+          if (photos.isEmpty) {
+            noPhotos++;
+            print('⚠️ No se encontraron fotos para: ${beach.name}');
+          } else {
+            // Actualizar en Firebase
+            final docRef = _firestore.collection('beaches').doc(beach.id);
+            final doc = await docRef.get();
+            
+            if (doc.exists) {
+              await docRef.update({
+                'imageUrls': photos,
+                'lastUpdated': FieldValue.serverTimestamp(),
+              });
+              
+              updated++;
+              print('✅ ${photos.length} foto(s) agregada(s) a: ${beach.name}');
+            } else {
+              notFound++;
+              print('⚠️ Playa no encontrada en Firebase: ${beach.name} (ID: ${beach.id})');
+            }
+          }
+          
+          // Pausa entre solicitudes para evitar rate limiting
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+        } catch (e) {
+          errors++;
+          print('❌ Error procesando ${beach.name}: $e');
+        }
+      }
+      
+      print('');
+      print('✅ Proceso completado:');
+      print('   - Actualizadas con fotos: $updated');
+      print('   - Sin fotos encontradas: $noPhotos');
+      print('   - No encontradas en Firebase: $notFound');
+      print('   - Errores: $errors');
+      print('   - Total procesadas: ${originalBeaches.length}');
+      
+    } catch (e) {
+      print('❌ Error obteniendo fotos desde Google Places: $e');
+      rethrow;
+    }
   }
 
   // =======================
@@ -311,7 +804,14 @@ class FirebaseService {
       // Notificar a usuarios que tienen esta playa como favorita
       _notifyFavoriteBeachUsers(report);
 
-      // Actualizar condición de la playa (tomar la condición más reciente)
+      // Esperar un momento para asegurar que el reporte esté disponible en la consulta
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Calcular estadísticas actualizadas desde todos los reportes
+      print('📊 Calculando estadísticas para playa ${report.beachId}...');
+      final stats = await calculateBeachStatsFromReports(report.beachId);
+      print('📊 Estadísticas calculadas: rating=${stats['rating']}, reviewCount=${stats['reviewCount']}, condition=${stats['currentCondition']}');
+
       // Verificar si la playa existe antes de actualizar
       DocumentSnapshot beachDoc = await _firestore
           .collection('beaches')
@@ -319,10 +819,14 @@ class FirebaseService {
           .get();
 
       if (beachDoc.exists) {
+        // Actualizar playa con datos calculados desde reportes
         await _firestore.collection('beaches').doc(report.beachId).update({
-          'currentCondition': report.condition,
+          'rating': stats['rating'],
+          'reviewCount': stats['reviewCount'],
+          'currentCondition': stats['currentCondition'],
           'lastUpdated': FieldValue.serverTimestamp(),
         });
+        print('✅ Estadísticas actualizadas desde reportes para playa ${report.beachId}: rating=${stats['rating']}, reviews=${stats['reviewCount']}, condition=${stats['currentCondition']}');
       } else {
         print('⚠️ Playa con ID ${report.beachId} no existe en Firestore');
         // Buscar la playa en los datos locales y crearla
@@ -332,25 +836,26 @@ class FirebaseService {
           orElse: () => throw Exception('Playa no encontrada en datos locales'),
         );
 
-        // Crear la playa en Firestore con todos los datos
+        // Crear la playa en Firestore con datos calculados desde reportes
         await _firestore.collection('beaches').doc(report.beachId).set({
           'id': localBeach.id,
           'name': localBeach.name,
           'province': localBeach.province,
           'municipality': localBeach.municipality,
           'description': localBeach.description,
+          'descriptionEn': localBeach.descriptionEn,
           'latitude': localBeach.latitude,
           'longitude': localBeach.longitude,
           'imageUrls': localBeach.imageUrls,
-          'rating': localBeach.rating,
-          'reviewCount': localBeach.reviewCount,
-          'currentCondition': report.condition, // Usar la condición del reporte
+          'rating': stats['rating'], // Usar rating calculado desde reportes
+          'reviewCount': stats['reviewCount'], // Usar reviewCount calculado desde reportes
+          'currentCondition': stats['currentCondition'], // Usar condición calculada desde reportes
           'amenities': localBeach.amenities,
           'activities': localBeach.activities,
           'createdAt': FieldValue.serverTimestamp(),
           'lastUpdated': FieldValue.serverTimestamp(),
         });
-        print('✅ Playa ${localBeach.name} creada en Firestore');
+        print('✅ Playa ${localBeach.name} creada en Firestore con datos desde reportes');
       }
 
       return docRef.id;
@@ -373,6 +878,145 @@ class FirebaseService {
               .map((doc) => BeachReport.fromFirestore(doc))
               .toList(),
         );
+  }
+
+  // Obtener todos los reportes de una playa (sin límite)
+  static Future<List<BeachReport>> getAllBeachReports(String beachId) async {
+    try {
+      // Intentar con orderBy primero
+      try {
+        final snapshot = await _firestore
+            .collection('reports')
+            .where('beachId', isEqualTo: beachId)
+            .orderBy('timestamp', descending: true)
+            .get();
+        
+        final reports = snapshot.docs
+            .map((doc) => BeachReport.fromFirestore(doc))
+            .toList();
+        
+        print('✅ Obtenidos ${reports.length} reportes con orderBy para playa $beachId');
+        return reports;
+      } catch (e) {
+        // Si falla con orderBy (puede ser problema de índice), intentar sin orderBy
+        print('⚠️ Error con orderBy, intentando sin orderBy: $e');
+        final snapshot = await _firestore
+            .collection('reports')
+            .where('beachId', isEqualTo: beachId)
+            .get();
+        
+        final reports = snapshot.docs
+            .map((doc) => BeachReport.fromFirestore(doc))
+            .toList();
+        
+        // Ordenar manualmente por timestamp
+        reports.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        
+        print('✅ Obtenidos ${reports.length} reportes sin orderBy para playa $beachId');
+        return reports;
+      }
+    } catch (e) {
+      print('❌ Error obteniendo reportes de playa $beachId: $e');
+      return [];
+    }
+  }
+
+  // Calcular datos de playa basándose en reportes reales
+  static Future<Map<String, dynamic>> calculateBeachStatsFromReports(
+    String beachId,
+  ) async {
+    try {
+      print('🔍 Obteniendo reportes para playa $beachId...');
+      final reports = await getAllBeachReports(beachId);
+      print('📋 Encontrados ${reports.length} reportes para playa $beachId');
+      
+      if (reports.isEmpty) {
+        // Si no hay reportes, retornar valores por defecto
+        print('⚠️ No hay reportes para playa $beachId, usando valores por defecto');
+        return {
+          'rating': 0.0,
+          'reviewCount': 0,
+          'currentCondition': 'Desconocido',
+        };
+      }
+
+      // Calcular reviewCount (total de reportes)
+      final reviewCount = reports.length;
+
+      // Calcular rating promedio
+      // Priorizar ratings reales de los reportes, si no hay, usar condiciones como fallback
+      double totalRating = 0.0;
+      final conditionCounts = <String, int>{
+        'Excelente': 0,
+        'Bueno': 0,
+        'Moderado': 0,
+        'Peligroso': 0,
+      };
+
+      for (final report in reports) {
+        // Si el reporte tiene rating real, usarlo
+        if (report.rating != null && report.rating! > 0) {
+          totalRating += report.rating!;
+        } else {
+          // Si no tiene rating, usar condición como fallback
+          // Mapeo: Excelente = 5.0, Bueno = 4.0, Moderado = 3.0, Peligroso = 2.0
+          switch (report.condition) {
+            case 'Excelente':
+              totalRating += 5.0;
+              conditionCounts['Excelente'] = conditionCounts['Excelente']! + 1;
+              break;
+            case 'Bueno':
+              totalRating += 4.0;
+              conditionCounts['Bueno'] = conditionCounts['Bueno']! + 1;
+              break;
+            case 'Moderado':
+              totalRating += 3.0;
+              conditionCounts['Moderado'] = conditionCounts['Moderado']! + 1;
+              break;
+            case 'Peligroso':
+              totalRating += 2.0;
+              conditionCounts['Peligroso'] = conditionCounts['Peligroso']! + 1;
+              break;
+          }
+        }
+      }
+
+      final rating = reviewCount > 0 ? totalRating / reviewCount : 0.0;
+
+      // Calcular condición más común (moda)
+      // Si hay empate, priorizar: Excelente > Bueno > Moderado > Peligroso
+      String currentCondition = 'Desconocido';
+      int maxCount = 0;
+      
+      // Orden de prioridad
+      final priorityOrder = ['Excelente', 'Bueno', 'Moderado', 'Peligroso'];
+      
+      for (final condition in priorityOrder) {
+        final count = conditionCounts[condition] ?? 0;
+        if (count > maxCount) {
+          maxCount = count;
+          currentCondition = condition;
+        }
+      }
+
+      // Si no hay ninguna condición con reportes, usar la más reciente
+      if (currentCondition == 'Desconocido' && reports.isNotEmpty) {
+        currentCondition = reports.first.condition;
+      }
+
+      return {
+        'rating': rating,
+        'reviewCount': reviewCount,
+        'currentCondition': currentCondition,
+      };
+    } catch (e) {
+      print('Error calculando estadísticas de playa: $e');
+      return {
+        'rating': 0.0,
+        'reviewCount': 0,
+        'currentCondition': 'Desconocido',
+      };
+    }
   }
 
   // Marcar reporte como útil

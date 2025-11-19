@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
+import '../services/support_service.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -116,27 +120,55 @@ class HelpScreen extends StatelessWidget {
             icon: Icons.support_agent_rounded,
             children: [
               _buildContactItem(
-                title: 'Centro de Ayuda',
-                description: 'Visita nuestro centro de ayuda en línea',
-                icon: Icons.help_center_rounded,
-                onTap: () {
-                  // Abrir URL del centro de ayuda
-                },
-              ),
-              _buildContactItem(
                 title: 'Reportar un Problema',
                 description: 'Envíanos tus comentarios o reporta problemas',
                 icon: Icons.bug_report_rounded,
-                onTap: () {
-                  // Abrir formulario de reporte
-                },
+                onTap: () => _showSupportDialog(
+                  context,
+                  SupportRequestType.issue,
+                ),
               ),
               _buildContactItem(
                 title: 'Sugerencias',
                 description: 'Comparte tus ideas para mejorar la app',
                 icon: Icons.lightbulb_outline_rounded,
+                onTap: () => _showSupportDialog(
+                  context,
+                  SupportRequestType.suggestion,
+                ),
+              ),
+              _buildEmailContactItem(context),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSection(
+            title: 'Legal',
+            icon: Icons.gavel_rounded,
+            children: [
+              _buildContactItem(
+                title: 'Política de Privacidad',
+                description: 'Consulta cómo protegemos y manejamos tus datos',
+                icon: Icons.privacy_tip_rounded,
                 onTap: () {
-                  // Abrir formulario de sugerencias
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildContactItem(
+                title: 'Términos y Condiciones',
+                description: 'Lee los términos de uso de la aplicación',
+                icon: Icons.description_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TermsOfServiceScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -407,6 +439,297 @@ class HelpScreen extends StatelessWidget {
         ),
         onTap: onTap,
       ),
+    );
+  }
+
+  Widget _buildEmailContactItem(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.email_rounded, color: Colors.blue, size: 24),
+        ),
+        title: const Text(
+          'Contacto Directo',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: Color(0xFF333333),
+          ),
+        ),
+        subtitle: Text(
+          SupportEmail.email,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[600],
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.grey[600],
+            size: 20,
+          ),
+        ),
+        onTap: () async {
+          final BuildContext dialogContext = context;
+          final Uri emailUri = Uri(
+            scheme: 'mailto',
+            path: SupportEmail.email,
+            query: 'subject=Soporte Playas RD',
+          );
+          
+          if (await canLaunchUrl(emailUri)) {
+            await launchUrl(emailUri);
+          } else {
+            // Si no se puede abrir el cliente de email, mostrar un diálogo
+            if (dialogContext.mounted) {
+              showDialog(
+                context: dialogContext,
+                builder: (dialogBuilderContext) => AlertDialog(
+                  title: const Text('Correo de Soporte'),
+                  content: SelectableText(SupportEmail.email),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogBuilderContext),
+                      child: const Text('Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _showSupportDialog(
+    BuildContext parentContext,
+    SupportRequestType type,
+  ) {
+    final messageController = TextEditingController();
+    final contactController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSending = false;
+
+    showDialog(
+      context: parentContext,
+      barrierDismissible: !isSending,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogInnerContext, setState) {
+            Future<void> submit() async {
+              if (!formKey.currentState!.validate()) return;
+              setState(() => isSending = true);
+              try {
+                print('📤 Enviando solicitud de soporte...');
+                print('Tipo: ${type.name}');
+                print('Mensaje: ${messageController.text}');
+                
+                await SupportService.submit(
+                  type: type,
+                  message: messageController.text,
+                  contact: contactController.text.trim().isEmpty
+                      ? null
+                      : contactController.text.trim(),
+                );
+                
+                print('✅ Solicitud enviada exitosamente');
+                
+                if (Navigator.of(dialogContext).canPop()) {
+                  Navigator.of(dialogContext).pop();
+                }
+                
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              type == SupportRequestType.issue
+                                  ? 'Reporte enviado. Te contactaremos pronto.'
+                                  : 'Sugerencia enviada. ¡Gracias por tu aporte!',
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                setState(() => isSending = false);
+                print('❌ Error en diálogo de soporte: $e');
+                print('Tipo de error: ${e.runtimeType}');
+                
+                String errorMessage = 'No pudimos enviar tu mensaje.';
+                if (e.toString().contains('permission-denied')) {
+                  errorMessage = 'Error de permisos. Verifica que tengas conexión a internet.';
+                } else if (e.toString().contains('unavailable')) {
+                  errorMessage = 'Servicio no disponible. Intenta más tarde.';
+                } else if (e.toString().contains('network')) {
+                  errorMessage = 'Error de conexión. Verifica tu internet.';
+                } else {
+                  errorMessage = 'Error: ${e.toString()}';
+                }
+                
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(errorMessage),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 5),
+                      action: SnackBarAction(
+                        label: 'Cerrar',
+                        textColor: Colors.white,
+                        onPressed: () {},
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              }
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                type == SupportRequestType.issue
+                    ? 'Reportar un problema'
+                    : 'Compartir una sugerencia',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tu mensaje se enviará directamente a nuestro equipo de soporte.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.email_rounded, size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Se enviará a: ${SupportEmail.email}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: messageController,
+                        minLines: 4,
+                        maxLines: 6,
+                        decoration: const InputDecoration(
+                          labelText: 'Mensaje',
+                          alignLabelWithHint: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().length < 10) {
+                            return 'Describe el problema o sugerencia (mínimo 10 caracteres).';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: contactController,
+                        decoration: const InputDecoration(
+                          labelText: 'Contacto (opcional)',
+                          hintText: 'Correo o teléfono para responderte',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSending
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isSending ? null : submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Enviar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

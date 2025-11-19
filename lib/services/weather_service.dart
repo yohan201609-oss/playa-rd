@@ -28,8 +28,9 @@ class WeatherService {
     required double latitude,
     required double longitude,
     bool forceRefresh = false,
+    String language = 'es',
   }) async {
-    final cacheKey = _getCacheKey(latitude, longitude);
+    final cacheKey = _getCacheKey(latitude, longitude, language);
 
     // Intentar obtener desde caché si no se fuerza refresh
     if (!forceRefresh) {
@@ -42,9 +43,9 @@ class WeatherService {
 
     // Si no hay caché o está expirado, consultar la API
     try {
-      print('🌐 Consultando API del clima para ($latitude, $longitude)');
+      print('🌐 Consultando API del clima para ($latitude, $longitude) en idioma: $language');
       final weatherData =
-          await _fetchWeatherFromAPI(latitude: latitude, longitude: longitude);
+          await _fetchWeatherFromAPI(latitude: latitude, longitude: longitude, language: language);
 
       // Guardar en caché
       await _cacheWeather(cacheKey, weatherData);
@@ -65,10 +66,11 @@ class WeatherService {
   Future<WeatherData> _fetchWeatherFromAPI({
     required double latitude,
     required double longitude,
+    String language = 'es',
   }) async {
     // Primero obtenemos los datos básicos del clima
     final weatherUrl = Uri.parse(
-      '$_baseUrl/weather?lat=$latitude&lon=$longitude&appid=$_apiKey&units=metric&lang=es',
+      '$_baseUrl/weather?lat=$latitude&lon=$longitude&appid=$_apiKey&units=metric&lang=$language',
     );
 
     final weatherResponse = await http.get(weatherUrl).timeout(
@@ -87,7 +89,7 @@ class WeatherService {
     // Nota: One Call 3.0 requiere plan de pago, pero podemos intentar 2.5
     try {
       final oneCallUrl = Uri.parse(
-        '$_baseUrl/onecall?lat=$latitude&lon=$longitude&appid=$_apiKey&units=metric&lang=es&exclude=minutely,hourly,daily,alerts',
+        '$_baseUrl/onecall?lat=$latitude&lon=$longitude&appid=$_apiKey&units=metric&lang=$language&exclude=minutely,hourly,daily,alerts',
       );
 
       final oneCallResponse = await http.get(oneCallUrl).timeout(
@@ -110,12 +112,12 @@ class WeatherService {
     return WeatherData.fromJson(weatherJson);
   }
 
-  /// Obtiene la clave para el caché basada en coordenadas
-  String _getCacheKey(double latitude, double longitude) {
+  /// Obtiene la clave para el caché basada en coordenadas e idioma
+  String _getCacheKey(double latitude, double longitude, String language) {
     // Redondear a 2 decimales para que playas cercanas compartan caché
     final lat = latitude.toStringAsFixed(2);
     final lon = longitude.toStringAsFixed(2);
-    return 'weather_${lat}_$lon';
+    return 'weather_${lat}_${lon}_$language';
   }
 
   /// Obtiene datos del clima desde caché local
@@ -180,7 +182,7 @@ class WeatherService {
   /// Precarga el clima para múltiples ubicaciones (batch)
   /// Útil para cargar el clima de varias playas a la vez
   Future<Map<String, WeatherData>> batchGetWeather(
-    List<Map<String, double>> locations,
+    List<Map<String, dynamic>> locations,
   ) async {
     final results = <String, WeatherData>{};
 
@@ -192,10 +194,12 @@ class WeatherService {
       final futures = batch.map((location) async {
         final lat = location['latitude']!;
         final lon = location['longitude']!;
+        final lang = location['language'] as String? ?? 'es';
         try {
           final weather = await getWeatherByCoordinates(
             latitude: lat,
             longitude: lon,
+            language: lang,
           );
           return MapEntry('${lat}_$lon', weather);
         } catch (e) {

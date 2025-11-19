@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
     
     <!-- Permisos para notificaciones push -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -47,7 +48,12 @@
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCFt87v-m5pkKXVyPNLZ_EPCtxJH_p810Q" />
+            android:value="AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus" />
+        
+        <!-- AdMob App ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2612958934827252~9650417470"/>
             
         <!-- Firebase Cloud Messaging -->
         <service

@@ -296,6 +296,12 @@ abstract class AppLocalizations {
   /// **'No se encontraron playas'**
   String get homeNoBeaches;
 
+  /// No description provided for @homeNoFavorites.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes playas favoritas'**
+  String get homeNoFavorites;
+
   /// No description provided for @homeBeachesCount.
   ///
   /// In es, this message translates to:
@@ -367,6 +373,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Compartir playa'**
   String get beachShareBeach;
+
+  /// No description provided for @beachMarkAsVisited.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como visitada'**
+  String get beachMarkAsVisited;
+
+  /// No description provided for @beachAlreadyVisited.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya visitada'**
+  String get beachAlreadyVisited;
+
+  /// No description provided for @beachDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get beachDescription;
 
   /// No description provided for @conditionExcellent.
   ///
@@ -446,6 +470,66 @@ abstract class AppLocalizations {
   /// **'Moto acuática'**
   String get activityJetski;
 
+  /// No description provided for @activityEcotourism.
+  ///
+  /// In es, this message translates to:
+  /// **'Ecoturismo'**
+  String get activityEcotourism;
+
+  /// No description provided for @activityPhotography.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotografía'**
+  String get activityPhotography;
+
+  /// No description provided for @activityRelaxation.
+  ///
+  /// In es, this message translates to:
+  /// **'Relajación'**
+  String get activityRelaxation;
+
+  /// No description provided for @activityTranquility.
+  ///
+  /// In es, this message translates to:
+  /// **'Tranquilidad'**
+  String get activityTranquility;
+
+  /// No description provided for @activityAdventure.
+  ///
+  /// In es, this message translates to:
+  /// **'Aventura'**
+  String get activityAdventure;
+
+  /// No description provided for @activityHiking.
+  ///
+  /// In es, this message translates to:
+  /// **'Caminata'**
+  String get activityHiking;
+
+  /// No description provided for @activityNature.
+  ///
+  /// In es, this message translates to:
+  /// **'Naturaleza'**
+  String get activityNature;
+
+  /// No description provided for @activitySunset.
+  ///
+  /// In es, this message translates to:
+  /// **'Atardecer'**
+  String get activitySunset;
+
+  /// No description provided for @activityRiver.
+  ///
+  /// In es, this message translates to:
+  /// **'Río'**
+  String get activityRiver;
+
+  /// No description provided for @activityFamilies.
+  ///
+  /// In es, this message translates to:
+  /// **'Familias'**
+  String get activityFamilies;
+
   /// No description provided for @mapTitle.
   ///
   /// In es, this message translates to:
@@ -515,7 +599,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportHelpDescription.
   ///
   /// In es, this message translates to:
-  /// **'Reporta las condiciones actuales de una playa y gana 10 puntos'**
+  /// **'Reporta las condiciones actuales de una playa'**
   String get reportHelpDescription;
 
   /// No description provided for @reportWhichBeach.
@@ -596,6 +680,18 @@ abstract class AppLocalizations {
   /// **'Galería'**
   String get reportGallery;
 
+  /// No description provided for @reportTakePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Tomar foto'**
+  String get reportTakePhoto;
+
+  /// No description provided for @reportSelectFromGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar de galería'**
+  String get reportSelectFromGallery;
+
   /// No description provided for @reportMaxPhotos.
   ///
   /// In es, this message translates to:
@@ -637,12 +733,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Por favor selecciona una condición'**
   String get reportSelectCondition;
-
-  /// No description provided for @reportPoints.
-  ///
-  /// In es, this message translates to:
-  /// **'Has ganado {points} puntos'**
-  String reportPoints(int points);
 
   /// No description provided for @profileTitle.
   ///
@@ -692,12 +782,6 @@ abstract class AppLocalizations {
   /// **'Comparte con la comunidad'**
   String get profileShareCommunity;
 
-  /// No description provided for @profilePoints.
-  ///
-  /// In es, this message translates to:
-  /// **'{points} puntos'**
-  String profilePoints(int points);
-
   /// No description provided for @profileFavorites.
   ///
   /// In es, this message translates to:
@@ -739,18 +823,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Reportes enviados'**
   String get profileReportsSent;
-
-  /// No description provided for @profileAchievements.
-  ///
-  /// In es, this message translates to:
-  /// **'Logros'**
-  String get profileAchievements;
-
-  /// No description provided for @profileAchievementsBadges.
-  ///
-  /// In es, this message translates to:
-  /// **'Ver mis logros y badges'**
-  String get profileAchievementsBadges;
 
   /// No description provided for @profileSettings.
   ///
@@ -1087,6 +1159,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Actualizar'**
   String get weatherRefresh;
+
+  /// No description provided for @weatherRecommendationExcellent.
+  ///
+  /// In es, this message translates to:
+  /// **'Excelente para la playa'**
+  String get weatherRecommendationExcellent;
+
+  /// No description provided for @weatherRecommendationNotRecommended.
+  ///
+  /// In es, this message translates to:
+  /// **'No recomendado - {reason}'**
+  String weatherRecommendationNotRecommended(String reason);
+
+  /// No description provided for @weatherRecommendationWarning.
+  ///
+  /// In es, this message translates to:
+  /// **'Advertencia - {reason}'**
+  String weatherRecommendationWarning(String reason);
+
+  /// No description provided for @weatherRecommendationCaution.
+  ///
+  /// In es, this message translates to:
+  /// **'Precaución - {reason}'**
+  String weatherRecommendationCaution(String reason);
+
+  /// No description provided for @weatherRecommendationCool.
+  ///
+  /// In es, this message translates to:
+  /// **'Fresco - Puede estar frío para nadar'**
+  String get weatherRecommendationCool;
+
+  /// No description provided for @weatherReasonThunderstorm.
+  ///
+  /// In es, this message translates to:
+  /// **'Tormenta eléctrica'**
+  String get weatherReasonThunderstorm;
+
+  /// No description provided for @weatherReasonRain.
+  ///
+  /// In es, this message translates to:
+  /// **'Lluvia'**
+  String get weatherReasonRain;
+
+  /// No description provided for @weatherReasonStrongWinds.
+  ///
+  /// In es, this message translates to:
+  /// **'Vientos fuertes'**
+  String get weatherReasonStrongWinds;
+
+  /// No description provided for @weatherReasonHighUV.
+  ///
+  /// In es, this message translates to:
+  /// **'Índice UV muy alto'**
+  String get weatherReasonHighUV;
+
+  /// No description provided for @weatherReasonHighTemperature.
+  ///
+  /// In es, this message translates to:
+  /// **'Temperatura muy alta'**
+  String get weatherReasonHighTemperature;
 
   /// No description provided for @authLogin.
   ///

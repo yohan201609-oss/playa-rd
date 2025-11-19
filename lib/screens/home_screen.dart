@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/beach_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/beach_card.dart';
 import '../widgets/loading_shimmer.dart';
 import '../widgets/app_logo.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
+import '../services/admob_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'beach_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -51,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildSearchBar(l10n),
+          _buildAdBanner(),
           _buildQuickFilters(l10n),
           Expanded(child: _buildBeachList(l10n)),
         ],
@@ -59,8 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchBar(AppLocalizations l10n) {
+    final padding = ResponsiveBreakpoints.horizontalPadding(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(padding),
       color: Colors.white,
       child: TextField(
         controller: _searchController,
@@ -82,7 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           filled: true,
           fillColor: Colors.grey[100],
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: ResponsiveBreakpoints.isMobile(context) ? 20 : 24,
+          ),
         ),
         onChanged: (value) {
           context.read<BeachProvider>().searchBeaches(value);
@@ -91,14 +98,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildAdBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: Colors.white,
+      alignment: Alignment.center,
+      child: const BannerAdWidget(
+        adSize: AdSize.banner,
+      ),
+    );
+  }
+
   Widget _buildQuickFilters(AppLocalizations l10n) {
     final authProvider = context.watch<AuthProvider>();
+    final padding = ResponsiveBreakpoints.horizontalPadding(context);
     
     return Consumer<BeachProvider>(
       builder: (context, provider, child) {
         return Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: ResponsiveBreakpoints.isMobile(context) ? 50 : 60,
+          padding: EdgeInsets.symmetric(horizontal: padding),
           color: Colors.white,
           child: ListView(
             scrollDirection: Axis.horizontal,
@@ -203,17 +222,25 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(
                   _showOnlyFavorites ? Icons.favorite_border : Icons.beach_access,
-                  size: 100,
+                  size: ResponsiveBreakpoints.isMobile(context) ? 100 : 120,
                   color: Colors.grey[400],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 16 : 24),
                 Text(
                   _showOnlyFavorites
-                      ? 'No tienes playas favoritas aún'
+                      ? l10n.homeNoFavorites
                       : l10n.homeNoBeaches,
-                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: ResponsiveBreakpoints.fontSize(
+                      context,
+                      mobile: 18,
+                      tablet: 20,
+                      desktop: 22,
+                    ),
+                    color: Colors.grey[600],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12),
                 TextButton(
                   onPressed: () {
                     beachProvider.clearFilters();
@@ -229,37 +256,76 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
+        final padding = ResponsiveBreakpoints.horizontalPadding(context);
+        final isMobile = ResponsiveBreakpoints.isMobile(context);
+        
         return RefreshIndicator(
           onRefresh: () => beachProvider.loadBeaches(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: beaches.length,
-            itemBuilder: (context, index) {
-              final beach = beaches[index];
-              return BeachCard(
-                beach: beach,
-                onTap: () {
-                  beachProvider.selectBeach(beach);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BeachDetailScreen(),
+          child: isMobile
+              ? ListView.builder(
+                  padding: EdgeInsets.all(padding),
+                  itemCount: beaches.length,
+                  itemBuilder: (context, index) {
+                    final beach = beaches[index];
+                    return BeachCard(
+                      beach: beach,
+                      onTap: () {
+                        beachProvider.selectBeach(beach);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BeachDetailScreen(),
+                          ),
+                        );
+                      },
+                      onFavorite: () async {
+                        final authProvider = context.read<AuthProvider>();
+                        if (authProvider.isAuthenticated) {
+                          await beachProvider.toggleFavorite(beach, authProvider.user!.uid);
+                          await authProvider.reloadUserData();
+                        } else {
+                          _showLoginPrompt(context);
+                        }
+                      },
+                    );
+                  },
+                )
+              : ResponsiveContainer(
+                  child: GridView.builder(
+                    padding: EdgeInsets.all(padding),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: ResponsiveBreakpoints.gridColumns(context),
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: ResponsiveBreakpoints.isTablet(context) ? 0.75 : 0.7,
                     ),
-                  );
-                },
-                onFavorite: () async {
-                  final authProvider = context.read<AuthProvider>();
-                  if (authProvider.isAuthenticated) {
-                    await beachProvider.toggleFavorite(beach, authProvider.user!.uid);
-                    // Recargar datos del usuario para actualizar la lista de favoritos
-                    await authProvider.reloadUserData();
-                  } else {
-                    _showLoginPrompt(context);
-                  }
-                },
-              );
-            },
-          ),
+                    itemCount: beaches.length,
+                    itemBuilder: (context, index) {
+                      final beach = beaches[index];
+                      return BeachCard(
+                        beach: beach,
+                        onTap: () {
+                          beachProvider.selectBeach(beach);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BeachDetailScreen(),
+                            ),
+                          );
+                        },
+                        onFavorite: () async {
+                          final authProvider = context.read<AuthProvider>();
+                          if (authProvider.isAuthenticated) {
+                            await beachProvider.toggleFavorite(beach, authProvider.user!.uid);
+                            await authProvider.reloadUserData();
+                          } else {
+                            _showLoginPrompt(context);
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
         );
       },
     );
@@ -295,14 +361,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       // Header fijo
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        padding: EdgeInsets.fromLTRB(
+                          ResponsiveBreakpoints.horizontalPadding(context),
+                          20,
+                          ResponsiveBreakpoints.horizontalPadding(context),
+                          0,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               l10n.homeFilters,
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: ResponsiveBreakpoints.fontSize(
+                                  context,
+                                  mobile: 20,
+                                  tablet: 22,
+                                  desktop: 24,
+                                ),
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.onSurface,
                               ),
@@ -321,31 +397,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
-                          padding: const EdgeInsets.all(20),
+                          padding: EdgeInsets.all(
+                            ResponsiveBreakpoints.horizontalPadding(context),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 l10n.beachCondition,
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: ResponsiveBreakpoints.fontSize(
+                                    context,
+                                    mobile: 16,
+                                    tablet: 18,
+                                    desktop: 20,
+                                  ),
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                children:
-                                    [
-                                      'Todas',
-                                      BeachConditions.excellent,
-                                      BeachConditions.good,
-                                      BeachConditions.moderate,
-                                      BeachConditions.danger,
-                                    ].map((condition) {
-                                      return ChoiceChip(
-                                        label: Text(condition),
+                              Consumer<SettingsProvider>(
+                                builder: (context, settings, child) {
+                                  return Wrap(
+                                    spacing: 8,
+                                    children:
+                                        [
+                                          'Todas',
+                                          BeachConditions.excellent,
+                                          BeachConditions.good,
+                                          BeachConditions.moderate,
+                                          BeachConditions.danger,
+                                        ].map((condition) {
+                                          final displayText = condition == 'Todas'
+                                              ? condition
+                                              : BeachConditions.getLocalizedCondition(context, condition);
+                                          return ChoiceChip(
+                                        label: Text(displayText),
                                         selected: provider.selectedCondition == condition,
                                         onSelected: (_) {
                                           provider.filterByCondition(condition);
@@ -359,12 +447,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       );
                                     }).toList(),
+                                  );
+                                },
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 l10n.homeSortBy,
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: ResponsiveBreakpoints.fontSize(
+                                    context,
+                                    mobile: 16,
+                                    tablet: 18,
+                                    desktop: 20,
+                                  ),
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.onSurface,
                                 ),
@@ -401,7 +496,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       // Botón fijo al fondo
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.all(
+                          ResponsiveBreakpoints.horizontalPadding(context),
+                        ),
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                           boxShadow: [
@@ -420,14 +517,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () => Navigator.pop(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: EdgeInsets.symmetric(
+                                  vertical: ResponsiveBreakpoints.isMobile(context) ? 16 : 18,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: Text(
                                 l10n.homeApplyFilters,
-                                style: const TextStyle(fontSize: 16, color: Colors.white),
+                                style: TextStyle(
+                                  fontSize: ResponsiveBreakpoints.fontSize(
+                                    context,
+                                    mobile: 16,
+                                    tablet: 17,
+                                    desktop: 18,
+                                  ),
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),

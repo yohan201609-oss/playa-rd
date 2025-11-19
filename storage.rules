@@ -5,6 +5,7 @@ rules_version = '2';
 // Aplicación: Playas RD
 // Descripción: Descubre las mejores playas de República Dominicana
 // Proyecto: playas-rd-2b475
+// Entorno: PRODUCCIÓN
 // Fecha: Octubre 2025
 // ========================================
 
@@ -44,10 +45,13 @@ service firebase.storage {
         request.resource.size < 2 * 1024 * 1024;
     }
     
-    // FOTOS DE PLAYAS (solo admins o sistema)
+    // FOTOS DE PLAYAS (solo usuarios autenticados)
+    // Máximo 10MB por imagen
     match /beaches/{beachId}/{fileName} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read: if true; // Todos pueden ver fotos de playas
+      allow write: if isSignedIn() && 
+        isImage() &&
+        request.resource.size < 10 * 1024 * 1024; // 10MB máximo
     }
     
     // FOTOS DE VISITANTES (feedback de usuarios)

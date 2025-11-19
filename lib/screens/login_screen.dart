@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/app_logo.dart';
+import '../services/admob_service.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isSignUp;
@@ -20,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
   bool _isSignUp = false;
   bool _obscurePassword = true;
+  bool _acceptedPrivacyPolicy = false;
+  bool _acceptedTermsOfService = false;
 
   @override
   void initState() {
@@ -91,6 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 12),
                           _buildForgotPassword(),
                         ],
+                        if (_isSignUp) ...[
+                          const SizedBox(height: 20),
+                          _buildAcceptanceCheckboxes(),
+                        ],
                         const SizedBox(height: 24),
                         _buildSubmitButton(),
                         const SizedBox(height: 16),
@@ -102,12 +112,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  // Anuncio banner
+                  _buildAdBanner(),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAdBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      alignment: Alignment.center,
+      child: const BannerAdWidget(
+        adSize: AdSize.banner,
+        useHotelRestaurantTargeting: true,
       ),
     );
   }
@@ -457,6 +481,9 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () {
             setState(() {
               _isSignUp = !_isSignUp;
+              // Resetear checkboxes al cambiar de modo
+              _acceptedPrivacyPolicy = false;
+              _acceptedTermsOfService = false;
             });
           },
           child: Text(
@@ -511,10 +538,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildSocialButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildSocialButton(
+    return Center(
+      child: SizedBox(
+        width: double.infinity,
+        child: _buildSocialButton(
           icon: Icons.g_mobiledata,
           label: 'Google',
           onTap: () async {
@@ -536,15 +563,7 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           },
         ),
-        const SizedBox(width: 16),
-        _buildSocialButton(
-          icon: Icons.facebook,
-          label: 'Facebook',
-          onTap: () {
-            // Implement Facebook Sign In
-          },
-        ),
-      ],
+      ),
     );
   }
 
@@ -555,47 +574,45 @@ class _LoginScreenState extends State<LoginScreen> {
     Color? iconColor,
     Color? backgroundColor,
   }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: iconColor ?? Colors.grey[700],
-                    size: 22,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: iconColor ?? Colors.grey[700],
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -603,8 +620,141 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildAcceptanceCheckboxes() {
+    return Column(
+      children: [
+        _buildCheckboxTile(
+          value: _acceptedPrivacyPolicy,
+          onChanged: (value) {
+            setState(() {
+              _acceptedPrivacyPolicy = value ?? false;
+            });
+          },
+          title: 'Acepto la',
+          linkText: 'Política de Privacidad',
+          onLinkTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PrivacyPolicyScreen(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildCheckboxTile(
+          value: _acceptedTermsOfService,
+          onChanged: (value) {
+            setState(() {
+              _acceptedTermsOfService = value ?? false;
+            });
+          },
+          title: 'Acepto los',
+          linkText: 'Términos y Condiciones',
+          onLinkTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TermsOfServiceScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxTile({
+    required bool value,
+    required ValueChanged<bool?> onChanged,
+    required String title,
+    required String linkText,
+    required VoidCallback onLinkTap,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: value ? AppColors.primary : Colors.grey[300]!,
+          width: value ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                    height: 1.4,
+                  ),
+                  children: [
+                    TextSpan(text: '$title '),
+                    WidgetSpan(
+                      child: GestureDetector(
+                        onTap: onLinkTap,
+                        child: Text(
+                          linkText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validar aceptación de políticas solo en registro
+    if (_isSignUp) {
+      if (!_acceptedPrivacyPolicy || !_acceptedTermsOfService) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Debes aceptar la Política de Privacidad y los Términos y Condiciones para registrarte',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+    }
 
     final authProvider = context.read<AuthProvider>();
     bool success;

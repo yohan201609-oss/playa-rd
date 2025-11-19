@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../providers/beach_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 import '../models/beach.dart';
 import '../services/firebase_service.dart';
 import '../utils/constants.dart';
@@ -11,7 +12,9 @@ import '../l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 class ReportScreen extends StatefulWidget {
-  const ReportScreen({super.key});
+  const ReportScreen({super.key, this.initialBeach});
+
+  final Beach? initialBeach;
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();
@@ -24,6 +27,29 @@ class _ReportScreenState extends State<ReportScreen> {
   final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedBeach = widget.initialBeach;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.initialBeach == null) return;
+      final provider = context.read<BeachProvider>();
+      try {
+        final matchedBeach = provider.beaches.firstWhere(
+          (beach) => beach.id == widget.initialBeach!.id,
+        );
+        if (!identical(matchedBeach, _selectedBeach)) {
+          setState(() {
+            _selectedBeach = matchedBeach;
+          });
+        }
+      } catch (_) {
+        // Si la playa no existe en la lista, se mantiene la selección inicial.
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -43,7 +69,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.reportTitle)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -58,6 +84,7 @@ class _ReportScreenState extends State<ReportScreen> {
             _buildImagePicker(l10n),
             const SizedBox(height: 32),
             _buildSubmitButton(authProvider),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -134,6 +161,18 @@ class _ReportScreenState extends State<ReportScreen> {
         const SizedBox(height: 12),
         Consumer<BeachProvider>(
           builder: (context, provider, child) {
+            final beaches = provider.beaches;
+            Beach? dropdownValue;
+            if (_selectedBeach != null) {
+              try {
+                dropdownValue = beaches.firstWhere(
+                  (beach) => beach.id == _selectedBeach!.id,
+                );
+              } catch (_) {
+                dropdownValue = null;
+              }
+            }
+
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -142,7 +181,7 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
               child: DropdownButton<Beach>(
                 isExpanded: true,
-                value: _selectedBeach,
+                value: dropdownValue,
                 hint: Text(l10n.reportSelectBeach),
                 underline: const SizedBox.shrink(),
                 items: provider.beaches.map((beach) {
@@ -206,35 +245,41 @@ class _ReportScreenState extends State<ReportScreen> {
     final isSelected = _selectedCondition == condition;
     final color = BeachConditions.getColor(condition);
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedCondition = condition;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
-          border: Border.all(color: color, width: 2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : color),
-            const SizedBox(width: 8),
-            Text(
-              condition,
-              style: TextStyle(
-                color: isSelected ? Colors.white : color,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        final localizedCondition = BeachConditions.getLocalizedCondition(context, condition);
+        
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _selectedCondition = condition;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? color : Colors.white,
+              border: Border.all(color: color, width: 2),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-      ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: isSelected ? Colors.white : color),
+                const SizedBox(width: 8),
+                Text(
+                  localizedCondition,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -292,7 +337,10 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Widget _buildAddPhotoButton() {
     return InkWell(
-      onTap: _pickImage,
+      onTap: () {
+        print('Botón de agregar foto presionado');
+        _pickImage();
+      },
       child: Container(
         width: 100,
         height: 100,
@@ -398,15 +446,87 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _pickImage() async {
+    print('=== _pickImage método llamado ===');
+    if (!mounted) {
+      print('Widget no está montado');
+      return;
+    }
+    
+    final l10n = AppLocalizations.of(context)!;
+    print('Mostrando diálogo de selección...');
+    
+    // Mostrar diálogo para elegir entre cámara o galería
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        print('Builder del diálogo ejecutado');
+        return AlertDialog(
+          title: Text(l10n.reportAddPhotos),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary, size: 32),
+                title: Text(l10n.reportTakePhoto),
+                subtitle: const Text('Tomar una foto con la cámara'),
+                onTap: () {
+                  print('Cámara seleccionada');
+                  Navigator.of(dialogContext).pop(ImageSource.camera);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: AppColors.primary, size: 32),
+                title: Text(l10n.reportSelectFromGallery),
+                subtitle: const Text('Seleccionar una foto de la galería'),
+                onTap: () {
+                  print('Galería seleccionada');
+                  Navigator.of(dialogContext).pop(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                print('Diálogo cancelado');
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(l10n.cancel),
+            ),
+          ],
+        );
+      },
+    );
+    
+    print('Diálogo cerrado, source: $source');
+
+    if (source == null || !mounted) {
+      print('Source es null o widget no está montado');
+      return;
+    }
+
+    print('Abriendo selector de imágenes con source: $source');
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
+      final XFile? image = await _picker.pickImage(source: source);
+      if (image != null && mounted) {
+        print('Imagen seleccionada: ${image.path}');
         setState(() {
           _selectedImages.add(image);
         });
+      } else {
+        print('No se seleccionó ninguna imagen');
       }
     } catch (e) {
       print('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al ${source == ImageSource.camera ? 'tomar' : 'seleccionar'} la imagen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -442,6 +562,13 @@ class _ReportScreenState extends State<ReportScreen> {
 
       if (reportId != null) {
         if (mounted) {
+          // Actualizar la playa en el provider para reflejar los nuevos datos
+          final beachProvider = context.read<BeachProvider>();
+          await beachProvider.refreshBeach(_selectedBeach!.id);
+          
+          // Recargar datos del usuario para actualizar el contador de reportes
+          await authProvider.reloadUserData();
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.reportSuccess),

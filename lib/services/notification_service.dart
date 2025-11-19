@@ -18,7 +18,8 @@ class NotificationService {
   NotificationService._internal();
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
   String? _fcmToken;
@@ -56,23 +57,32 @@ class NotificationService {
   /// Solicitar permisos de notificaciones
   Future<void> _requestPermissions() async {
     try {
-      // Solicitar permisos en iOS y Android 13+
-      final settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
+      // Firebase Messaging solo funciona en Android, iOS y Web
+      if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+        // Solicitar permisos en iOS y Android 13+
+        final settings = await _firebaseMessaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('✅ Permisos de notificación concedidos');
-      } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-        print('⚠️ Permisos provisionales concedidos');
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          print('✅ Permisos de notificación concedidos');
+        } else if (settings.authorizationStatus ==
+            AuthorizationStatus.provisional) {
+          print('⚠️ Permisos provisionales concedidos');
+        } else {
+          print('❌ Permisos de notificación denegados');
+        }
       } else {
-        print('❌ Permisos de notificación denegados');
+        print(
+          'ℹ️ Permisos de Firebase Messaging no requeridos en esta plataforma',
+        );
+        print('✅ Permisos de notificación concedidos (solo locales)');
       }
     } catch (e) {
       print('⚠️ Error solicitando permisos: $e');
@@ -83,7 +93,9 @@ class NotificationService {
   Future<void> _initializeLocalNotifications() async {
     try {
       // Configuración para Android
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
 
       // Configuración para iOS
       const iosSettings = DarwinInitializationSettings(
@@ -125,57 +137,85 @@ class NotificationService {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
   /// Inicializar Firebase Cloud Messaging
   Future<void> _initializeFirebaseMessaging() async {
     try {
-      // Obtener token FCM
-      _fcmToken = await _firebaseMessaging.getToken();
-      print('📱 Token FCM: $_fcmToken');
+      // Firebase Messaging no está completamente soportado en Windows
+      // Solo funciona en Android, iOS y Web
+      if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+        // Obtener token FCM
+        _fcmToken = await _firebaseMessaging.getToken();
+        print('📱 Token FCM: $_fcmToken');
 
-      // Escuchar cambios en el token
-      _firebaseMessaging.onTokenRefresh.listen((newToken) {
-        _fcmToken = newToken;
-        print('🔄 Token FCM actualizado: $newToken');
-        // Aquí podrías guardar el token en Firestore asociado al usuario
-      });
+        // Escuchar cambios en el token
+        _firebaseMessaging.onTokenRefresh.listen((newToken) {
+          _fcmToken = newToken;
+          print('🔄 Token FCM actualizado: $newToken');
+          // Aquí podrías guardar el token en Firestore asociado al usuario
+        });
 
-      // Configurar manejador de mensajes en segundo plano
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        // Configurar manejador de mensajes en segundo plano
+        FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler,
+        );
 
-      print('✅ Firebase Messaging configurado');
+        print('✅ Firebase Messaging configurado');
+      } else {
+        print(
+          'ℹ️ Firebase Messaging no está disponible en esta plataforma (Windows/Linux/Mac desktop)',
+        );
+        print('ℹ️ Solo las notificaciones locales estarán disponibles');
+      }
     } catch (e) {
       print('⚠️ Error configurando Firebase Messaging: $e');
+      // No lanzar el error, permitir que la app continúe con notificaciones locales
     }
   }
 
   /// Configurar manejadores de mensajes
   void _setupMessageHandlers() {
-    // Cuando la app está en primer plano
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📨 Mensaje recibido en primer plano');
-      _handleMessage(message, foreground: true);
-    });
+    // Firebase Messaging solo funciona en Android, iOS y Web
+    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+      // Cuando la app está en primer plano
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('📨 Mensaje recibido en primer plano');
+        _handleMessage(message, foreground: true);
+      });
 
-    // Cuando el usuario toca una notificación (app en segundo plano)
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📨 Notificación tocada (app en segundo plano)');
-      _handleMessage(message, fromBackground: true);
-    });
+      // Cuando el usuario toca una notificación (app en segundo plano)
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('📨 Notificación tocada (app en segundo plano)');
+        _handleMessage(message, fromBackground: true);
+      });
 
-    // Verificar si la app se abrió desde una notificación
-    _checkInitialMessage();
+      // Verificar si la app se abrió desde una notificación
+      _checkInitialMessage();
+    } else {
+      print(
+        'ℹ️ Manejadores de Firebase Messaging no disponibles en esta plataforma',
+      );
+    }
   }
 
   /// Verificar mensaje inicial (cuando la app se abre desde una notificación)
   Future<void> _checkInitialMessage() async {
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
-    if (initialMessage != null) {
-      print('📨 App abierta desde notificación');
-      _handleMessage(initialMessage, fromTerminated: true);
+    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+      try {
+        RemoteMessage? initialMessage = await _firebaseMessaging
+            .getInitialMessage();
+        if (initialMessage != null) {
+          print('📨 App abierta desde notificación');
+          _handleMessage(initialMessage, fromTerminated: true);
+        }
+      } catch (e) {
+        print('⚠️ Error verificando mensaje inicial: $e');
+      }
     }
   }
 
@@ -255,7 +295,7 @@ class NotificationService {
   void _onNotificationTapped(NotificationResponse response) {
     print('👆 Notificación tocada');
     print('Payload: ${response.payload}');
-    
+
     // Aquí puedes navegar a pantallas específicas según el payload
     // Por ejemplo, si el payload contiene el ID de una playa,
     // podrías navegar a la pantalla de detalle de esa playa
@@ -271,11 +311,7 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    await _showLocalNotification(
-      title: title,
-      body: body,
-      payload: payload,
-    );
+    await _showLocalNotification(title: title, body: body, payload: payload);
   }
 
   /// Notificación de cambio climático en una playa
@@ -328,21 +364,29 @@ class NotificationService {
 
   /// Suscribirse a un tópico (para notificaciones masivas)
   Future<void> subscribeToTopic(String topic) async {
-    try {
-      await _firebaseMessaging.subscribeToTopic(topic);
-      print('✅ Suscrito al tópico: $topic');
-    } catch (e) {
-      print('⚠️ Error suscribiendo al tópico $topic: $e');
+    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+      try {
+        await _firebaseMessaging.subscribeToTopic(topic);
+        print('✅ Suscrito al tópico: $topic');
+      } catch (e) {
+        print('⚠️ Error suscribiendo al tópico $topic: $e');
+      }
+    } else {
+      print('ℹ️ Suscripción a tópicos no disponible en esta plataforma');
     }
   }
 
   /// Desuscribirse de un tópico
   Future<void> unsubscribeFromTopic(String topic) async {
-    try {
-      await _firebaseMessaging.unsubscribeFromTopic(topic);
-      print('✅ Desuscrito del tópico: $topic');
-    } catch (e) {
-      print('⚠️ Error desuscribiendo del tópico $topic: $e');
+    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+      try {
+        await _firebaseMessaging.unsubscribeFromTopic(topic);
+        print('✅ Desuscrito del tópico: $topic');
+      } catch (e) {
+        print('⚠️ Error desuscribiendo del tópico $topic: $e');
+      }
+    } else {
+      print('ℹ️ Desuscripción de tópicos no disponible en esta plataforma');
     }
   }
 
@@ -361,8 +405,17 @@ class NotificationService {
 
   /// Verificar si las notificaciones están habilitadas
   Future<bool> areNotificationsEnabled() async {
-    final settings = await _firebaseMessaging.getNotificationSettings();
-    return settings.authorizationStatus == AuthorizationStatus.authorized;
+    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+      try {
+        final settings = await _firebaseMessaging.getNotificationSettings();
+        return settings.authorizationStatus == AuthorizationStatus.authorized;
+      } catch (e) {
+        print('⚠️ Error verificando estado de notificaciones: $e');
+        return false;
+      }
+    } else {
+      // En Windows/Linux/Mac, asumimos que las notificaciones locales están disponibles
+      return true;
+    }
   }
 }
-

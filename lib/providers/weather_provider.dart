@@ -38,8 +38,10 @@ class WeatherProvider with ChangeNotifier {
     required double latitude,
     required double longitude,
     bool forceRefresh = false,
+    String? language,
   }) async {
     final key = _getLocationKey(latitude, longitude);
+    final lang = language ?? 'es';
 
     // Si ya tenemos datos y no se fuerza refresh, no hacer nada
     if (!forceRefresh && _weatherCache.containsKey(key)) {
@@ -56,6 +58,7 @@ class WeatherProvider with ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
         forceRefresh: forceRefresh,
+        language: lang,
       );
 
       _weatherCache[key] = weather;
@@ -71,9 +74,12 @@ class WeatherProvider with ChangeNotifier {
 
   /// Carga el clima para múltiples playas (optimizado)
   Future<void> fetchWeatherForMultipleBeaches(
-    List<Map<String, double>> locations, {
+    List<Map<String, dynamic>> locations, {
     bool forceRefresh = false,
+    String? language,
   }) async {
+    final lang = language ?? 'es';
+    
     // Filtrar las ubicaciones que ya tienen datos (si no se fuerza refresh)
     final locationsToFetch = forceRefresh
         ? locations
@@ -84,6 +90,15 @@ class WeatherProvider with ChangeNotifier {
 
     if (locationsToFetch.isEmpty) return;
 
+    // Agregar idioma a cada ubicación
+    final locationsWithLang = locationsToFetch.map((loc) {
+      return {
+        'latitude': loc['latitude'],
+        'longitude': loc['longitude'],
+        'language': lang,
+      };
+    }).toList();
+
     // Marcar todas como cargando
     for (final loc in locationsToFetch) {
       final key = _getLocationKey(loc['latitude']!, loc['longitude']!);
@@ -93,7 +108,7 @@ class WeatherProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final results = await _weatherService.batchGetWeather(locationsToFetch);
+      final results = await _weatherService.batchGetWeather(locationsWithLang);
 
       // Actualizar caché con resultados
       for (final entry in results.entries) {
@@ -112,11 +127,12 @@ class WeatherProvider with ChangeNotifier {
   }
 
   /// Refresca el clima para una ubicación
-  Future<void> refreshWeather(double latitude, double longitude) async {
+  Future<void> refreshWeather(double latitude, double longitude, {String? language}) async {
     return fetchWeatherForBeach(
       latitude: latitude,
       longitude: longitude,
       forceRefresh: true,
+      language: language,
     );
   }
 

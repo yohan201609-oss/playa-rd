@@ -46,6 +46,7 @@ dependencies:
   cloud_firestore: ^5.4.4
   firebase_storage: ^12.3.4
   firebase_messaging: ^15.1.3
+  firebase_app_check: ^0.3.1+2
   
   # Notificaciones locales
   flutter_local_notifications: ^18.0.1
@@ -76,9 +77,13 @@ dependencies:
   # HTTP y API
   http: ^1.2.0
   flutter_dotenv: ^5.1.0
+  url_launcher: ^6.3.0
   
   # Caché local
   shared_preferences: ^2.2.2
+  
+  # AdMob
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -109,6 +114,8 @@ flutter:
     - .env
     - assets/images/
     - assets/icons/
+    - docs/politica_privacidad.md
+    - docs/terminos_servicio.md
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

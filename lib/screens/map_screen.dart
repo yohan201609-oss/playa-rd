@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../providers/beach_provider.dart';
+import '../providers/settings_provider.dart';
+import '../providers/auth_provider.dart';
 import '../models/beach.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
@@ -39,9 +41,22 @@ class _MapScreenState extends State<MapScreen> {
       
       // Agregar listener para cambios futuros
       _beachProvider!.addListener(_onBeachesChanged);
+      
+      // Escuchar cambios de idioma para actualizar marcadores
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      settingsProvider.addListener(_onLanguageChanged);
     });
   }
-
+  
+  void _onLanguageChanged() {
+    // Cuando cambia el idioma, solo necesitamos actualizar el texto de los InfoWindows
+    // Los colores de los marcadores NO deben cambiar porque siempre usan la condición original
+    if (_beachProvider != null && mounted) {
+      // Actualizar marcadores para cambiar solo el texto traducido en los InfoWindows
+      _updateBeachMarkers(_beachProvider!.beaches);
+    }
+  }
+  
   Future<void> _checkLocationPermission() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -74,7 +89,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _onBeachesChanged() {
-    if (_beachProvider != null) {
+    if (_beachProvider != null && mounted) {
       _updateBeachMarkers(_beachProvider!.beaches);
     }
   }
@@ -115,6 +130,14 @@ class _MapScreenState extends State<MapScreen> {
       onMapCreated: (GoogleMapController controller) {
         _mapController = controller;
         print('✅ Mapa de Google Maps creado correctamente');
+        // Actualizar marcadores después de que el mapa se haya creado
+        if (_beachProvider != null) {
+          _updateBeachMarkers(_beachProvider!.beaches);
+        }
+      },
+      onTap: (LatLng position) {
+        // Cerrar cualquier InfoWindow abierto al tocar el mapa
+        // Esto se maneja automáticamente por Google Maps
       },
       mapType: MapType.normal,
       myLocationEnabled: _locationPermissionGranted,
@@ -131,11 +154,14 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildLegend() {
+    final padding = ResponsiveBreakpoints.isMobile(context) ? 16.0 : 24.0;
     return Positioned(
-      top: 16,
-      right: 16,
+      top: padding,
+      right: padding,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(
+          ResponsiveBreakpoints.isMobile(context) ? 12 : 16,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -151,9 +177,17 @@ class _MapScreenState extends State<MapScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Condiciones',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: ResponsiveBreakpoints.fontSize(
+                  context,
+                  mobile: 12,
+                  tablet: 13,
+                  desktop: 14,
+                ),
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             _buildLegendItem(
@@ -172,6 +206,10 @@ class _MapScreenState extends State<MapScreen> {
               color: BeachConditions.getColor(BeachConditions.danger),
               label: 'Peligroso',
             ),
+            _buildLegendItem(
+              color: BeachConditions.getColor(BeachConditions.unknown),
+              label: 'Desconocido',
+            ),
           ],
         ),
       ),
@@ -180,17 +218,29 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildLegendItem({required Color color, required String label}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(
+        vertical: ResponsiveBreakpoints.isMobile(context) ? 4 : 6,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 12,
-            height: 12,
+            width: ResponsiveBreakpoints.isMobile(context) ? 12 : 14,
+            height: ResponsiveBreakpoints.isMobile(context) ? 12 : 14,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 11)),
+          SizedBox(width: ResponsiveBreakpoints.isMobile(context) ? 8 : 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: ResponsiveBreakpoints.fontSize(
+                context,
+                mobile: 11,
+                tablet: 12,
+                desktop: 13,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -231,8 +281,8 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveBreakpoints.horizontalPadding(context),
                       vertical: 8,
                     ),
                     child: Row(
@@ -240,8 +290,13 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Text(
                           '${provider.beaches.length} playas',
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: ResponsiveBreakpoints.fontSize(
+                              context,
+                              mobile: 18,
+                              tablet: 20,
+                              desktop: 22,
+                            ),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -288,10 +343,13 @@ class _MapScreenState extends State<MapScreen> {
                           )
                         : ListView.separated(
                             controller: scrollController,
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(
+                              ResponsiveBreakpoints.horizontalPadding(context),
+                            ),
                             itemCount: provider.beaches.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
+                            separatorBuilder: (context, index) => SizedBox(
+                              height: ResponsiveBreakpoints.isMobile(context) ? 12 : 16,
+                            ),
                             itemBuilder: (context, index) {
                               final beach = provider.beaches[index];
                               return _buildBeachListItem(beach, provider);
@@ -369,20 +427,46 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: conditionColor,
-                          shape: BoxShape.circle,
-                        ),
+                      Consumer<AuthProvider>(
+                        builder: (context, authProvider, child) {
+                          if (authProvider.isAuthenticated) {
+                            return Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: conditionColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Consumer<SettingsProvider>(
+                                  builder: (context, settings, child) {
+                                    return Text(
+                                      BeachConditions.getLocalizedCondition(context, beach.currentCondition),
+                                      style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                            );
+                          }
+                          // Si no está autenticado, mostrar mensaje de bloqueo
+                          return Row(
+                            children: [
+                              const Icon(Icons.lock_outline, size: 12, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Inicia sesión',
+                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          );
+                        },
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        beach.currentCondition,
-                        style: TextStyle(fontSize: 11, color: Colors.grey[700]),
-                      ),
-                      const SizedBox(width: 8),
                       const Icon(Icons.star, size: 12, color: Colors.amber),
                       const SizedBox(width: 2),
                       Text(
@@ -410,52 +494,75 @@ class _MapScreenState extends State<MapScreen> {
   void _updateBeachMarkers(List<Beach> beaches) {
     if (!mounted) return;
     
+    // Obtener el contexto del widget para las traducciones
+    final context = this.context;
+    
     setState(() {
       _markers = beaches.map((beach) {
+        // IMPORTANTE: Usar siempre la condición original (en español) para el color del marcador
+        // La condición original siempre está en español: 'Excelente', 'Bueno', 'Moderado', 'Peligroso'
+        final originalCondition = beach.currentCondition;
+        
+        // Solo traducir para el InfoWindow (texto visible al usuario)
+        final l10n = AppLocalizations.of(context);
+        final localizedCondition = l10n != null 
+          ? BeachConditions.getLocalizedCondition(context, originalCondition)
+          : originalCondition;
+        
         return Marker(
           markerId: MarkerId(beach.id),
           position: LatLng(beach.latitude, beach.longitude),
           infoWindow: InfoWindow(
             title: beach.name,
-            snippet: '${beach.province} - ${beach.currentCondition}',
+            snippet: '${beach.province} - $localizedCondition',
           ),
-          icon: _getMarkerIcon(beach.currentCondition),
+          // Usar siempre la condición original para determinar el color
+          icon: _getMarkerIcon(originalCondition),
+          onTap: () {
+            // Navegar a los detalles de la playa al tocar el marcador
+            if (_beachProvider != null) {
+              _beachProvider!.selectBeach(beach);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BeachDetailScreen(),
+                ),
+              );
+            }
+          },
         );
       }).toSet();
     });
-    // Solo registrar en debug cuando hay cambios significativos
-    if (beaches.length != _markers.length) {
-      print('✅ ${beaches.length} marcadores actualizados en el mapa');
-    }
+    print('✅ ${beaches.length} marcadores actualizados en el mapa');
   }
 
   BitmapDescriptor _getMarkerIcon(String condition) {
-    Color color;
-    switch (condition) {
-      case 'Excelente':
-        color = AppColors.excellent;
+    // IMPORTANTE: Este método siempre recibe la condición original en español
+    // ('Excelente', 'Bueno', 'Moderado', 'Peligroso')
+    // Usar las constantes de BeachConditions para comparación exacta
+    double hue;
+    
+    // Normalizar la condición para evitar problemas con espacios o mayúsculas
+    final normalizedCondition = condition.trim();
+    
+    switch (normalizedCondition) {
+      case BeachConditions.excellent:
+        hue = BitmapDescriptor.hueGreen;
         break;
-      case 'Bueno':
-        color = AppColors.good;
+      case BeachConditions.good:
+        hue = BitmapDescriptor.hueYellow;
         break;
-      case 'Moderado':
-        color = AppColors.moderate;
+      case BeachConditions.moderate:
+        hue = BitmapDescriptor.hueOrange;
         break;
-      case 'Peligroso':
-        color = AppColors.danger;
+      case BeachConditions.danger:
+        hue = BitmapDescriptor.hueRed;
         break;
       default:
-        color = Colors.grey;
+        // Si no coincide con ninguna condición conocida, usar azul por defecto
+        hue = BitmapDescriptor.hueBlue;
     }
-    return BitmapDescriptor.defaultMarkerWithHue(_colorToHue(color));
-  }
-
-  double _colorToHue(Color color) {
-    if (color == AppColors.excellent) return BitmapDescriptor.hueGreen;
-    if (color == AppColors.good) return BitmapDescriptor.hueYellow;
-    if (color == AppColors.moderate) return BitmapDescriptor.hueOrange;
-    if (color == AppColors.danger) return BitmapDescriptor.hueRed;
-    return BitmapDescriptor.hueBlue;
+    return BitmapDescriptor.defaultMarkerWithHue(hue);
   }
 
   void _centerOnBeach(Beach beach) {
@@ -603,9 +710,11 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
-    // Remover el listener para evitar memory leaks
+    // Remover los listeners para evitar memory leaks
     _beachProvider?.removeListener(_onBeachesChanged);
-    
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    settingsProvider.removeListener(_onLanguageChanged);
+
     _mapController?.dispose();
     _scrollController.dispose();
     super.dispose();

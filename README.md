@@ -184,7 +184,7 @@ La app incluye **20 playas reales de República Dominicana** con coordenadas GPS
 
 **REGIÓN NORTE - Península de Samaná**
 8. **Playa Rincón** (19.2884°N, 69.2483°W) - Top 10 mundial, 3 km media luna
-9. **Playa Frontón** (19.3145°N, 69.2256°W) - Virgen, solo bote o trekking
+9. **Playa Frontón** (19.29708°N, 69.15153°W) - Virgen, solo bote o trekking
 10. **Playa El Valle** (19.2567°N, 69.3124°W) - Arena dorada, tortugas marinas
 11. **Cayo Levantado** (19.1834°N, 69.3567°W) - "Isla Bacardí"
 
@@ -260,17 +260,37 @@ Se ha realizado un análisis exhaustivo del proyecto y se creó documentación c
 
 ### 📚 Documentación Disponible
 
-1. **[INICIO_PRODUCCION.md](INICIO_PRODUCCION.md)** ← **⭐ EMPIEZA AQUÍ**
+#### ⭐ **NUEVA GUÍA - Configuraciones Faltantes**
+
+1. **[GUIA_CONFIGURACIONES_PRODUCCION.md](GUIA_CONFIGURACIONES_PRODUCCION.md)** ← **⭐ GUÍA COMPLETA PASO A PASO**
+   - Guía detallada de todas las configuraciones faltantes
+   - 9 secciones completas con instrucciones paso a paso
+   - Android: Keystore, firma, ProGuard
+   - iOS: Bundle ID, certificados, firma
+   - Firebase: Reglas de seguridad actualizadas
+   - API Keys: Restricciones y configuración
+   - Google Play Console y App Store Connect
+   - Checklist final completo
+
+2. **[RESUMEN_CONFIGURACIONES_FALTANTES.md](RESUMEN_CONFIGURACIONES_FALTANTES.md)** ← **📋 RESUMEN EJECUTIVO**
+   - Resumen rápido de lo que falta
+   - Prioridades (Crítico, Alta, Media)
+   - Plan de acción por días
+   - Costos y tiempos estimados
+
+#### 📖 **Otras Guías Disponibles**
+
+3. **[INICIO_PRODUCCION.md](INICIO_PRODUCCION.md)** (si existe)
    - Resumen ejecutivo y plan de acción
    - Primeros pasos rápidos (15 minutos)
    - Índice de toda la documentación
 
-2. **[RESUMEN_PROBLEMAS_ENCONTRADOS.md](RESUMEN_PROBLEMAS_ENCONTRADOS.md)**
+4. **[RESUMEN_PROBLEMAS_ENCONTRADOS.md](RESUMEN_PROBLEMAS_ENCONTRADOS.md)** (si existe)
    - 8 problemas críticos identificados
    - 15 mejoras recomendadas
    - Tabla de prioridades y tiempos
 
-3. **[GUIA_PRODUCCION_COMPLETA.md](GUIA_PRODUCCION_COMPLETA.md)**
+5. **[GUIA_PRODUCCION_COMPLETA.md](GUIA_PRODUCCION_COMPLETA.md)** (si existe)
    - Guía paso a paso completa (12 secciones)
    - Android: Keystore, firma, ProGuard
    - iOS: Permisos, configuración, firma
@@ -279,12 +299,12 @@ Se ha realizado un análisis exhaustivo del proyecto y se creó documentación c
    - Legal: Políticas de privacidad y términos
    - Testing, optimización y deployment
 
-4. **[CHECKLIST_PRODUCCION.md](CHECKLIST_PRODUCCION.md)**
+6. **[CHECKLIST_PRODUCCION.md](CHECKLIST_PRODUCCION.md)** (si existe)
    - 75+ tareas organizadas
    - Seguimiento interactivo
    - Comandos de referencia rápida
 
-5. **[CONFIGURACION_ENV.md](CONFIGURACION_ENV.md)**
+7. **[CONFIGURACION_ENV.md](CONFIGURACION_ENV.md)** (si existe)
    - ⚠️ **URGENTE:** Configuración de variables de entorno
    - Obtener API key de OpenWeatherMap
    - Solución de problemas
@@ -300,9 +320,10 @@ Se ha realizado un análisis exhaustivo del proyecto y se creó documentación c
 - **Total año 1: $124 USD**
 
 ### 🎯 Primeros Pasos (15 minutos)
-1. Lee [INICIO_PRODUCCION.md](INICIO_PRODUCCION.md)
-2. Crea archivo `.env` siguiendo [CONFIGURACION_ENV.md](CONFIGURACION_ENV.md)
-3. Revisa [CHECKLIST_PRODUCCION.md](CHECKLIST_PRODUCCION.md)
+1. **Lee el resumen:** [RESUMEN_CONFIGURACIONES_FALTANTES.md](RESUMEN_CONFIGURACIONES_FALTANTES.md)
+2. **Sigue la guía completa:** [GUIA_CONFIGURACIONES_PRODUCCION.md](GUIA_CONFIGURACIONES_PRODUCCION.md)
+3. **Empieza por lo crítico:** Sección 1 - Variables de entorno (crear `.env`)
+4. **Continúa con Android:** Sección 2 - Configuración de keystore y firma
 
 ---
 

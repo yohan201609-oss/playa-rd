@@ -1,20 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beach_provider.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/app_logo.dart';
+import '../services/admob_service.dart';
 import 'login_screen.dart';
 import 'favorites_screen.dart';
 import 'visited_beaches_screen.dart';
 import 'my_reports_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
-import 'test_notifications_screen.dart'; // 🧪 Solo desarrollo
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  InterstitialAdHelper? _interstitialAdHelper;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInterstitialAd();
+  }
+
+  Future<void> _loadInterstitialAd() async {
+    _interstitialAdHelper = InterstitialAdHelper(
+      useHotelRestaurantTargeting: true,
+    );
+    await _interstitialAdHelper?.loadInterstitialAd();
+  }
+
+  Future<void> _showInterstitialAdAndNavigate(VoidCallback navigationCallback) async {
+    if (_interstitialAdHelper?.isAdReady == true) {
+      // Mostrar el anuncio y esperar a que se cierre
+      final shown = await _interstitialAdHelper!.showInterstitialAd();
+      if (shown) {
+        // Esperar un momento para que el anuncio se cierre completamente
+        await Future.delayed(const Duration(milliseconds: 500));
+        // Recargar el anuncio para la próxima vez
+        _loadInterstitialAd();
+      }
+    }
+    // Ejecutar la navegación después del anuncio (o inmediatamente si no hay anuncio)
+    if (mounted) {
+      navigationCallback();
+    }
+  }
+
+  @override
+  void dispose() {
+    _interstitialAdHelper?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +224,10 @@ class ProfileScreen extends StatelessWidget {
           _buildStatsCard(context, authProvider, l10n, favoriteCount),
           const SizedBox(height: 20),
 
+          // Anuncio banner
+          _buildAdBanner(),
+          const SizedBox(height: 20),
+
           // Opciones del menú
           _buildMenuSection(
             title: l10n.profileTitle,
@@ -190,12 +238,14 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: l10n.profileFavoritesBeaches,
                 iconColor: const Color(0xFFFF4081),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FavoritesScreen(),
-                    ),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FavoritesScreen(),
+                      ),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -204,12 +254,14 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: 'Playas que he visitado',
                 iconColor: AppColors.secondary,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const VisitedBeachesScreen(),
-                    ),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const VisitedBeachesScreen(),
+                      ),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -218,12 +270,14 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: l10n.profileReportsSent,
                 iconColor: Colors.orange,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyReportsScreen(),
-                    ),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyReportsScreen(),
+                      ),
+                    );
+                  });
                 },
               ),
             ],
@@ -234,33 +288,20 @@ class ProfileScreen extends StatelessWidget {
           _buildMenuSection(
             title: 'General',
             items: [
-              // 🧪 SOLO PARA DESARROLLO - Comentar o eliminar en producción
-              _MenuItemData(
-                icon: Icons.bug_report,
-                title: '🧪 Prueba de Notificaciones',
-                subtitle: 'Solo para desarrollo',
-                iconColor: Colors.purple,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TestNotificationsScreen(),
-                    ),
-                  );
-                },
-              ),
               _MenuItemData(
                 icon: Icons.settings,
                 title: l10n.profileSettings,
                 subtitle: l10n.profileSettingsPreferences,
                 iconColor: AppColors.primary,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -269,10 +310,12 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: l10n.profileHelpFAQ,
                 iconColor: Colors.blue,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HelpScreen()),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HelpScreen()),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -355,6 +398,10 @@ class ProfileScreen extends StatelessWidget {
           _buildSignupButton(context, l10n),
           const SizedBox(height: 32),
 
+          // Anuncio banner
+          _buildAdBanner(),
+          const SizedBox(height: 32),
+
           // Opciones generales (sin autenticación)
           _buildMenuSection(
             title: 'General',
@@ -365,12 +412,14 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: l10n.profileSettingsPreferences,
                 iconColor: AppColors.primary,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -379,10 +428,12 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: l10n.profileHelpFAQ,
                 iconColor: Colors.blue,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HelpScreen()),
-                  );
+                  _showInterstitialAdAndNavigate(() {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HelpScreen()),
+                    );
+                  });
                 },
               ),
               _MenuItemData(
@@ -830,6 +881,17 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAdBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      alignment: Alignment.center,
+      child: const BannerAdWidget(
+        adSize: AdSize.banner,
+        useHotelRestaurantTargeting: true,
       ),
     );
   }

@@ -53,6 +53,20 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<!-- Permisos para cámara y galería -->
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceso a la cámara para tomar fotos de las playas</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceso a la galería para seleccionar fotos de las playas</string>
+	<!-- Permisos para ubicación -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para mostrarte las playas cercanas en el mapa.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Permitimos el acceso a tu ubicación para mejorar tu experiencia.</string>
+	<!-- AdMob App ID -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-2612958934827252~9650417470</string>
+	<!-- App ID de producción de AdMob -->
 	<!-- Descripción para solicitud de notificaciones -->
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>

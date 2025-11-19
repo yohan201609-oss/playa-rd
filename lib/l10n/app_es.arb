@@ -36,6 +36,7 @@
   "homeApplyFilters": "Aplicar",
   "homeLoginToSaveFavorites": "Inicia sesión para guardar favoritos",
   "homeNoBeaches": "No se encontraron playas",
+  "homeNoFavorites": "Aún no tienes playas favoritas",
   "homeBeachesCount": "{count} playas encontradas",
   "@homeBeachesCount": {
     "placeholders": {
@@ -56,6 +57,9 @@
   "beachAddToFavorites": "Agregar a favoritos",
   "beachRemoveFromFavorites": "Quitar de favoritos",
   "beachShareBeach": "Compartir playa",
+  "beachMarkAsVisited": "Marcar como visitada",
+  "beachAlreadyVisited": "Ya visitada",
+  "beachDescription": "Descripción",
   
   "conditionExcellent": "Excelente",
   "conditionGood": "Bueno",
@@ -71,6 +75,16 @@
   "activityFishing": "Pesca",
   "activityVolleyball": "Voleibol",
   "activityJetski": "Moto acuática",
+  "activityEcotourism": "Ecoturismo",
+  "activityPhotography": "Fotografía",
+  "activityRelaxation": "Relajación",
+  "activityTranquility": "Tranquilidad",
+  "activityAdventure": "Aventura",
+  "activityHiking": "Caminata",
+  "activityNature": "Naturaleza",
+  "activitySunset": "Atardecer",
+  "activityRiver": "Río",
+  "activityFamilies": "Familias",
   
   "mapTitle": "Mapa",
   "mapTitleWithCount": "Mapa de Playas ({count})",
@@ -91,7 +105,7 @@
   
   "reportTitle": "Reportar Condición",
   "reportHelpCommunity": "Ayuda a la comunidad",
-  "reportHelpDescription": "Reporta las condiciones actuales de una playa y gana 10 puntos",
+  "reportHelpDescription": "Reporta las condiciones actuales de una playa",
   "reportWhichBeach": "¿Qué playa visitaste?",
   "reportSelectBeach": "Selecciona una playa",
   "reportHowConditions": "¿Cómo están las condiciones?",
@@ -105,6 +119,8 @@
   "reportPhotoFrom": "Foto desde",
   "reportCamera": "Cámara",
   "reportGallery": "Galería",
+  "reportTakePhoto": "Tomar foto",
+  "reportSelectFromGallery": "Seleccionar de galería",
   "reportMaxPhotos": "Máximo 3 fotos",
   "reportSubmit": "Enviar reporte",
   "reportSubmitting": "Enviando...",
@@ -112,14 +128,6 @@
   "reportError": "Error al enviar el reporte",
   "reportSelectBeachFirst": "Por favor selecciona una playa primero",
   "reportSelectCondition": "Por favor selecciona una condición",
-  "reportPoints": "Has ganado {points} puntos",
-  "@reportPoints": {
-    "placeholders": {
-      "points": {
-        "type": "int"
-      }
-    }
-  },
   
   "profileTitle": "Mi Perfil",
   "profileWelcome": "Bienvenido a",
@@ -129,14 +137,6 @@
   "profileSaveBeaches": "Guarda tus playas favoritas",
   "profileCheckWeather": "Consulta el clima en tiempo real",
   "profileShareCommunity": "Comparte con la comunidad",
-  "profilePoints": "{points} puntos",
-  "@profilePoints": {
-    "placeholders": {
-      "points": {
-        "type": "int"
-      }
-    }
-  },
   "profileFavorites": "Favoritos",
   "profileReports": "Reportes",
   "profileVisited": "Visitadas",
@@ -144,8 +144,6 @@
   "profileFavoritesBeaches": "Playas que me gustan",
   "profileMyReports": "Mis Reportes",
   "profileReportsSent": "Reportes enviados",
-  "profileAchievements": "Logros",
-  "profileAchievementsBadges": "Ver mis logros y badges",
   "profileSettings": "Configuración",
   "profileSettingsPreferences": "Preferencias de la app",
   "profileHelp": "Ayuda",
@@ -211,6 +209,37 @@
   "weatherLoading": "Cargando clima...",
   "weatherError": "Error al cargar clima",
   "weatherRefresh": "Actualizar",
+  "weatherRecommendationExcellent": "Excelente para la playa",
+  "weatherRecommendationNotRecommended": "No recomendado - {reason}",
+  "@weatherRecommendationNotRecommended": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationWarning": "Advertencia - {reason}",
+  "@weatherRecommendationWarning": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationCaution": "Precaución - {reason}",
+  "@weatherRecommendationCaution": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationCool": "Fresco - Puede estar frío para nadar",
+  "weatherReasonThunderstorm": "Tormenta eléctrica",
+  "weatherReasonRain": "Lluvia",
+  "weatherReasonStrongWinds": "Vientos fuertes",
+  "weatherReasonHighUV": "Índice UV muy alto",
+  "weatherReasonHighTemperature": "Temperatura muy alta",
   
   "authLogin": "Iniciar Sesión",
   "authSignup": "Crear Cuenta",

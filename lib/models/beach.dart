@@ -5,7 +5,10 @@ class Beach {
   final String name;
   final String province;
   final String municipality;
+  final String? postalCode;
+  final String? address;
   final String description;
+  final String? descriptionEn; // Descripción en inglés
   final double latitude;
   final double longitude;
   final List<String> imageUrls;
@@ -23,7 +26,10 @@ class Beach {
     required this.name,
     required this.province,
     required this.municipality,
+    this.postalCode,
+    this.address,
     required this.description,
+    this.descriptionEn,
     required this.latitude,
     required this.longitude,
     this.imageUrls = const [],
@@ -44,7 +50,10 @@ class Beach {
       name: data['name'] ?? '',
       province: data['province'] ?? '',
       municipality: data['municipality'] ?? '',
+      postalCode: data['postalCode'],
+      address: data['address'],
       description: data['description'] ?? '',
+      descriptionEn: data['descriptionEn'],
       latitude: (data['latitude'] ?? 0.0).toDouble(),
       longitude: (data['longitude'] ?? 0.0).toDouble(),
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
@@ -66,7 +75,10 @@ class Beach {
       'name': name,
       'province': province,
       'municipality': municipality,
+      'postalCode': postalCode,
+      'address': address,
       'description': description,
+      'descriptionEn': descriptionEn,
       'latitude': latitude,
       'longitude': longitude,
       'imageUrls': imageUrls,
@@ -86,7 +98,10 @@ class Beach {
     String? name,
     String? province,
     String? municipality,
+    String? postalCode,
+    String? address,
     String? description,
+    String? descriptionEn,
     double? latitude,
     double? longitude,
     List<String>? imageUrls,
@@ -103,7 +118,10 @@ class Beach {
       name: name ?? this.name,
       province: province ?? this.province,
       municipality: municipality ?? this.municipality,
+      postalCode: postalCode ?? this.postalCode,
+      address: address ?? this.address,
       description: description ?? this.description,
+      descriptionEn: descriptionEn ?? this.descriptionEn,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       imageUrls: imageUrls ?? this.imageUrls,
@@ -116,6 +134,14 @@ class Beach {
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
+
+  /// Obtiene la descripción traducida según el idioma
+  String getLocalizedDescription(String language) {
+    if (language == 'en' && descriptionEn != null && descriptionEn!.isNotEmpty) {
+      return descriptionEn!;
+    }
+    return description;
+  }
 }
 
 // Modelo para Reportes de Condiciones
@@ -125,6 +151,7 @@ class BeachReport {
   final String userId;
   final String userName;
   final String condition; // Excelente, Bueno, Moderado, Peligroso
+  final double? rating; // Calificación de 1.0 a 5.0
   final String? comment;
   final List<String> imageUrls;
   final DateTime timestamp;
@@ -136,6 +163,7 @@ class BeachReport {
     required this.userId,
     required this.userName,
     required this.condition,
+    this.rating,
     this.comment,
     this.imageUrls = const [],
     required this.timestamp,
@@ -150,6 +178,7 @@ class BeachReport {
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? 'Anónimo',
       condition: data['condition'] ?? 'Desconocido',
+      rating: data['rating'] != null ? (data['rating'] as num).toDouble() : null,
       comment: data['comment'],
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       timestamp: data['timestamp'] != null
@@ -165,6 +194,7 @@ class BeachReport {
       'userId': userId,
       'userName': userName,
       'condition': condition,
+      'rating': rating,
       'comment': comment,
       'imageUrls': imageUrls,
       'timestamp': FieldValue.serverTimestamp(),

@@ -36,6 +36,7 @@
   "homeApplyFilters": "Apply",
   "homeLoginToSaveFavorites": "Sign in to save favorites",
   "homeNoBeaches": "No beaches found",
+  "homeNoFavorites": "You have no favorite beaches yet",
   "homeBeachesCount": "{count} beaches found",
   "@homeBeachesCount": {
     "placeholders": {
@@ -56,6 +57,9 @@
   "beachAddToFavorites": "Add to favorites",
   "beachRemoveFromFavorites": "Remove from favorites",
   "beachShareBeach": "Share beach",
+  "beachMarkAsVisited": "Mark as visited",
+  "beachAlreadyVisited": "Already visited",
+  "beachDescription": "Description",
   
   "conditionExcellent": "Excellent",
   "conditionGood": "Good",
@@ -71,6 +75,16 @@
   "activityFishing": "Fishing",
   "activityVolleyball": "Volleyball",
   "activityJetski": "Jet Ski",
+  "activityEcotourism": "Ecotourism",
+  "activityPhotography": "Photography",
+  "activityRelaxation": "Relaxation",
+  "activityTranquility": "Tranquility",
+  "activityAdventure": "Adventure",
+  "activityHiking": "Hiking",
+  "activityNature": "Nature",
+  "activitySunset": "Sunset",
+  "activityRiver": "River",
+  "activityFamilies": "Families",
   
   "mapTitle": "Map",
   "mapTitleWithCount": "Beach Map ({count})",
@@ -91,7 +105,7 @@
   
   "reportTitle": "Report Condition",
   "reportHelpCommunity": "Help the community",
-  "reportHelpDescription": "Report current beach conditions and earn 10 points",
+  "reportHelpDescription": "Report current beach conditions",
   "reportWhichBeach": "Which beach did you visit?",
   "reportSelectBeach": "Select a beach",
   "reportHowConditions": "How are the conditions?",
@@ -105,6 +119,8 @@
   "reportPhotoFrom": "Photo from",
   "reportCamera": "Camera",
   "reportGallery": "Gallery",
+  "reportTakePhoto": "Take photo",
+  "reportSelectFromGallery": "Select from gallery",
   "reportMaxPhotos": "Maximum 3 photos",
   "reportSubmit": "Submit report",
   "reportSubmitting": "Submitting...",
@@ -112,14 +128,6 @@
   "reportError": "Error submitting report",
   "reportSelectBeachFirst": "Please select a beach first",
   "reportSelectCondition": "Please select a condition",
-  "reportPoints": "You earned {points} points",
-  "@reportPoints": {
-    "placeholders": {
-      "points": {
-        "type": "int"
-      }
-    }
-  },
   
   "profileTitle": "My Profile",
   "profileWelcome": "Welcome to",
@@ -129,14 +137,6 @@
   "profileSaveBeaches": "Save your favorite beaches",
   "profileCheckWeather": "Check real-time weather",
   "profileShareCommunity": "Share with the community",
-  "profilePoints": "{points} points",
-  "@profilePoints": {
-    "placeholders": {
-      "points": {
-        "type": "int"
-      }
-    }
-  },
   "profileFavorites": "Favorites",
   "profileReports": "Reports",
   "profileVisited": "Visited",
@@ -144,8 +144,6 @@
   "profileFavoritesBeaches": "Beaches I like",
   "profileMyReports": "My Reports",
   "profileReportsSent": "Reports sent",
-  "profileAchievements": "Achievements",
-  "profileAchievementsBadges": "View my achievements and badges",
   "profileSettings": "Settings",
   "profileSettingsPreferences": "App preferences",
   "profileHelp": "Help",
@@ -211,6 +209,37 @@
   "weatherLoading": "Loading weather...",
   "weatherError": "Error loading weather",
   "weatherRefresh": "Refresh",
+  "weatherRecommendationExcellent": "Excellent for the beach",
+  "weatherRecommendationNotRecommended": "Not recommended - {reason}",
+  "@weatherRecommendationNotRecommended": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationWarning": "Warning - {reason}",
+  "@weatherRecommendationWarning": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationCaution": "Caution - {reason}",
+  "@weatherRecommendationCaution": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherRecommendationCool": "Cool - May be cold for swimming",
+  "weatherReasonThunderstorm": "Thunderstorm",
+  "weatherReasonRain": "Rain",
+  "weatherReasonStrongWinds": "Strong winds",
+  "weatherReasonHighUV": "Very high UV index",
+  "weatherReasonHighTemperature": "Very high temperature",
   
   "authLogin": "Sign In",
   "authSignup": "Sign Up",

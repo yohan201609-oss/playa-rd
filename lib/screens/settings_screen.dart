@@ -417,7 +417,18 @@ class SettingsScreen extends StatelessWidget {
                     flag: '🇩🇴',
                     label: 'Español',
                     isSelected: settings.language == 'es',
-                    onTap: () => settings.setLanguage('es'),
+                    onTap: () async {
+                      if (settings.language != 'es') {
+                        await settings.setLanguage('es');
+                        // Forzar recarga completa de la aplicación
+                        if (context.mounted) {
+                          // Cerrar todas las pantallas y volver al inicio
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          // Forzar rebuild del MaterialApp
+                          await Future.delayed(const Duration(milliseconds: 100));
+                        }
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -427,7 +438,18 @@ class SettingsScreen extends StatelessWidget {
                     flag: '🇺🇸',
                     label: 'English',
                     isSelected: settings.language == 'en',
-                    onTap: () => settings.setLanguage('en'),
+                    onTap: () async {
+                      if (settings.language != 'en') {
+                        await settings.setLanguage('en');
+                        // Forzar recarga completa de la aplicación
+                        if (context.mounted) {
+                          // Cerrar todas las pantallas y volver al inicio
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          // Forzar rebuild del MaterialApp
+                          await Future.delayed(const Duration(milliseconds: 100));
+                        }
+                      }
+                    },
                   ),
                 ),
               ],

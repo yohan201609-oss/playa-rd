@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 // Exportar assets para fácil acceso
 export 'app_assets.dart';
+// Exportar utilidades responsivas
+export 'responsive.dart';
+
+// Correo de soporte
+class SupportEmail {
+  static const String email = 'soporteplayasrd@outlook.com';
+}
 
 // Colores basados en el logo de Playas RD
 class AppColors {
@@ -37,8 +45,10 @@ class BeachConditions {
         return AppColors.moderate;
       case danger:
         return AppColors.danger;
+      case unknown:
+        return Colors.blue; // Azul para condiciones desconocidas
       default:
-        return Colors.grey;
+        return Colors.blue; // Azul por defecto para condiciones no reconocidas
     }
   }
 
@@ -54,6 +64,35 @@ class BeachConditions {
         return Icons.dangerous;
       default:
         return Icons.help_outline;
+    }
+  }
+
+  /// Traduce una condición de playa al idioma actual
+  static String getLocalizedCondition(BuildContext context, String condition) {
+    final l10n = AppLocalizations.of(context);
+    
+    // Si no hay localizaciones, retornar el valor original
+    if (l10n == null) {
+      return condition;
+    }
+    
+    // Normalizar la condición para hacer coincidencias más flexibles
+    final normalizedCondition = condition.trim();
+    
+    // Las constantes excellent, good, etc. ya son 'Excelente', 'Bueno', etc.
+    switch (normalizedCondition) {
+      case 'Excelente':
+        return l10n.conditionExcellent;
+      case 'Bueno':
+        return l10n.conditionGood;
+      case 'Moderado':
+        return l10n.conditionModerate;
+      case 'Peligroso':
+        return l10n.conditionDanger;
+      case 'Desconocido':
+        return l10n.conditionUnknown;
+      default:
+        return condition; // Retornar el valor original si no coincide
     }
   }
 }
@@ -109,12 +148,61 @@ class BeachActivities {
         return Icons.beach_access;
     }
   }
+
+  /// Traduce una actividad de playa al idioma actual
+  static String getLocalizedActivity(BuildContext context, String activity) {
+    final l10n = AppLocalizations.of(context);
+    
+    // Si no hay localizaciones, retornar el valor original
+    if (l10n == null) {
+      return activity;
+    }
+    
+    // Normalizar la actividad para hacer coincidencias más flexibles
+    final normalizedActivity = activity.trim();
+    
+    // Las constantes swimming, surfing, etc. ya son 'Natación', 'Surf', etc.
+    switch (normalizedActivity) {
+      case 'Natación':
+        return l10n.activitySwimming;
+      case 'Surf':
+        return l10n.activitySurfing;
+      case 'Snorkel':
+        return l10n.activitySnorkeling;
+      case 'Buceo':
+        return l10n.activityDiving;
+      case 'Kayak':
+        return l10n.activityKayaking;
+      case 'Pesca':
+        return l10n.activityFishing;
+      case 'Voleibol':
+        return l10n.activityVolleyball;
+      case 'Moto acuática':
+        return l10n.activityJetski;
+      case 'Ecoturismo':
+        return l10n.activityEcotourism;
+      case 'Fotografía':
+        return l10n.activityPhotography;
+      case 'Relajación':
+        return l10n.activityRelaxation;
+      case 'Tranquilidad':
+        return l10n.activityTranquility;
+      case 'Aventura':
+        return l10n.activityAdventure;
+      case 'Caminata':
+        return l10n.activityHiking;
+      case 'Naturaleza':
+        return l10n.activityNature;
+      case 'Atardecer':
+        return l10n.activitySunset;
+      case 'Río':
+        return l10n.activityRiver;
+      case 'Familias':
+        return l10n.activityFamilies;
+      default:
+        // Si no coincide con ninguna actividad conocida, retornar el original
+        return activity;
+    }
+  }
 }
 
-// Puntos del sistema de gamificación
-class PointsSystem {
-  static const int reportSubmitted = 10;
-  static const int photoUploaded = 5;
-  static const int helpfulVote = 2;
-  static const int beachVisited = 15;
-}

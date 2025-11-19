@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
+
 /// Modelo de datos del clima
 /// Incluye toda la información meteorológica relevante para playas
 class WeatherData {
@@ -173,8 +176,36 @@ class WeatherData {
         windSpeed < 10;
   }
 
-  /// Retorna una recomendación basada en el clima
-  String get beachRecommendation {
+  /// Retorna una recomendación basada en el clima (traducida)
+  String getLocalizedRecommendation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) {
+      return beachRecommendationFallback;
+    }
+    
+    if (mainCondition.toLowerCase().contains('thunderstorm')) {
+      return l10n.weatherRecommendationNotRecommended(l10n.weatherReasonThunderstorm);
+    }
+    if (mainCondition.toLowerCase().contains('rain')) {
+      return l10n.weatherRecommendationNotRecommended(l10n.weatherReasonRain);
+    }
+    if (windSpeed > 15) {
+      return l10n.weatherRecommendationWarning(l10n.weatherReasonStrongWinds);
+    }
+    if (uvIndex != null && uvIndex! > 8) {
+      return l10n.weatherRecommendationCaution(l10n.weatherReasonHighUV);
+    }
+    if (temperature < 20) {
+      return l10n.weatherRecommendationCool;
+    }
+    if (temperature > 35) {
+      return l10n.weatherRecommendationCaution(l10n.weatherReasonHighTemperature);
+    }
+    return l10n.weatherRecommendationExcellent;
+  }
+
+  /// Retorna una recomendación basada en el clima (fallback en español)
+  String get beachRecommendationFallback {
     if (mainCondition.toLowerCase().contains('thunderstorm')) {
       return 'No recomendado - Tormenta eléctrica';
     }
@@ -195,6 +226,10 @@ class WeatherData {
     }
     return 'Excelente para la playa';
   }
+
+  /// Retorna una recomendación basada en el clima (deprecated - usar getLocalizedRecommendation)
+  @Deprecated('Use getLocalizedRecommendation instead')
+  String get beachRecommendation => beachRecommendationFallback;
 
   /// URL del icono del clima
   String getIconUrl({String size = '2x'}) {
