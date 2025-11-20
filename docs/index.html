@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playas RD - Documentación Legal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .documents {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .document-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .document-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .document-card h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+        
+        .document-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .document-card .date {
+            font-size: 0.9em;
+            color: #999;
+        }
+        
+        .footer {
+            background: #f5f5f5;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏖️ Playas RD</h1>
+            <p>Documentación Legal</p>
+        </div>
+        
+        <div class="content">
+            <h2>Bienvenido</h2>
+            <p>En esta página encontrarás los documentos legales de la aplicación Playas RD. Por favor, revisa estos documentos para entender cómo utilizamos tu información y los términos de uso de nuestra aplicación.</p>
+            
+            <div class="documents">
+                <a href="politica-privacidad.html" class="document-card">
+                    <h2>🔒 Política de Privacidad</h2>
+                    <p>Conoce cómo recopilamos, usamos y protegemos tu información personal.</p>
+                    <div class="date">Última actualización: 8 de noviembre de 2025</div>
+                </a>
+                
+                <a href="terminos-servicio.html" class="document-card">
+                    <h2>📋 Términos y Condiciones de Uso</h2>
+                    <p>Lee los términos y condiciones que rigen el uso de la aplicación Playas RD.</p>
+                    <div class="date">Última actualización: 8 de noviembre de 2025</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Para consultas, contáctanos en <a href="mailto:soporteplayasrd@outlook.com">soporteplayasrd@outlook.com</a></p>
+            <p style="margin-top: 10px;">© 2025 Playas RD. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
+
