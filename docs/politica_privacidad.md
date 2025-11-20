@@ -59,6 +59,40 @@ Dependiendo de la legislación aplicable, puedes ejercer los siguientes derechos
 
 Para ejercer estos derechos, contáctanos en **soporteplayasrd@outlook.com**. Responderemos en un plazo razonable y conforme a la normativa vigente.
 
+### 8.1. Eliminación de cuenta y datos
+
+**¿Cómo solicitar la eliminación de tu cuenta?**
+
+Para solicitar la eliminación de tu cuenta y todos los datos asociados en Playas RD, sigue estos pasos:
+
+1. Envía un email a: **soporteplayasrd@outlook.com**
+2. Indica claramente que deseas eliminar tu cuenta
+3. Proporciona el email con el que te registraste en la aplicación
+4. Opcionalmente, indica si también deseas que se eliminen tus reportes públicos
+
+Procesaremos tu solicitud en un plazo máximo de 30 días hábiles desde la recepción de tu solicitud.
+
+**¿Qué datos se eliminarán?**
+
+Al eliminar tu cuenta, se eliminarán permanentemente los siguientes datos:
+- Email y nombre de usuario
+- Foto de perfil (si la tienes)
+- Lista de playas favoritas
+- Historial de playas visitadas
+- Historial de reportes personales
+- Fotos subidas en reportes (si solicitas su eliminación)
+- Token de notificaciones push (FCM Token)
+- Puntos y estadísticas de usuario
+
+**¿Qué datos se conservarán?**
+
+Los siguientes datos pueden conservarse por razones legítimas:
+- **Reportes públicos:** Los reportes sobre condiciones de playas pueden mantenerse de forma anónima (sin asociación a tu cuenta) para beneficio de otros usuarios. Si deseas que también se eliminen tus reportes, indícalo específicamente en tu solicitud.
+- **Datos legales:** Podemos conservar ciertos datos si es necesario para cumplir con obligaciones legales, resolver disputas o hacer cumplir nuestros acuerdos.
+
+**Desarrollador:** Johan Almanzar  
+**Aplicación:** Playas RD
+
 ## 9. Seguridad
 Implementamos medidas técnicas y organizativas para proteger los datos (encriptación, control de accesos, prácticas de seguridad). No obstante, ningún sistema es completamente seguro; mantén contraseñas fuertes y notifica sospechas de acceso no autorizado.
 
