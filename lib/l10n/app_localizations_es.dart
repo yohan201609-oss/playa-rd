@@ -141,6 +141,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get beachGetDirections => 'Cómo llegar';
 
   @override
+  String get beachNavigateWith => 'Navegar con';
+
+  @override
+  String get beachNavigateGoogleMaps => 'Google Maps';
+
+  @override
+  String get beachNavigateWaze => 'Waze';
+
+  @override
+  String get beachWazeNotInstalled => 'Waze no está instalado';
+
+  @override
+  String get beachWazeNotInstalledDesc =>
+      '¿Deseas instalar Waze desde la tienda de aplicaciones?';
+
+  @override
+  String get beachWazeError =>
+      'Waze no pudo abrir esta ubicación. ¿Deseas usar Google Maps en su lugar?';
+
+  @override
+  String get beachWazeInstall => 'Instalar Waze';
+
+  @override
   String get beachAddToFavorites => 'Agregar a favoritos';
 
   @override

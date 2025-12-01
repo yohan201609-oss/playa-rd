@@ -65,8 +65,23 @@
 	<string>Permitimos el acceso a tu ubicación para mejorar tu experiencia.</string>
 	<!-- AdMob App ID -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2612958934827252~9650417470</string>
+	<string>ca-app-pub-2612958934827252~4943084922</string>
 	<!-- App ID de producción de AdMob -->
+	<!-- Google Sign-In Configuration -->
+	<key>GIDClientID</key>
+	<string>360714035813-j1q7j0elbuep49uurma34kkofh9v27i5.apps.googleusercontent.com</string>
+	<!-- URL Scheme para Google Sign-In -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.360714035813-j1q7j0elbuep49uurma34kkofh9v27i5</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Descripción para solicitud de notificaciones -->
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>

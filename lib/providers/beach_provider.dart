@@ -39,26 +39,18 @@ class BeachProvider with ChangeNotifier {
   }
 
   // Cargar playas
-  Future<void> loadBeaches() async {
+  Future<void> loadBeaches({bool forceRefresh = false}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Cargar desde caché primero (modo offline)
-      final cachedBeaches = await _loadFromCache();
-      if (cachedBeaches != null && cachedBeaches.isNotEmpty) {
-        _beaches = cachedBeaches;
-        _applyFilters();
-        _isLoading = false;
-        notifyListeners();
-        print('📦 ${cachedBeaches.length} playas cargadas desde caché');
-        
-        // Sincronizar favoritos después de cargar desde caché
-        await _syncUserFavorites();
-        return;
+      // Si se fuerza la recarga, limpiar caché primero
+      if (forceRefresh) {
+        await clearCache();
+        print('🔄 Caché limpiado, forzando recarga desde Firestore');
       }
 
-      // Intentar cargar desde Firestore (coordenadas actualizadas)
+      // Intentar cargar desde Firestore primero (siempre intentar para obtener datos actualizados)
       try {
         final firestoreBeaches = await _loadFromFirestore();
         if (firestoreBeaches != null && firestoreBeaches.isNotEmpty) {
@@ -75,9 +67,24 @@ class BeachProvider with ChangeNotifier {
         }
       } catch (e) {
         print('⚠️ Error cargando desde Firestore: $e');
+        // Si falla Firestore, intentar usar caché
       }
 
-      // Si no hay datos en Firestore, cargar datos estáticos
+      // Si Firestore falló o no tiene datos, intentar cargar desde caché (modo offline)
+      final cachedBeaches = await _loadFromCache();
+      if (cachedBeaches != null && cachedBeaches.isNotEmpty) {
+        _beaches = cachedBeaches;
+        _applyFilters();
+        _isLoading = false;
+        notifyListeners();
+        print('📦 ${cachedBeaches.length} playas cargadas desde caché');
+        
+        // Sincronizar favoritos después de cargar desde caché
+        await _syncUserFavorites();
+        return;
+      }
+
+      // Si no hay datos en Firestore ni caché, cargar datos estáticos
       _beaches = BeachService.getDominicanBeaches();
       _applyFilters();
       
@@ -100,6 +107,11 @@ class BeachProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+  
+  // Forzar recarga desde Firestore
+  Future<void> refreshBeaches() async {
+    await loadBeaches(forceRefresh: true);
   }
   
   // Sincronizar favoritos del usuario actual
@@ -141,13 +153,18 @@ class BeachProvider with ChangeNotifier {
           'name': beach.name,
           'province': beach.province,
           'municipality': beach.municipality,
+          'postalCode': beach.postalCode,
+          'address': beach.address,
           'description': beach.description,
+          'descriptionEn': beach.descriptionEn,
           'latitude': beach.latitude,
           'longitude': beach.longitude,
           'imageUrls': beach.imageUrls,
           'rating': beach.rating,
           'reviewCount': beach.reviewCount,
           'currentCondition': beach.currentCondition,
+          'amenities': beach.amenities,
+          'activities': beach.activities,
           'isFavorite': beach.isFavorite,
         };
       }).toList();
@@ -175,12 +192,12 @@ class BeachProvider with ChangeNotifier {
         return null;
       }
 
-      // Verificar si el caché no es muy viejo (máximo 24 horas)
+      // Verificar si el caché no es muy viejo (máximo 1 hora para asegurar datos actualizados)
       final cacheDate = DateTime.parse(cacheTimestamp);
       final hoursSinceCache = DateTime.now().difference(cacheDate).inHours;
       
-      if (hoursSinceCache > 24) {
-        print('⏰ Caché expirado ($hoursSinceCache horas)');
+      if (hoursSinceCache > 1) {
+        print('⏰ Caché expirado ($hoursSinceCache horas), se intentará cargar desde Firestore');
         return null;
       }
 
@@ -191,15 +208,18 @@ class BeachProvider with ChangeNotifier {
           name: json['name'],
           province: json['province'],
           municipality: json['municipality'],
+          postalCode: json['postalCode'],
+          address: json['address'],
           description: json['description'],
+          descriptionEn: json['descriptionEn'],
           latitude: json['latitude'],
           longitude: json['longitude'],
           imageUrls: List<String>.from(json['imageUrls'] ?? []),
           rating: (json['rating'] as num).toDouble(),
           reviewCount: json['reviewCount'],
           currentCondition: json['currentCondition'] ?? 'Desconocido',
-          amenities: const {},
-          activities: const [],
+          amenities: Map<String, dynamic>.from(json['amenities'] ?? {}),
+          activities: List<String>.from(json['activities'] ?? []),
           isFavorite: json['isFavorite'] ?? false,
         );
       }).toList();
@@ -336,28 +356,48 @@ class BeachProvider with ChangeNotifier {
   Future<void> toggleFavorite(Beach beach, String userId) async {
     try {
       final wasFavorite = beach.isFavorite;
+      final newFavoriteState = !beach.isFavorite;
       
-      if (beach.isFavorite) {
+      print('🔄 Cambiando estado de favorito para ${beach.name}: $wasFavorite -> $newFavoriteState');
+      
+      // Actualizar en Firebase primero
+      if (wasFavorite) {
         await FirebaseService.removeFavoriteBeach(userId, beach.id);
       } else {
         await FirebaseService.addFavoriteBeach(userId, beach.id);
       }
 
-      // Actualizar localmente
+      // Si la actualización en Firebase fue exitosa, actualizar localmente
       final index = _beaches.indexWhere((b) => b.id == beach.id);
       if (index != -1) {
-        _beaches[index] = beach.copyWith(isFavorite: !beach.isFavorite);
+        _beaches[index] = beach.copyWith(isFavorite: newFavoriteState);
         _applyFilters();
         notifyListeners();
+        print('✅ Estado de favorito actualizado localmente para ${beach.name}');
         
         // Enviar notificación solo cuando se añade como favorito (no cuando se quita)
         if (!wasFavorite) {
-          await NotificationHelper.sendFavoriteBeachNotification(beach.name);
-          print('📱 Notificación de favorito enviada para ${beach.name}');
+          try {
+            await NotificationHelper.sendFavoriteBeachNotification(beach.name);
+            print('📱 Notificación de favorito enviada para ${beach.name}');
+          } catch (e) {
+            print('⚠️ Error enviando notificación: $e');
+          }
         }
+      } else {
+        print('⚠️ No se encontró la playa en la lista local');
       }
     } catch (e) {
-      print('Error toggle favorito: $e');
+      print('❌ Error toggle favorito: $e');
+      // Revertir cambio local si falló la actualización en Firebase
+      final index = _beaches.indexWhere((b) => b.id == beach.id);
+      if (index != -1) {
+        _beaches[index] = beach.copyWith(isFavorite: beach.isFavorite);
+        _applyFilters();
+        notifyListeners();
+        print('🔄 Estado de favorito revertido debido al error');
+      }
+      rethrow; // Re-lanzar el error para que la UI pueda manejarlo
     }
   }
 

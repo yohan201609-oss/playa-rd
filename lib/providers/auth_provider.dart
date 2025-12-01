@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 import '../models/beach.dart';
 import '../services/firebase_service.dart';
 import '../services/notification_service.dart';
@@ -25,8 +26,9 @@ class AuthProvider with ChangeNotifier {
         _loadUserData();
       } else {
         _appUser = null;
-        // Notificar que no hay favoritos
-        onFavoritesChanged?.call([]);
+        // No limpiar favoritos al cerrar sesión - se mantendrán en la UI
+        // y se restaurarán correctamente cuando el usuario vuelva a iniciar sesión
+        // onFavoritesChanged?.call([]); // Comentado para evitar eliminar favoritos
       }
       notifyListeners();
     });
@@ -73,7 +75,43 @@ class AuthProvider with ChangeNotifier {
   
   // Recargar datos del usuario (útil después de modificar favoritos)
   Future<void> reloadUserData() async {
+    print('🔄 Recargando datos del usuario...');
     await _loadUserData();
+    if (_appUser != null) {
+      print('✅ Datos del usuario recargados. Favoritos: ${_appUser!.favoriteBeaches.length}');
+      print('📋 IDs de favoritos: ${_appUser!.favoriteBeaches}');
+    } else {
+      print('⚠️ No se pudieron cargar los datos del usuario');
+    }
+  }
+
+  // Actualizar foto de perfil
+  Future<bool> updateProfilePhoto(File imageFile) async {
+    if (_user == null) return false;
+    
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final photoUrl = await FirebaseService.updateProfilePhoto(_user!.uid, imageFile);
+      if (photoUrl != null) {
+        // Recargar datos del usuario para obtener la nueva foto
+        await _loadUserData();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _isLoading = false;
+      _errorMessage = 'Error al actualizar la foto de perfil';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error al actualizar la foto de perfil: $e';
+      notifyListeners();
+      return false;
+    }
   }
 
   // Registrar nuevo usuario
@@ -161,15 +199,24 @@ class AuthProvider with ChangeNotifier {
       final result = await FirebaseService.signInWithGoogle();
       _isLoading = false;
       notifyListeners();
-      return result != null;
+      
+      // Si el resultado es null, el usuario canceló el proceso
+      if (result == null) {
+        _errorMessage = null; // No mostrar error si el usuario canceló
+        return false;
+      }
+      
+      return true;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
       _errorMessage = _getErrorMessage(e.code);
+      print('❌ Error de Firebase Auth: ${e.code} - ${e.message}');
       notifyListeners();
       return false;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Error al iniciar sesión con Google';
+      _errorMessage = 'Error al iniciar sesión con Google: ${e.toString()}';
+      print('❌ Error en Google Sign-In: $e');
       notifyListeners();
       return false;
     }

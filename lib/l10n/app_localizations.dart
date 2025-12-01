@@ -356,6 +356,48 @@ abstract class AppLocalizations {
   /// **'Cómo llegar'**
   String get beachGetDirections;
 
+  /// No description provided for @beachNavigateWith.
+  ///
+  /// In es, this message translates to:
+  /// **'Navegar con'**
+  String get beachNavigateWith;
+
+  /// No description provided for @beachNavigateGoogleMaps.
+  ///
+  /// In es, this message translates to:
+  /// **'Google Maps'**
+  String get beachNavigateGoogleMaps;
+
+  /// No description provided for @beachNavigateWaze.
+  ///
+  /// In es, this message translates to:
+  /// **'Waze'**
+  String get beachNavigateWaze;
+
+  /// No description provided for @beachWazeNotInstalled.
+  ///
+  /// In es, this message translates to:
+  /// **'Waze no está instalado'**
+  String get beachWazeNotInstalled;
+
+  /// No description provided for @beachWazeNotInstalledDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Deseas instalar Waze desde la tienda de aplicaciones?'**
+  String get beachWazeNotInstalledDesc;
+
+  /// No description provided for @beachWazeError.
+  ///
+  /// In es, this message translates to:
+  /// **'Waze no pudo abrir esta ubicación. ¿Deseas usar Google Maps en su lugar?'**
+  String get beachWazeError;
+
+  /// No description provided for @beachWazeInstall.
+  ///
+  /// In es, this message translates to:
+  /// **'Instalar Waze'**
+  String get beachWazeInstall;
+
   /// No description provided for @beachAddToFavorites.
   ///
   /// In es, this message translates to:

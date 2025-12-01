@@ -32,9 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         // Logo en el AppBar - Usando tu logo existente
         title: Row(
@@ -45,6 +46,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          Consumer<SettingsProvider>(
+            builder: (context, settings, child) {
+              IconData themeIcon;
+              switch (settings.themeMode) {
+                case 'light':
+                  themeIcon = Icons.light_mode;
+                  break;
+                case 'dark':
+                  themeIcon = Icons.dark_mode;
+                  break;
+                default:
+                  themeIcon = Icons.brightness_auto;
+              }
+              return IconButton(
+                icon: Icon(themeIcon),
+                tooltip: 'Cambiar tema',
+                onPressed: () {
+                  // Cambiar entre los tres modos: system -> light -> dark -> system
+                  final currentMode = settings.themeMode;
+                  String nextMode;
+                  if (currentMode == 'system') {
+                    nextMode = 'light';
+                  } else if (currentMode == 'light') {
+                    nextMode = 'dark';
+                  } else {
+                    nextMode = 'system';
+                  }
+                  settings.setThemeMode(nextMode);
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () => _showFilterSheet(context),
@@ -64,17 +97,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchBar(AppLocalizations l10n) {
     final padding = ResponsiveBreakpoints.horizontalPadding(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: EdgeInsets.all(padding),
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: l10n.homeSearchHint,
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.7)),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: Icon(Icons.clear, color: theme.colorScheme.onSurface.withOpacity(0.7)),
                   onPressed: () {
                     _searchController.clear();
                     context.read<BeachProvider>().searchBeaches('');
@@ -86,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
           contentPadding: EdgeInsets.symmetric(
             horizontal: ResponsiveBreakpoints.isMobile(context) ? 20 : 24,
           ),
@@ -99,9 +137,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAdBanner() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       alignment: Alignment.center,
       child: const BannerAdWidget(
         adSize: AdSize.banner,
@@ -112,13 +153,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildQuickFilters(AppLocalizations l10n) {
     final authProvider = context.watch<AuthProvider>();
     final padding = ResponsiveBreakpoints.horizontalPadding(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
     return Consumer<BeachProvider>(
       builder: (context, provider, child) {
         return Container(
           height: ResponsiveBreakpoints.isMobile(context) ? 50 : 60,
           padding: EdgeInsets.symmetric(horizontal: padding),
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -187,6 +230,9 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -194,9 +240,11 @@ class _HomeScreenState extends State<HomeScreen> {
         selected: selected,
         onSelected: (_) => onTap(),
         selectedColor: AppColors.primary,
-        backgroundColor: Colors.grey[200],
+        backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
         labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
+          color: selected 
+              ? Colors.white 
+              : theme.colorScheme.onSurface,
           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -223,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(
                   _showOnlyFavorites ? Icons.favorite_border : Icons.beach_access,
                   size: ResponsiveBreakpoints.isMobile(context) ? 100 : 120,
-                  color: Colors.grey[400],
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
                 SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 16 : 24),
                 Text(
@@ -237,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       tablet: 20,
                       desktop: 22,
                     ),
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12),
@@ -260,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final isMobile = ResponsiveBreakpoints.isMobile(context);
         
         return RefreshIndicator(
-          onRefresh: () => beachProvider.loadBeaches(),
+          onRefresh: () => beachProvider.refreshBeaches(),
           child: isMobile
               ? ListView.builder(
                   padding: EdgeInsets.all(padding),

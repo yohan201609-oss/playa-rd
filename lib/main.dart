@@ -85,8 +85,10 @@ class _PlayasRDAppState extends State<PlayasRDApp> {
               );
               beach.syncFavorites(auth.appUser!.favoriteBeaches);
             } else {
-              print('👤 No hay usuario autenticado');
-              beach.syncFavorites([]);
+              print('👤 No hay usuario autenticado - manteniendo favoritos en UI');
+              // No limpiar favoritos al cerrar sesión - se mantendrán en la UI
+              // y se restaurarán correctamente cuando el usuario vuelva a iniciar sesión
+              // beach.syncFavorites([]); // Comentado para evitar eliminar favoritos
             }
             return;
           },

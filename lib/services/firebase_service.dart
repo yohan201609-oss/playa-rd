@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:io';
 import '../models/beach.dart';
 import '../utils/notification_helper.dart';
 import 'beach_service.dart';
@@ -81,8 +83,10 @@ class FirebaseService {
   static Future<UserCredential?> signInWithGoogle() async {
     try {
       // Configurar Google Sign-In
+      // El serverClientId es el Web Client ID necesario para obtener el idToken
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
+        serverClientId: '360714035813-lrrgnhe5eqvuu755ntif56i92q6u5an6.apps.googleusercontent.com',
       );
 
       // Iniciar el proceso de autenticación
@@ -113,7 +117,7 @@ class FirebaseService {
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'email': userCredential.user!.email,
           'displayName': userCredential.user!.displayName,
-          'photoURL': userCredential.user!.photoURL,
+          'photoUrl': userCredential.user!.photoURL,
           'provider': 'google',
           'favoriteBeaches': [],
           'reportsCount': 0,
@@ -124,7 +128,8 @@ class FirebaseService {
 
       return userCredential;
     } catch (e) {
-      print('Error en Google Sign-In: $e');
+      print('❌ Error en Google Sign-In: $e');
+      print('Stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
@@ -179,16 +184,82 @@ class FirebaseService {
 
   // Agregar playa a favoritos
   static Future<void> addFavoriteBeach(String userId, String beachId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'favoriteBeaches': FieldValue.arrayUnion([beachId]),
-    });
+    try {
+      print('💖 Agregando playa $beachId a favoritos del usuario $userId');
+      
+      // Verificar que el documento del usuario exista
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        print('⚠️ El documento del usuario no existe, creándolo...');
+        await _firestore.collection('users').doc(userId).set({
+          'favoriteBeaches': [beachId],
+          'visitedBeaches': [],
+          'reportsCount': 0,
+        }, SetOptions(merge: true));
+        print('✅ Documento de usuario creado con favorito');
+        return;
+      }
+      
+      // Verificar que el campo favoriteBeaches exista, si no, inicializarlo
+      final userData = userDoc.data();
+      if (userData == null || !userData.containsKey('favoriteBeaches')) {
+        print('⚠️ El campo favoriteBeaches no existe, inicializándolo...');
+        await _firestore.collection('users').doc(userId).set({
+          'favoriteBeaches': [beachId],
+        }, SetOptions(merge: true));
+        print('✅ Campo favoriteBeaches inicializado');
+        return;
+      }
+      
+      // Actualizar favoritos
+      await _firestore.collection('users').doc(userId).update({
+        'favoriteBeaches': FieldValue.arrayUnion([beachId]),
+      });
+      
+      // Verificar que se guardó correctamente
+      final updatedDoc = await _firestore.collection('users').doc(userId).get();
+      final favorites = List<String>.from(updatedDoc.data()?['favoriteBeaches'] ?? []);
+      print('✅ Playa agregada a favoritos. Total favoritos: ${favorites.length}');
+      print('📋 Favoritos actuales: $favorites');
+    } catch (e) {
+      print('❌ Error agregando playa a favoritos: $e');
+      rethrow;
+    }
   }
 
   // Remover playa de favoritos
   static Future<void> removeFavoriteBeach(String userId, String beachId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'favoriteBeaches': FieldValue.arrayRemove([beachId]),
-    });
+    try {
+      print('💔 Removiendo playa $beachId de favoritos del usuario $userId');
+      
+      // Verificar que el documento del usuario exista
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        print('⚠️ El documento del usuario no existe');
+        return;
+      }
+      
+      // Verificar que el campo favoriteBeaches exista
+      final userData = userDoc.data();
+      if (userData == null || !userData.containsKey('favoriteBeaches')) {
+        print('⚠️ El campo favoriteBeaches no existe, no hay nada que remover');
+        return;
+      }
+      
+      // Actualizar favoritos
+      await _firestore.collection('users').doc(userId).update({
+        'favoriteBeaches': FieldValue.arrayRemove([beachId]),
+      });
+      
+      // Verificar que se guardó correctamente
+      final updatedDoc = await _firestore.collection('users').doc(userId).get();
+      final favorites = List<String>.from(updatedDoc.data()?['favoriteBeaches'] ?? []);
+      print('✅ Playa removida de favoritos. Total favoritos: ${favorites.length}');
+      print('📋 Favoritos actuales: $favorites');
+    } catch (e) {
+      print('❌ Error removiendo playa de favoritos: $e');
+      rethrow;
+    }
   }
 
   // Agregar playa a visitadas
@@ -231,6 +302,38 @@ class FirebaseService {
     }
   }
 
+  // Actualizar foto de perfil del usuario
+  static Future<String?> updateProfilePhoto(String userId, File imageFile) async {
+    try {
+      // Crear referencia en Storage: profiles/{userId}/{timestamp}.jpg
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = '$timestamp.jpg';
+      final ref = FirebaseStorage.instance.ref().child('profiles/$userId/$fileName');
+      
+      // Subir imagen
+      final uploadTask = await ref.putFile(imageFile);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      
+      // Actualizar Firebase Auth
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.updatePhotoURL(downloadUrl);
+        await user.reload();
+      }
+      
+      // Actualizar Firestore
+      await _firestore.collection('users').doc(userId).update({
+        'photoUrl': downloadUrl,
+      });
+      
+      print('✅ Foto de perfil actualizada: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      print('❌ Error actualizando foto de perfil: $e');
+      rethrow;
+    }
+  }
+
   // =======================
   // PLAYAS
   // =======================
@@ -250,13 +353,13 @@ class FirebaseService {
 
         if (!doc.exists) {
           // Crear la playa en Firestore
-          await _firestore.collection('beaches').doc(beach.id).set({
+          final beachData = <String, dynamic>{
             'id': beach.id,
             'name': beach.name,
             'province': beach.province,
             'municipality': beach.municipality,
             'description': beach.description,
-            'descriptionEn': beach.descriptionEn,
+            'descriptionEn': beach.descriptionEn ?? '',
             'latitude': beach.latitude,
             'longitude': beach.longitude,
             'imageUrls': beach.imageUrls,
@@ -267,17 +370,30 @@ class FirebaseService {
             'activities': beach.activities,
             'createdAt': FieldValue.serverTimestamp(),
             'lastUpdated': FieldValue.serverTimestamp(),
-          });
+          };
+          
+          // Agregar campos opcionales si existen
+          if (beach.postalCode != null && beach.postalCode!.isNotEmpty) {
+            beachData['postalCode'] = beach.postalCode!;
+          }
+          if (beach.address != null && beach.address!.isNotEmpty) {
+            beachData['address'] = beach.address!;
+          }
+          
+          await _firestore.collection('beaches').doc(beach.id).set(beachData);
           print('✅ Playa ${beach.name} sincronizada con Firestore');
         } else {
           // Actualizar playa existente para asegurar que tenga descriptionEn
-          final existingData = doc.data() as Map<String, dynamic>;
-          if (existingData['descriptionEn'] == null || 
-              (existingData['descriptionEn'] as String).isEmpty) {
-            await _firestore.collection('beaches').doc(beach.id).update({
-              'descriptionEn': beach.descriptionEn,
+          final existingData = doc.data() as Map<String, dynamic>?;
+          final existingDescriptionEn = existingData?['descriptionEn'] as String?;
+          if (existingDescriptionEn == null || existingDescriptionEn.isEmpty) {
+            final updateData = <String, dynamic>{
               'lastUpdated': FieldValue.serverTimestamp(),
-            });
+            };
+            if (beach.descriptionEn != null && beach.descriptionEn!.isNotEmpty) {
+              updateData['descriptionEn'] = beach.descriptionEn;
+            }
+            await _firestore.collection('beaches').doc(beach.id).update(updateData);
             print('✅ Descripción en inglés agregada a ${beach.name}');
           }
         }

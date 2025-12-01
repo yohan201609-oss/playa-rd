@@ -15,7 +15,7 @@ class AppAssets {
   
   /// Logo principal con fondo (1024x1024px)
   /// Uso: AppBar, Drawer, pantallas internas
-  static const String logo = 'assets/images/logo.png';
+  static const String logo = 'assets/logo.png';
 
   /// Logo sin fondo - PNG transparente (1024x1024px)
   /// Uso: Superposiciones, compartir, watermarks

@@ -155,6 +155,9 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildLegend() {
     final padding = ResponsiveBreakpoints.isMobile(context) ? 16.0 : 24.0;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Positioned(
       top: padding,
       right: padding,
@@ -163,11 +166,11 @@ class _MapScreenState extends State<MapScreen> {
           ResponsiveBreakpoints.isMobile(context) ? 12 : 16,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -187,6 +190,7 @@ class _MapScreenState extends State<MapScreen> {
                   desktop: 14,
                 ),
                 fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -217,6 +221,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildLegendItem({required Color color, required String label}) {
+    final theme = Theme.of(context);
+    
     return Padding(
       padding: EdgeInsets.symmetric(
         vertical: ResponsiveBreakpoints.isMobile(context) ? 4 : 6,
@@ -239,6 +245,7 @@ class _MapScreenState extends State<MapScreen> {
                 tablet: 12,
                 desktop: 13,
               ),
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ],
@@ -255,15 +262,18 @@ class _MapScreenState extends State<MapScreen> {
           minChildSize: 0.15,
           maxChildSize: 0.7,
           builder: (context, scrollController) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+            
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black26,
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.26),
                     blurRadius: 10,
-                    offset: Offset(0, -2),
+                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
@@ -275,7 +285,7 @@ class _MapScreenState extends State<MapScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: isDark ? Colors.grey[600] : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -298,6 +308,7 @@ class _MapScreenState extends State<MapScreen> {
                               desktop: 22,
                             ),
                             fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         if (provider.selectedProvince != 'Todas' ||
@@ -324,22 +335,29 @@ class _MapScreenState extends State<MapScreen> {
                   // Beach list
                   Expanded(
                     child: provider.beaches.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.beach_access,
-                                  size: 60,
-                                  color: Colors.grey[400],
+                        ? Builder(
+                            builder: (context) {
+                              final theme = Theme.of(context);
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.beach_access,
+                                      size: 60,
+                                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No hay playas con estos filtros',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No hay playas con estos filtros',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           )
                         : ListView.separated(
                             controller: scrollController,
@@ -367,6 +385,8 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildBeachListItem(Beach beach, BeachProvider provider) {
     final conditionColor = BeachConditions.getColor(beach.currentCondition);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
       onTap: () {
@@ -380,9 +400,11 @@ class _MapScreenState extends State<MapScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(
+            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+          ),
         ),
         child: Row(
           children: [
@@ -392,7 +414,7 @@ class _MapScreenState extends State<MapScreen> {
               height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.grey[200],
+                color: isDark ? Colors.grey[800] : Colors.grey[200],
                 image: beach.imageUrls.isNotEmpty
                     ? DecorationImage(
                         image: NetworkImage(beach.imageUrls.first),
@@ -401,7 +423,10 @@ class _MapScreenState extends State<MapScreen> {
                     : null,
               ),
               child: beach.imageUrls.isEmpty
-                  ? Icon(Icons.beach_access, color: Colors.grey[400])
+                  ? Icon(
+                      Icons.beach_access,
+                      color: isDark ? Colors.grey[600] : Colors.grey[400],
+                    )
                   : null,
             ),
             const SizedBox(width: 12),
@@ -412,9 +437,10 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Text(
                     beach.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -422,7 +448,10 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 4),
                   Text(
                     beach.province,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -445,7 +474,10 @@ class _MapScreenState extends State<MapScreen> {
                                   builder: (context, settings, child) {
                                     return Text(
                                       BeachConditions.getLocalizedCondition(context, beach.currentCondition),
-                                      style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                      ),
                                     );
                                   },
                                 ),
@@ -456,11 +488,18 @@ class _MapScreenState extends State<MapScreen> {
                           // Si no está autenticado, mostrar mensaje de bloqueo
                           return Row(
                             children: [
-                              const Icon(Icons.lock_outline, size: 12, color: Colors.grey),
+                              Icon(
+                                Icons.lock_outline,
+                                size: 12,
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Inicia sesión',
-                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                ),
                               ),
                               const SizedBox(width: 8),
                             ],
@@ -471,7 +510,10 @@ class _MapScreenState extends State<MapScreen> {
                       const SizedBox(width: 2),
                       Text(
                         beach.rating.toStringAsFixed(1),
-                        style: const TextStyle(fontSize: 11),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                     ],
                   ),
@@ -592,8 +634,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _showFilterSheet(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -611,9 +657,10 @@ class _MapScreenState extends State<MapScreen> {
                     children: [
                       Text(
                         l10n.homeFilters,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       TextButton(
@@ -625,7 +672,11 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 16),
                   Text(
                     l10n.mapProvince,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -640,10 +691,11 @@ class _MapScreenState extends State<MapScreen> {
                           provider.filterByProvince(province);
                         },
                         selectedColor: AppColors.primary,
+                        backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
                         labelStyle: TextStyle(
                           color: provider.selectedProvince == province
                               ? Colors.white
-                              : Colors.black,
+                              : theme.colorScheme.onSurface,
                           fontSize: 12,
                         ),
                       );
@@ -652,7 +704,11 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 16),
                   Text(
                     l10n.beachCondition,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -672,10 +728,11 @@ class _MapScreenState extends State<MapScreen> {
                               provider.filterByCondition(condition);
                             },
                             selectedColor: AppColors.primary,
+                            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
                             labelStyle: TextStyle(
                               color: provider.selectedCondition == condition
                                   ? Colors.white
-                                  : Colors.black,
+                                  : theme.colorScheme.onSurface,
                               fontSize: 12,
                             ),
                           );

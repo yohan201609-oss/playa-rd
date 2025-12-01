@@ -13,24 +13,61 @@ class AdMobService {
   // Cambiar a true solo si necesitas probar con anuncios de prueba
   bool _isTestMode = false; // false = producción, true = test
 
-  // IDs de anuncios de prueba (para desarrollo)
-  // Reemplaza estos con tus IDs reales cuando estés listo para producción
-  static const String _testBannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
-  static const String _testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
-  static const String _testRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+  // IDs de anuncios de prueba (para desarrollo) - Funcionan en todas las plataformas
+  static const String _testBannerAdUnitId =
+      'ca-app-pub-3940256099942544/6300978111';
+  static const String _testInterstitialAdUnitId =
+      'ca-app-pub-3940256099942544/1033173712';
+  static const String _testRewardedAdUnitId =
+      'ca-app-pub-3940256099942544/5224354917';
 
-  // IDs de producción
-  static const String _productionBannerAdUnitId = 'ca-app-pub-2612958934827252/5832453782';
-  static const String _productionInterstitialAdUnitId = 'ca-app-pub-2612958934827252/7996540555';
-  // TODO: Crear unidad de anuncio recompensado en AdMob y actualizar este ID
-  static const String _productionRewardedAdUnitId = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
+  // IDs de producción para Android
+  static const String _productionBannerAdUnitIdAndroid =
+      'ca-app-pub-2612958934827252/5832453782';
+  static const String _productionInterstitialAdUnitIdAndroid =
+      'ca-app-pub-2612958934827252/7996540555';
+  // TODO: Crear unidad de anuncio recompensado en AdMob para Android y actualizar este ID
+  static const String _productionRewardedAdUnitIdAndroid =
+      'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
 
-  /// IDs de anuncios según el modo (test o producción)
-  String get bannerAdUnitId => _isTestMode ? _testBannerAdUnitId : _productionBannerAdUnitId;
-  String get interstitialAdUnitId => _isTestMode ? _testInterstitialAdUnitId : _productionInterstitialAdUnitId;
-  String get rewardedAdUnitId => _isTestMode ? _testRewardedAdUnitId : _productionRewardedAdUnitId;
+  // IDs de producción para iOS
+  static const String _productionBannerAdUnitIdIOS =
+      'ca-app-pub-2612958934827252/8722547833';
+  static const String _productionInterstitialAdUnitIdIOS =
+      'ca-app-pub-2612958934827252/4839143147';
+  // TODO: Crear unidad de anuncio recompensado en AdMob para iOS y actualizar este ID
+  static const String _productionRewardedAdUnitIdIOS =
+      'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
 
-  /// Inicializar AdMob
+  /// IDs de anuncios según el modo (test o producción) y la plataforma
+  String get bannerAdUnitId {
+    if (_isTestMode) {
+      return _testBannerAdUnitId;
+    }
+    return Platform.isIOS
+        ? _productionBannerAdUnitIdIOS
+        : _productionBannerAdUnitIdAndroid;
+  }
+
+  String get interstitialAdUnitId {
+    if (_isTestMode) {
+      return _testInterstitialAdUnitId;
+    }
+    return Platform.isIOS
+        ? _productionInterstitialAdUnitIdIOS
+        : _productionInterstitialAdUnitIdAndroid;
+  }
+
+  String get rewardedAdUnitId {
+    if (_isTestMode) {
+      return _testRewardedAdUnitId;
+    }
+    return Platform.isIOS
+        ? _productionRewardedAdUnitIdIOS
+        : _productionRewardedAdUnitIdAndroid;
+  }
+
+  /// Inicializar AdMob de forma optimizada para reducir uso de memoria en iOS
   Future<void> initialize() async {
     if (_initialized) {
       print('✅ AdMobService ya está inicializado');
@@ -38,7 +75,9 @@ class AdMobService {
     }
 
     try {
+      // Inicialización optimizada - el SDK maneja la optimización internamente
       await MobileAds.instance.initialize();
+
       _initialized = true;
       print('✅ AdMobService inicializado correctamente');
       print('📱 Modo: ${_isTestMode ? "TEST" : "PRODUCCIÓN"}');
@@ -70,7 +109,9 @@ class AdMobService {
   /// Configurar RequestConfiguration
   Future<void> configureRequest() async {
     try {
-      await MobileAds.instance.updateRequestConfiguration(getRequestConfiguration());
+      await MobileAds.instance.updateRequestConfiguration(
+        getRequestConfiguration(),
+      );
       print('✅ RequestConfiguration configurado');
     } catch (e) {
       print('❌ Error configurando RequestConfiguration: $e');
@@ -78,14 +119,14 @@ class AdMobService {
   }
 
   /// Crear un AdRequest personalizado para anuncios de hoteles y restaurantes
-  /// 
+  ///
   /// NOTA: AdMob no ofrece categorías de contenido en el dashboard para unidades individuales.
   /// El targeting se realiza mediante palabras clave (keywords) en el código, que es
   /// la forma más efectiva de segmentar anuncios por categoría.
-  /// 
+  ///
   /// Este método incluye más de 40 palabras clave organizadas por categorías:
   /// - Hoteles y alojamiento
-  /// - Restaurantes y gastronomía  
+  /// - Restaurantes y gastronomía
   /// - Turismo y viajes
   /// - Playas y destinos
   AdRequest createHotelRestaurantAdRequest({
@@ -116,7 +157,7 @@ class AdMobService {
       'villa',
       'apartamento turistico',
       'tourist accommodation',
-      
+
       // Categoría: Restaurantes y Gastronomía (prioridad alta)
       'restaurante',
       'restaurantes',
@@ -130,7 +171,7 @@ class AdMobService {
       'seafood',
       'comida tipica',
       'traditional food',
-      
+
       // Categoría: Turismo y Viajes (prioridad alta)
       'turismo',
       'turismo dominicano',
@@ -146,7 +187,7 @@ class AdMobService {
       'travel agency',
       'agencia de viajes',
       'tour operator',
-      
+
       // Categoría: Playas y Destinos (prioridad alta)
       'playa',
       'playas',
@@ -166,7 +207,7 @@ class AdMobService {
       'paradise',
       'beach vacation',
       'vacaciones playa',
-      
+
       // Categoría: Actividades turísticas
       'snorkeling',
       'buceo',
@@ -196,7 +237,8 @@ class AdMobService {
     if (finalContentUrl == null) {
       // URL contextual que ayuda al targeting - más específica para turismo
       if (beachName != null) {
-        finalContentUrl = 'https://playasrd.com/beach/${beachName.toLowerCase().replaceAll(' ', '-')}';
+        finalContentUrl =
+            'https://playasrd.com/beach/${beachName.toLowerCase().replaceAll(' ', '-')}';
       } else {
         // URL genérica pero específica de turismo en República Dominicana
         finalContentUrl = 'https://playasrd.com/turismo-republica-dominicana';
@@ -335,7 +377,9 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   void _retryOnNetworkError() {
     if (_retryCount >= _maxRetries) {
-      print('❌ Máximo de reintentos alcanzado ($_maxRetries). No se mostrará el anuncio.');
+      print(
+        '❌ Máximo de reintentos alcanzado ($_maxRetries). No se mostrará el anuncio.',
+      );
       setState(() {
         _isAdLoaded = false;
       });
@@ -344,7 +388,9 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
     _retryCount++;
     final delay = Duration(seconds: _retryDelay.inSeconds * _retryCount);
-    print('🔄 Reintentando cargar anuncio en ${delay.inSeconds} segundos (intento $_retryCount/$_maxRetries)...');
+    print(
+      '🔄 Reintentando cargar anuncio en ${delay.inSeconds} segundos (intento $_retryCount/$_maxRetries)...',
+    );
 
     Future.delayed(delay, () {
       if (mounted) {
@@ -386,14 +432,14 @@ class InterstitialAdHelper {
     bool useHotelRestaurantTargeting = true,
     VoidCallback? onAdDismissed,
     VoidCallback? onAdFailedToShow,
-  })  : _useHotelRestaurantTargeting = useHotelRestaurantTargeting,
-        _onAdDismissed = onAdDismissed,
-        _onAdFailedToShow = onAdFailedToShow;
+  }) : _useHotelRestaurantTargeting = useHotelRestaurantTargeting,
+       _onAdDismissed = onAdDismissed,
+       _onAdFailedToShow = onAdFailedToShow;
 
   /// Cargar un anuncio intersticial
   Future<void> loadInterstitialAd() async {
     final adService = AdMobService();
-    
+
     // Usar AdRequest personalizado para hoteles y restaurantes si está habilitado
     final adRequest = _useHotelRestaurantTargeting
         ? adService.createHotelRestaurantAdRequest()
@@ -475,12 +521,12 @@ class RewardedAdHelper {
   final bool _useHotelRestaurantTargeting;
 
   RewardedAdHelper({bool useHotelRestaurantTargeting = true})
-      : _useHotelRestaurantTargeting = useHotelRestaurantTargeting;
+    : _useHotelRestaurantTargeting = useHotelRestaurantTargeting;
 
   /// Cargar un anuncio con recompensa
   Future<void> loadRewardedAd() async {
     final adService = AdMobService();
-    
+
     // Usar AdRequest personalizado para hoteles y restaurantes si está habilitado
     final adRequest = _useHotelRestaurantTargeting
         ? adService.createHotelRestaurantAdRequest()

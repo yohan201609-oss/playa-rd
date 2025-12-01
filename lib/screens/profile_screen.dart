@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../providers/beach_provider.dart';
 import '../utils/constants.dart';
@@ -23,6 +25,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   InterstitialAdHelper? _interstitialAdHelper;
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUploadingPhoto = false;
+  bool _isAvatarPressed = false;
 
   @override
   void initState() {
@@ -115,34 +120,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildUserAvatar(AuthProvider authProvider) {
     return Hero(
       tag: 'user_avatar',
-      child: Container(
-        width: 90,
-        height: 90,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child:
-            authProvider.isAuthenticated && authProvider.user?.photoURL != null
-            ? ClipOval(
-                child: Image.network(
-                  authProvider.user!.photoURL!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildDefaultAvatar();
-                  },
+      child: GestureDetector(
+        onTapDown: authProvider.isAuthenticated
+            ? (_) => setState(() => _isAvatarPressed = true)
+            : null,
+        onTapUp: authProvider.isAuthenticated
+            ? (_) {
+                setState(() => _isAvatarPressed = false);
+                _showPhotoPickerDialog(context, authProvider);
+              }
+            : null,
+        onTapCancel: authProvider.isAuthenticated
+            ? () => setState(() => _isAvatarPressed = false)
+            : null,
+        child: Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              _buildAvatarImage(authProvider),
+              // Mostrar indicador de carga o overlay al presionar
+              if (authProvider.isAuthenticated)
+                Positioned.fill(
+                  child: ClipOval(
+                    child: _isUploadingPhoto
+                        ? Container(
+                            color: Colors.black.withOpacity(0.5),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          )
+                        : _isAvatarPressed
+                            ? Container(
+                                color: Colors.black.withOpacity(0.3),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                  ),
                 ),
-              )
-            : _buildDefaultAvatar(),
+              // Botón de editar en la esquina inferior derecha
+              if (authProvider.isAuthenticated && !_isUploadingPhoto)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildAvatarImage(AuthProvider authProvider) {
+    if (!authProvider.isAuthenticated) {
+      return _buildDefaultAvatar();
+    }
+
+    // Priorizar foto de Firestore (appUser), luego Firebase Auth (user)
+    final photoUrl = authProvider.appUser?.photoUrl ?? authProvider.user?.photoURL;
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return ClipOval(
+        child: SizedBox.expand(
+          child: Image.network(
+            photoUrl,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (context, error, stackTrace) {
+              return _buildDefaultAvatar();
+            },
+          ),
+        ),
+      );
+    }
+
+    return _buildDefaultAvatar();
   }
 
   Widget _buildDefaultAvatar() {
@@ -352,10 +445,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           Text(
             l10n.profileLoginPrompt,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF333333),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
@@ -365,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Descubre, guarda y comparte las mejores playas de República Dominicana',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -480,14 +573,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label: l10n.profileFavorites,
             color: const Color(0xFFFF4081),
           ),
-          Container(height: 50, width: 1, color: Colors.grey[300]),
+          Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              final isDark = theme.brightness == Brightness.dark;
+              return Container(
+                height: 50,
+                width: 1,
+                color: isDark ? Colors.grey[700] : Colors.grey[300],
+              );
+            },
+          ),
           _buildStatItem(
             icon: Icons.report,
             count: authProvider.appUser?.reportsCount ?? 0,
             label: l10n.profileReports,
             color: Colors.orange,
           ),
-          Container(height: 50, width: 1, color: Colors.grey[300]),
+          Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              final isDark = theme.brightness == Brightness.dark;
+              return Container(
+                height: 50,
+                width: 1,
+                color: isDark ? Colors.grey[700] : Colors.grey[300],
+              );
+            },
+          ),
           _buildStatItem(
             icon: Icons.beach_access,
             count: authProvider.appUser?.visitedBeaches.length ?? 0,
@@ -505,6 +618,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String label,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    
     return Column(
       children: [
         Icon(icon, color: color, size: 32),
@@ -517,7 +632,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: color,
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
       ],
     );
   }
@@ -527,14 +648,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -554,10 +678,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF333333),
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -614,16 +738,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSignupButton(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primary, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -677,42 +804,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: items.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isLast = index == items.length - 1;
-
-              return Column(
-                children: [
-                  _buildMenuItem(
-                    icon: item.icon,
-                    title: item.title,
-                    subtitle: item.subtitle,
-                    iconColor: item.iconColor,
-                    onTap: item.onTap,
+        Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+            
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                  if (!isLast)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 72),
-                      child: Divider(height: 1, color: Colors.grey[200]),
-                    ),
                 ],
-              );
-            }).toList(),
-          ),
+              ),
+              child: Column(
+                children: items.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  final isLast = index == items.length - 1;
+
+                  return Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: item.icon,
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        iconColor: item.iconColor,
+                        onTap: item.onTap,
+                      ),
+                      if (!isLast)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 72),
+                          child: Divider(
+                            height: 1,
+                            color: isDark ? Colors.grey[700] : Colors.grey[200],
+                          ),
+                        ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -725,6 +862,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Container(
@@ -737,25 +877,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 16,
-          color: Color(0xFF333333),
+          color: theme.colorScheme.onSurface,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+        style: TextStyle(
+          fontSize: 13,
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
       ),
       trailing: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: isDark ? Colors.grey[800] : Colors.grey[100],
           shape: BoxShape.circle,
         ),
         child: Icon(
           Icons.chevron_right_rounded,
-          color: Colors.grey[600],
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
           size: 20,
         ),
       ),
@@ -768,15 +911,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     AuthProvider authProvider,
     AppLocalizations l10n,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -845,7 +991,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         content: Text(
           l10n.profileLogoutConfirm,
-          style: const TextStyle(fontSize: 15, height: 1.5),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         actions: [
           TextButton(
@@ -856,7 +1006,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(
               'Cancelar',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -926,14 +1076,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Descubre las mejores playas de República Dominicana. Consulta el clima, guarda tus favoritas y comparte con la comunidad.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              '© 2024 Playas RD',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              '© 2025 Playas RD',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
           ],
         ),
@@ -958,6 +1111,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  // Mostrar diálogo para seleccionar foto de perfil
+  Future<void> _showPhotoPickerDialog(BuildContext context, AuthProvider authProvider) async {
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.camera_alt, color: AppColors.primary, size: 24),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Cambiar foto de perfil',
+                  style: const TextStyle(fontSize: 18),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary, size: 32),
+                title: const Text('Tomar foto'),
+                subtitle: const Text('Usar la cámara'),
+                onTap: () => Navigator.of(dialogContext).pop(ImageSource.camera),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: AppColors.primary.withOpacity(0.05),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: AppColors.primary, size: 32),
+                title: const Text('Seleccionar de galería'),
+                subtitle: const Text('Elegir una foto existente'),
+                onTap: () => Navigator.of(dialogContext).pop(ImageSource.gallery),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: AppColors.primary.withOpacity(0.05),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (source == null || !mounted) return;
+
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null && mounted) {
+        await _uploadProfilePhoto(File(image.path), authProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al ${source == ImageSource.camera ? 'tomar' : 'seleccionar'} la imagen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Subir foto de perfil
+  Future<void> _uploadProfilePhoto(File imageFile, AuthProvider authProvider) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isUploadingPhoto = true;
+    });
+
+    try {
+      final success = await authProvider.updateProfilePhoto(imageFile);
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Foto de perfil actualizada con éxito!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Error al actualizar la foto de perfil'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al subir la foto: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingPhoto = false;
+        });
+      }
+    }
   }
 }
 

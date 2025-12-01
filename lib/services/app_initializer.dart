@@ -99,7 +99,8 @@ class AppInitializer {
   }
 
   void _kickOffBackgroundWork() {
-    Future.microtask(() async {
+    // Inicializar notificaciones después de un pequeño delay
+    Future.delayed(const Duration(milliseconds: 500), () async {
       try {
         await NotificationService().initialize();
         print('✅ Servicio de notificaciones inicializado (post-arranque)');
@@ -108,18 +109,21 @@ class AppInitializer {
       }
     });
 
-    Future.microtask(() async {
+    // Optimización iOS: Diferir AdMob significativamente más para reducir uso de memoria al inicio
+    // En iOS, AdMob puede usar mucha memoria durante la inicialización
+    Future.delayed(const Duration(seconds: 3), () async {
       try {
         final adService = AdMobService();
         await adService.initialize();
         await adService.configureRequest();
-        print('✅ AdMob inicializado correctamente (post-arranque)');
+        print('✅ AdMob inicializado correctamente (post-arranque diferido)');
       } catch (e) {
         print('⚠️ Error inicializando AdMob: $e');
       }
     });
 
-    Future.microtask(() async {
+    // Sincronización de playas puede esperar aún más
+    Future.delayed(const Duration(seconds: 5), () async {
       try {
         await FirebaseService.syncBeachesToFirestore();
         await FirebaseService.updateAllBeachesWithEnglishDescriptions();

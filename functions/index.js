@@ -645,7 +645,8 @@ exports.processSupportRequest = onDocumentCreated(
         `;
 
         await transporter.sendMail({
-          from: `"Playas RD Soporte" <${supportConfig.user}>`,
+          // Para SendGrid, el remitente debe ser el email verificado
+          from: `"Playas RD Soporte" <${SUPPORT_EMAIL}>`,
           to: SUPPORT_EMAIL,
           subject: `${subject} · ${requestId}`,
           html: htmlBody,

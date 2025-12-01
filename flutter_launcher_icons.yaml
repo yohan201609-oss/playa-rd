@@ -9,13 +9,13 @@ flutter_launcher_icons:
   
   # Ruta a tu logo existente (1024x1024px recomendado)
   # Usando el mismo logo que se muestra en la pantalla principal
-  image_path: "assets/images/logo.png"
+  image_path: "assets/logo.png"
   
   # Configuración para Android
   # Genera iconos adaptativos (Android 8.0+)
   # Color de fondo verde oscuro que coincide con el borde del logo
   adaptive_icon_background: "#2E7D32"  # Verde oscuro (borde del logo)
-  adaptive_icon_foreground: "assets/images/logo.png"  # Tu logo como foreground
+  adaptive_icon_foreground: "assets/logo.png"  # Tu logo como foreground
   
   # Opcionalidades para Android
   # Si tu logo tiene transparencia, puedes agregar un fondo
@@ -28,18 +28,18 @@ flutter_launcher_icons:
   # Configuración para Web (opcional)
   web:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/logo.png"
     background_color: "#2E7D32"
     theme_color: "#2E7D32"
   
   # Configuración para Windows (opcional)
   windows:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/logo.png"
     icon_size: 48
   
   # Configuración para macOS (opcional)
   macos:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/logo.png"
 

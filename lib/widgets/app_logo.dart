@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
 /// Widget reutilizable para mostrar el logo de Playas RD
-/// 
+///
 /// Este widget usa el logo existente sin modificarlo y proporciona
 /// diferentes variantes según el contexto de uso.
 class AppLogo extends StatelessWidget {
@@ -31,10 +31,10 @@ class AppLogo extends StatelessWidget {
     this.useWhiteVersion = false,
     this.onTap,
     this.circular = false,
-  })  : height = 40,
-        width = null,
-        fit = BoxFit.cover,
-        borderRadius = null;
+  }) : height = 40,
+       width = null,
+       fit = BoxFit.cover,
+       borderRadius = null;
 
   /// Logo mediano para headers (80px) con bordes redondeados
   const AppLogo.medium({
@@ -42,10 +42,10 @@ class AppLogo extends StatelessWidget {
     this.useWhiteVersion = false,
     this.onTap,
     this.circular = false,
-  })  : height = 80,
-        width = null,
-        fit = BoxFit.cover,
-        borderRadius = null;
+  }) : height = 80,
+       width = null,
+       fit = BoxFit.cover,
+       borderRadius = null;
 
   /// Logo grande para splash screen (200px) con bordes redondeados
   const AppLogo.large({
@@ -53,10 +53,10 @@ class AppLogo extends StatelessWidget {
     this.useWhiteVersion = false,
     this.onTap,
     this.circular = false,
-  })  : height = 200,
-        width = null,
-        fit = BoxFit.cover,
-        borderRadius = null;
+  }) : height = 200,
+       width = null,
+       fit = BoxFit.cover,
+       borderRadius = null;
 
   /// Logo adaptativo según el brillo del tema
   factory AppLogo.adaptive({
@@ -84,14 +84,14 @@ class AppLogo extends StatelessWidget {
     this.height = 80,
     this.useWhiteVersion = false,
     this.onTap,
-  })  : width = null,
-        fit = BoxFit.cover,
-        circular = true,
-        borderRadius = null;
+  }) : width = null,
+       fit = BoxFit.cover,
+       circular = true,
+       borderRadius = null;
 
   @override
   Widget build(BuildContext context) {
-    // Usar el logo existente desde assets/images/logo.png
+    // Usar el logo existente desde assets/logo.png
     // NO se modifica, NO se regenera, solo se usa tal como está
     final logoPath = useWhiteVersion && _logoWhiteExists()
         ? AppAssets.logoWhite
@@ -103,7 +103,8 @@ class AppLogo extends StatelessWidget {
       width: width,
       fit: fit,
       // Texto alternativo para accesibilidad
-      semanticLabel: 'Logo de Playas RD - Descubre las mejores playas de República Dominicana',
+      semanticLabel:
+          'Logo de Playas RD - Descubre las mejores playas de República Dominicana',
       // Optimización: cachear la imagen para mejor rendimiento
       cacheHeight: height != null ? (height! * 3).toInt() : null,
       cacheWidth: width != null ? (width! * 3).toInt() : null,
@@ -114,7 +115,9 @@ class AppLogo extends StatelessWidget {
           width: width,
           decoration: BoxDecoration(
             color: AppColors.primary,
-            borderRadius: BorderRadius.circular(height != null ? height! / 4 : 12),
+            borderRadius: BorderRadius.circular(
+              height != null ? height! / 4 : 12,
+            ),
           ),
           child: Icon(
             Icons.beach_access,
@@ -128,16 +131,12 @@ class AppLogo extends StatelessWidget {
     // Aplicar bordes circulares/redondeados al logo
     // Esto mejora la apariencia sin modificar el archivo original
     Widget logoWidget;
-    
+
     if (circular) {
       // Logo completamente circular
       final size = height ?? width ?? 80.0;
       logoWidget = ClipOval(
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: logoImage,
-        ),
+        child: SizedBox(width: size, height: size, child: logoImage),
       );
     } else {
       // Logo con bordes redondeados (suave)
@@ -150,10 +149,7 @@ class AppLogo extends StatelessWidget {
 
     // Si hay callback onTap, hacer el logo clickeable
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: logoWidget,
-      );
+      return GestureDetector(onTap: onTap, child: logoWidget);
     }
 
     return logoWidget;
@@ -193,10 +189,7 @@ class _AnimatedAppLogoState extends State<AnimatedAppLogo>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -227,12 +220,8 @@ class _AnimatedAppLogoState extends State<AnimatedAppLogo>
       opacity: _fadeAnimation,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: AppLogo(
-          height: widget.height,
-          width: widget.width,
-        ),
+        child: AppLogo(height: widget.height, width: widget.width),
       ),
     );
   }
 }
-

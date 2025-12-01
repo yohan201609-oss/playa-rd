@@ -24,9 +24,13 @@ class BeachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: isDark ? 0 : 2,
+      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
@@ -91,33 +95,47 @@ class BeachCard extends StatelessWidget {
                   height: imageHeight,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    height: imageHeight,
-                    color: Colors.grey[300],
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: imageHeight,
-                    color: Colors.grey[300],
-                    child: Center(
-                      child: Icon(
-                        Icons.beach_access,
-                        size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
-                        color: Colors.grey,
+                  placeholder: (context, url) {
+                    final theme = Theme.of(context);
+                    final isDark = theme.brightness == Brightness.dark;
+                    return Container(
+                      height: imageHeight,
+                      color: isDark ? Colors.grey[800] : Colors.grey[300],
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorWidget: (context, url, error) {
+                    final theme = Theme.of(context);
+                    final isDark = theme.brightness == Brightness.dark;
+                    return Container(
+                      height: imageHeight,
+                      color: isDark ? Colors.grey[800] : Colors.grey[300],
+                      child: Center(
+                        child: Icon(
+                          Icons.beach_access,
+                          size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 )
-              : Container(
-                  height: imageHeight,
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: Icon(
-                      Icons.beach_access,
-                      size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
-                      color: Colors.grey,
-                    ),
-                  ),
+              : Builder(
+                  builder: (context) {
+                    final theme = Theme.of(context);
+                    final isDark = theme.brightness == Brightness.dark;
+                    return Container(
+                      height: imageHeight,
+                      color: isDark ? Colors.grey[800] : Colors.grey[300],
+                      child: Center(
+                        child: Icon(
+                          Icons.beach_access,
+                          size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    );
+                  },
                 ),
         ),
         // Badge de condición (solo para usuarios autenticados)
@@ -237,6 +255,7 @@ class BeachCard extends StatelessWidget {
   }
 
   Widget _buildTitle(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       beach.name,
       style: TextStyle(
@@ -247,15 +266,21 @@ class BeachCard extends StatelessWidget {
           desktop: 24,
         ),
         fontWeight: FontWeight.bold,
+        color: theme.colorScheme.onSurface,
       ),
     );
   }
 
   Widget _buildLocation(BuildContext context) {
     final iconSize = ResponsiveBreakpoints.isMobile(context) ? 18.0 : 20.0;
+    final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(Icons.location_on, size: iconSize, color: Colors.grey[600]),
+        Icon(
+          Icons.location_on,
+          size: iconSize,
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
         SizedBox(width: ResponsiveBreakpoints.isMobile(context) ? 4 : 6),
         Expanded(
           child: Text(
@@ -267,7 +292,7 @@ class BeachCard extends StatelessWidget {
                 tablet: 15,
                 desktop: 16,
               ),
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ),
@@ -277,6 +302,7 @@ class BeachCard extends StatelessWidget {
 
   Widget _buildRating(BuildContext context) {
     final itemSize = ResponsiveBreakpoints.isMobile(context) ? 20.0 : 24.0;
+    final theme = Theme.of(context);
     return Row(
       children: [
         RatingBarIndicator(
@@ -298,6 +324,7 @@ class BeachCard extends StatelessWidget {
               desktop: 16,
             ),
             fontWeight: FontWeight.w500,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ],
