@@ -2,12 +2,8 @@ import Flutter
 import UIKit
 import GoogleMaps
 
-// Importar configuración local de API Key (no se sube al repositorio)
-// INSTRUCCIONES:
-// 1. Asegúrate de que el archivo GoogleMaps-API-Key.h esté agregado al proyecto en Xcode
-// 2. Si no existe, copia GoogleMaps-API-Key.h.template a GoogleMaps-API-Key.h
-// 3. Reemplaza YOUR_API_KEY_HERE con tu clave API real de Google Maps
-#import "GoogleMaps-API-Key.h"
+// La API Key se importa a través del Bridging Header (Runner-Bridging-Header.h)
+// El archivo GoogleMaps-API-Key.h debe estar agregado al proyecto en Xcode
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
