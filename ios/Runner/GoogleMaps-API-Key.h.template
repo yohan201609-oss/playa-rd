@@ -1,0 +1,17 @@
+//
+// GoogleMaps-API-Key.h.template
+// Template para configuración de Google Maps API Key
+//
+// INSTRUCCIONES:
+// 1. Copia este archivo a GoogleMaps-API-Key.h (sin .template)
+// 2. Reemplaza YOUR_API_KEY_HERE con tu clave API real de Google Maps
+// 3. El archivo GoogleMaps-API-Key.h NO se subirá al repositorio (está en .gitignore)
+//
+
+#ifndef GoogleMaps_API_Key_h
+#define GoogleMaps_API_Key_h
+
+#define GOOGLE_MAPS_API_KEY @"YOUR_API_KEY_HERE"
+
+#endif /* GoogleMaps_API_Key_h */
+

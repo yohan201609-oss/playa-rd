@@ -17,6 +17,10 @@ migrate_working_dir/
 .env.local
 .env.*.local
 
+# API Keys y secretos de configuración (NO subir al repositorio)
+ios/Runner/GoogleMaps-API-Key.h
+android/app/src/main/res/values/api_keys.xml
+
 # IntelliJ related
 *.iml
 *.ipr
