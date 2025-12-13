@@ -32,3 +32,4 @@ FIREBASE_API_KEY=
     Write-Host "✅ Archivo .env ya existe." -ForegroundColor Green
 }
 
+

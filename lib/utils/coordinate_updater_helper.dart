@@ -252,6 +252,93 @@ class CoordinateUpdaterHelper {
     );
   }
 
+  /// Actualizar coordenadas y fotos de una playa específica
+  static Future<bool> updateBeachCoordinatesAndPhotos(
+    BuildContext context,
+    Beach beach,
+  ) async {
+    final beachProvider = Provider.of<BeachProvider>(context, listen: false);
+    
+    // Verificar API key
+    final apiKeyValid = await GoogleGeocodingService.verifyApiKey();
+    if (!apiKeyValid) {
+      _showErrorDialog(
+        context,
+        'API Key no configurada',
+        'Por favor, configura tu API Key de Google Maps en el archivo .env',
+      );
+      return false;
+    }
+
+    // Mostrar indicador de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text('Actualizando ${beach.name}...'),
+            const SizedBox(height: 8),
+            const Text('Obteniendo coordenadas y fotos...', style: TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // Actualizar coordenadas primero
+      final coordinatesSuccess = await beachProvider.updateBeachCoordinates(beach);
+      
+      if (!coordinatesSuccess) {
+        Navigator.pop(context);
+        _showErrorDialog(
+          context,
+          'Error',
+          'No se pudieron actualizar las coordenadas de ${beach.name}.',
+        );
+        return false;
+      }
+
+      // Obtener la playa actualizada
+      final updatedBeach = beachProvider.allBeaches.firstWhere(
+        (b) => b.id == beach.id,
+        orElse: () => beach,
+      );
+
+      // Actualizar fotos
+      final photosSuccess = await beachProvider.updateBeachPhotos(updatedBeach);
+      
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      if (photosSuccess) {
+        _showSuccessDialog(
+          context,
+          'Actualización completada',
+          'Coordenadas y fotos de ${beach.name} han sido actualizadas exitosamente.',
+        );
+        return true;
+      } else {
+        _showSuccessDialog(
+          context,
+          'Coordenadas actualizadas',
+          'Las coordenadas de ${beach.name} fueron actualizadas, pero no se encontraron fotos.',
+        );
+        return true;
+      }
+    } catch (e) {
+      Navigator.pop(context); // Cerrar diálogo de carga
+      _showErrorDialog(
+        context,
+        'Error',
+        'Error al actualizar: $e',
+      );
+      return false;
+    }
+  }
+
   /// Actualizar fotos de todas las playas desde Google Places API
   static Future<void> showUpdatePhotosDialog(BuildContext context) async {
     final beachProvider = Provider.of<BeachProvider>(context, listen: false);
@@ -577,7 +664,7 @@ class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
 
   Future<void> _startUpdate() async {
     // Obtener todas las playas (sin filtros)
-    final allBeaches = widget.beachProvider.beaches;
+    final allBeaches = widget.beachProvider.allBeaches;
     _total = allBeaches.length;
 
     final result = await widget.beachProvider.updateAllBeachesCoordinates(

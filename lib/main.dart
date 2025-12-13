@@ -85,7 +85,9 @@ class _PlayasRDAppState extends State<PlayasRDApp> {
               );
               beach.syncFavorites(auth.appUser!.favoriteBeaches);
             } else {
-              print('👤 No hay usuario autenticado - manteniendo favoritos en UI');
+              print(
+                '👤 No hay usuario autenticado - manteniendo favoritos en UI',
+              );
               // No limpiar favoritos al cerrar sesión - se mantendrán en la UI
               // y se restaurarán correctamente cuando el usuario vuelva a iniciar sesión
               // beach.syncFavorites([]); // Comentado para evitar eliminar favoritos
@@ -287,11 +289,7 @@ class _InitializationErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.wifi_off_rounded,
-                color: Colors.white,
-                size: 72,
-              ),
+              const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 72),
               const SizedBox(height: 16),
               const Text(
                 'No pudimos preparar la app',

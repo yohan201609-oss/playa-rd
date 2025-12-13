@@ -486,18 +486,19 @@ class BeachService {
       ),
       Beach(
         id: '15',
-        name: 'Punta Rucia',
+        name: 'Playa Punta Rucia',
         province: 'Montecristi',
-        municipality: 'Villa Isabela',
+        municipality: 'Punta Rucia',
+        postalCode: '57000',
         description:
-            'Manglares abundantes, ambiente tranquilo. Punto de partida a Cayo Arena. Recomendado alojarse en Hostel Villa Rosa que incluye excursión temprana a Cayo Arena.',
+            'Hermosa playa con manglares abundantes y ambiente tranquilo. Punto de partida ideal para excursiones a Cayo Arena (Cayo Paraíso). Recomendado alojarse en Hostel Villa Rosa que incluye excursión temprana a Cayo Arena. Aguas cristalinas perfectas para snorkel y kayak.',
         descriptionEn:
-            'Abundant mangroves, tranquil atmosphere. Starting point to Cayo Arena. Recommended to stay at Hostel Villa Rosa which includes early excursion to Cayo Arena.',
+            'Beautiful beach with abundant mangroves and tranquil atmosphere. Ideal starting point for excursions to Cayo Arena (Paradise Cay). Recommended to stay at Hostel Villa Rosa which includes early excursion to Cayo Arena. Crystal-clear waters perfect for snorkeling and kayaking.',
         latitude: 19.8945,
         longitude: -71.2134,
         imageUrls: [],
-        rating: 4.5,
-        reviewCount: 1234,
+        rating: 4.7,
+        reviewCount: 196,
         currentCondition: 'Excelente',
         amenities: {
           'baños': false,
@@ -507,7 +508,7 @@ class BeachService {
           'sombrillas': false,
           'salvavidas': false,
         },
-        activities: ['Natación', 'Ecoturismo', 'Kayak'],
+        activities: ['Natación', 'Ecoturismo', 'Kayak', 'Snorkel', 'Excursiones a Cayo Arena'],
       ),
       // REGIÓN ESTE - SANTO DOMINGO
       Beach(
@@ -1213,31 +1214,6 @@ class BeachService {
           'salvavidas': false,
         },
         activities: ['Surf', 'Bodyboard', 'Aventura'],
-      ),
-      Beach(
-        id: '49',
-        name: 'Cumayasa',
-        province: 'San Pedro de Macorís',
-        municipality: 'San Pedro de Macorís',
-        description:
-            'Hermosa playa que se extiende a lo largo de aproximadamente 60 kilómetros de costa, desde Guayacanes hasta Cumayasa, ofreciendo paisajes impresionantes y un ambiente relajado. Una de las extensiones costeras más largas de la provincia.',
-        descriptionEn:
-            'Beautiful beach that extends along approximately 60 kilometers of coastline, from Guayacanes to Cumayasa, offering impressive landscapes and a relaxed atmosphere. One of the longest coastal stretches in the province.',
-        latitude: 18.3500,
-        longitude: -69.3000,
-        imageUrls: [],
-        rating: 4.6,
-        reviewCount: 0,
-        currentCondition: 'Excelente',
-        amenities: {
-          'baños': true,
-          'duchas': false,
-          'parking': true,
-          'restaurantes': true,
-          'sombrillas': true,
-          'salvavidas': false,
-        },
-        activities: ['Natación', 'Caminata', 'Fotografía', 'Ecoturismo'],
       ),
       Beach(
         id: '50',

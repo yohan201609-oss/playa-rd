@@ -2,18 +2,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Repositorio de Mapbox
-        maven {
-            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
-            credentials {
-                username = "mapbox"
-                password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN")
-                    .getOrElse(System.getenv("MAPBOX_DOWNLOADS_TOKEN") ?: "dummy_token")
-            }
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
     }
     
     // Configurar Java toolchain para usar Java 17 en todos los proyectos

@@ -5,7 +5,7 @@ import '../models/beach.dart';
 
 /// Servicio para buscar y obtener playas usando Google Places API
 class GooglePlacesService {
-  // Obtener la API key
+  // Obtener la API key desde .env
   static String? get _apiKey {
     // Intentar desde .env con diferentes nombres
     final envKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? 
@@ -15,12 +15,18 @@ class GooglePlacesService {
     if (envKey != null && envKey.trim().isNotEmpty) {
       final cleanKey = envKey.trim();
       if (cleanKey.length > 30 && cleanKey.startsWith('AIzaSy')) {
+        print('✅ Usando Google Maps API Key desde .env');
         return cleanKey;
+      } else {
+        print('⚠️ API Key en .env no tiene formato válido');
       }
+    } else {
+      print('⚠️ GOOGLE_MAPS_API_KEY no encontrada en .env');
+      print('🔍 Variables disponibles en .env: ${dotenv.env.keys.join(", ")}');
     }
     
-    // Fallback al AndroidManifest
-    return 'AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus';
+    // No hay fallback - la key debe estar en .env
+    return null;
   }
 
   /// Buscar playas en República Dominicana usando Places API

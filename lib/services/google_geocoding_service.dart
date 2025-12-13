@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Servicio para obtener coordenadas precisas usando Google Geocoding API
 class GoogleGeocodingService {
-  // Obtener la API key desde variables de entorno o usar la del AndroidManifest
+  // Obtener la API key desde variables de entorno
   static String? get _apiKey {
     try {
       // Intentar diferentes nombres de variables comunes
@@ -37,7 +37,7 @@ class GoogleGeocodingService {
         // Limpiar espacios en blanco
         final cleanKey = envKey.trim();
         if (cleanKey.isNotEmpty) {
-          print('🔑 Usando API Key desde .env (variable: $keyName, ${cleanKey.length} caracteres)');
+          print('✅ Usando Google Maps API Key desde .env (variable: $keyName, ${cleanKey.length} caracteres)');
           return cleanKey;
         } else {
           print('⚠️ API Key en .env está vacía o contiene solo espacios');
@@ -51,9 +51,9 @@ class GoogleGeocodingService {
       print('⚠️ Error accediendo a dotenv: $e');
     }
     
-    // Si no está en .env, usar la key del AndroidManifest (hardcoded como fallback)
-    print('⚠️ Usando API Key del AndroidManifest como fallback');
-    return 'AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus';
+    // No hay fallback - la key debe estar en .env
+    print('❌ Google Maps API Key no disponible. Asegúrate de configurar GOOGLE_MAPS_API_KEY en .env');
+    return null;
   }
   
   // Método público para verificar si la API key está configurada

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permisos necesarios para Mapbox -->
+    <!-- Permisos necesarios para la aplicación -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -46,9 +46,12 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <!-- Google Maps API Key -->
+        <!-- IMPORTANTE: Esta key debe coincidir con GOOGLE_MAPS_API_KEY en el archivo .env -->
+        <!-- Esta key es usada por el Google Maps SDK nativo para mostrar mapas -->
+        <!-- Para actualizarla, modifica el valor aquí para que coincida con .env -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBnUosAkC0unrpG6zCfL9JbFTrhW4VKHus" />
+            android:value="AIzaSyCFt87v-m5pkKXVyPNLZ_EPCtxJH_p810Q" />
         
         <!-- AdMob App ID -->
         <meta-data

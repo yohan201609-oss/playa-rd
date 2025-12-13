@@ -15,7 +15,7 @@ Aplicación completa para descubrir y reportar las mejores playas de República 
 ## 🎯 Características Implementadas
 
 - [x] Lista de playas (20 playas reales de RD)
-- [x] Mapa interactivo con Mapbox
+- [x] Mapa interactivo con Google Maps
 - [x] Detalles de playa
 - [x] Sistema de reportes
 - [x] Perfil de usuario
@@ -34,14 +34,13 @@ cd D:\playas_rd_flutter
 flutter pub get
 ```
 
-### 2. Configurar Mapbox
+### 2. Configurar Google Maps
 
-✅ **Token de Mapbox YA CONFIGURADO** en todas las plataformas:
+✅ **Google Maps API Key configurada** en:
+- ✅ `.env` como `GOOGLE_MAPS_API_KEY`
 - ✅ Android (`android/app/src/main/AndroidManifest.xml`)
-- ✅ iOS (`ios/Runner/Info.plist`)
-- ✅ Web (`web/index.html`)
 
-El mapa está listo para funcionar en todas las plataformas sin configuración adicional.
+**Nota:** Asegúrate de tener configurada la API Key de Google Maps en el archivo `.env` en la raíz del proyecto.
 
 ### 3. Firebase - ¡YA CONFIGURADO! 🔥
 
@@ -114,8 +113,8 @@ dependencies:
   cloud_firestore: ^5.4.4
   firebase_storage: ^12.3.4
   
-  # Mapbox (en lugar de Google Maps)
-  mapbox_maps_flutter: ^2.3.0
+  # Maps - Google Maps
+  google_maps_flutter: ^2.5.3
   
   # Location
   geolocator: ^13.0.1
@@ -144,7 +143,7 @@ lib/
 │   └── beach.dart                 # Beach, BeachReport, AppUser
 ├── screens/                       # Pantallas
 │   ├── home_screen.dart           # Lista de playas con búsqueda/filtros
-│   ├── map_screen.dart            # Mapa con Mapbox
+│   ├── map_screen.dart            # Mapa con Google Maps
 │   ├── beach_detail_screen.dart   # Detalles completos de playa
 │   ├── report_screen.dart         # Formulario de reportes
 │   ├── profile_screen.dart        # Perfil de usuario
@@ -226,7 +225,7 @@ La app incluye **20 playas reales de República Dominicana** con coordenadas GPS
 - Ordenar por calificación, nombre o condición
 
 ### Mapa Interactivo
-- Visualiza todas las playas en un mapa de Mapbox
+- Visualiza todas las playas en un mapa de Google Maps
 - Markers con código de colores según condición
 - Tap en marker para ver información rápida
 - Navegación a detalles completos

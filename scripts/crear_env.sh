@@ -34,3 +34,4 @@ else
     echo "✅ Archivo .env ya existe."
 fi
 
+
