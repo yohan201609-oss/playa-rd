@@ -11,7 +11,7 @@ class AdMobService {
   bool _initialized = false;
   // Usar anuncios de producción por defecto
   // Cambiar a true solo si necesitas probar con anuncios de prueba
-  bool _isTestMode = false; // false = producción, true = test
+  bool _isTestMode = true; // false = producción, true = test
 
   // IDs de anuncios de prueba (para desarrollo) - Funcionan en todas las plataformas
   static const String _testBannerAdUnitId =

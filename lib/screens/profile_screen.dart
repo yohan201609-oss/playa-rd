@@ -15,6 +15,7 @@ import 'visited_beaches_screen.dart';
 import 'my_reports_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
+import 'test_notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,7 +43,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _interstitialAdHelper?.loadInterstitialAd();
   }
 
-  Future<void> _showInterstitialAdAndNavigate(VoidCallback navigationCallback) async {
+  Future<void> _showInterstitialAdAndNavigate(
+    VoidCallback navigationCallback,
+  ) async {
     if (_interstitialAdHelper?.isAdReady == true) {
       // Mostrar el anuncio y esperar a que se cierre
       final shown = await _interstitialAdHelper!.showInterstitialAd();
@@ -159,23 +162,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.black.withOpacity(0.5),
                             child: const Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                                 strokeWidth: 2,
                               ),
                             ),
                           )
                         : _isAvatarPressed
-                            ? Container(
-                                color: Colors.black.withOpacity(0.3),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        ? Container(
+                            color: Colors.black.withOpacity(0.3),
+                            child: const Center(
+                              child: Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                 ),
               // Botón de editar en la esquina inferior derecha
@@ -218,7 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     // Priorizar foto de Firestore (appUser), luego Firebase Auth (user)
-    final photoUrl = authProvider.appUser?.photoUrl ?? authProvider.user?.photoURL;
+    final photoUrl =
+        authProvider.appUser?.photoUrl ?? authProvider.user?.photoURL;
 
     if (photoUrl != null && photoUrl.isNotEmpty) {
       return ClipOval(
@@ -406,7 +412,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _showInterstitialAdAndNavigate(() {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HelpScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const HelpScreen(),
+                      ),
                     );
                   });
                 },
@@ -420,6 +428,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _showAboutDialog(context, l10n);
                 },
               ),
+              // ⚠️ SOLO PARA DESARROLLO - Eliminar en producción
+              if (const bool.fromEnvironment('dart.vm.product') == false)
+                _MenuItemData(
+                  icon: Icons.bug_report,
+                  title: '🧪 Prueba Notificaciones',
+                  subtitle: 'Pantalla de pruebas (solo desarrollo)',
+                  iconColor: Colors.purple,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TestNotificationsScreen(),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
           const SizedBox(height: 20),
@@ -524,7 +548,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _showInterstitialAdAndNavigate(() {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HelpScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const HelpScreen(),
+                      ),
                     );
                   });
                 },
@@ -619,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         Icon(icon, color: color, size: 32),
@@ -650,7 +676,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -740,7 +766,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSignupButton(BuildContext context, AppLocalizations l10n) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       width: double.infinity,
       height: 56,
@@ -808,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           builder: (context) {
             final theme = Theme.of(context);
             final isDark = theme.brightness == Brightness.dark;
-            
+
             return Container(
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
@@ -864,7 +890,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Container(
@@ -913,7 +939,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1114,12 +1140,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Mostrar diálogo para seleccionar foto de perfil
-  Future<void> _showPhotoPickerDialog(BuildContext context, AuthProvider authProvider) async {
+  Future<void> _showPhotoPickerDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
     final ImageSource? source = await showDialog<ImageSource>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1138,20 +1169,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppColors.primary, size: 32),
+                leading: const Icon(
+                  Icons.camera_alt,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
                 title: const Text('Tomar foto'),
                 subtitle: const Text('Usar la cámara'),
-                onTap: () => Navigator.of(dialogContext).pop(ImageSource.camera),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () =>
+                    Navigator.of(dialogContext).pop(ImageSource.camera),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: AppColors.primary.withOpacity(0.05),
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppColors.primary, size: 32),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
                 title: const Text('Seleccionar de galería'),
                 subtitle: const Text('Elegir una foto existente'),
-                onTap: () => Navigator.of(dialogContext).pop(ImageSource.gallery),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () =>
+                    Navigator.of(dialogContext).pop(ImageSource.gallery),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: AppColors.primary.withOpacity(0.05),
               ),
             ],
@@ -1186,7 +1231,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al ${source == ImageSource.camera ? 'tomar' : 'seleccionar'} la imagen: $e'),
+            content: Text(
+              'Error al ${source == ImageSource.camera ? 'tomar' : 'seleccionar'} la imagen: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -1195,7 +1242,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Subir foto de perfil
-  Future<void> _uploadProfilePhoto(File imageFile, AuthProvider authProvider) async {
+  Future<void> _uploadProfilePhoto(
+    File imageFile,
+    AuthProvider authProvider,
+  ) async {
     if (!mounted) return;
 
     setState(() {
@@ -1218,7 +1268,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Error al actualizar la foto de perfil'),
+            content: Text(
+              authProvider.errorMessage ??
+                  'Error al actualizar la foto de perfil',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../firebase_options.dart';
@@ -89,6 +91,61 @@ class AppInitializer {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+
+      // Configurar App Check con Debug Token para desarrollo
+      if (kDebugMode) {
+        try {
+          await FirebaseAppCheck.instance.activate(
+            androidProvider: AndroidProvider.debug,
+            appleProvider: AppleProvider.debug, // Esto generará un debug token
+          );
+
+          // Intentar obtener el debug token después de un pequeño delay
+          Future.delayed(const Duration(seconds: 1), () async {
+            try {
+              final token = await FirebaseAppCheck.instance.getToken();
+              if (token != null) {
+                // Remover saltos de línea del token para mostrarlo en una sola línea
+                final cleanToken = token.replaceAll('\n', '').replaceAll(' ', '');
+                print('');
+                print('🔑 ==========================================');
+                print('🔑 TOKEN DE APP CHECK (NO es para notificaciones)');
+                print('🔑 ==========================================');
+                print('🔑 PROPÓSITO: Validar que la app es legítima');
+                print('🔑 DÓNDE USAR: Firebase Console → App Check → Debug Tokens');
+                print('🔑 ==========================================');
+                print('🔑 TOKEN APP CHECK (copia completo):');
+                print(cleanToken);
+                print('🔑 ==========================================');
+                print('⚠️ INSTRUCCIONES:');
+                print('⚠️ 1. Copia el token completo de arriba');
+                print('⚠️ 2. Ve a Firebase Console → App Check → Apps → Playas RD iOS');
+                print('⚠️ 3. Menú (⋮) → "Administrar tokens de depuración"');
+                print('⚠️ 4. Pega y guarda el token');
+                print('');
+                print('❌ ESTE TOKEN NO SIRVE PARA ENVIAR NOTIFICACIONES');
+                print('✅ Para notificaciones, busca el token con emoji 📱 más abajo');
+                print('');
+              }
+            } catch (e) {
+              print('⚠️ No se pudo obtener debug token: $e');
+            }
+          });
+        } catch (e) {
+          print('⚠️ Error configurando App Check (continuando sin él): $e');
+        }
+      } else {
+        // Para producción, usar DeviceCheck
+        try {
+          await FirebaseAppCheck.instance.activate(
+            androidProvider: AndroidProvider.playIntegrity,
+            appleProvider: AppleProvider.deviceCheck,
+          );
+        } catch (e) {
+          print('⚠️ Error configurando App Check para producción: $e');
+        }
+      }
+
       print('✅ Firebase inicializado correctamente');
       return true;
     } catch (e) {

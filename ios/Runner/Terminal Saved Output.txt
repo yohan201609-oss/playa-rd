@@ -1,0 +1,12 @@
+Last login: Tue Dec  2 08:22:47 on ttys000
+gabrielsaladin@Gabriels-MacBook-Pro ~ % cd playas-rd
+cd: no such file or directory: playas-rd
+gabrielsaladin@Gabriels-MacBook-Pro ~ % cd playa-rd
+cd: no such file or directory: playa-rd
+gabrielsaladin@Gabriels-MacBook-Pro ~ % cd desktop
+gabrielsaladin@Gabriels-MacBook-Pro desktop % cd playa-rd
+gabrielsaladin@Gabriels-MacBook-Pro playa-rd % touch .env
+gabrielsaladin@Gabriels-MacBook-Pro playa-rd % touch .env
+gabrielsaladin@Gabriels-MacBook-Pro playa-rd % echo .env
+.env
+gabrielsaladin@Gabriels-MacBook-Pro playa-rd %touch .env

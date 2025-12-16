@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import '../models/beach.dart';
 import '../services/firebase_service.dart';
@@ -11,6 +12,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   Function(List<String>)? onFavoritesChanged;
+  bool _fcmTokenListenerSetup = false;
 
   User? get user => _user;
   AppUser? get appUser => _appUser;
@@ -19,11 +21,16 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _user != null;
 
   AuthProvider() {
+    // Configurar listener de token FCM al inicializar
+    _setupFCMTokenListener();
+    
     // Escuchar cambios de autenticación
     FirebaseService.authStateChanges.listen((User? user) {
       _user = user;
       if (user != null) {
         _loadUserData();
+        // Reconfigurar listener cuando hay un usuario autenticado
+        _setupFCMTokenListener();
       } else {
         _appUser = null;
         // No limpiar favoritos al cerrar sesión - se mantendrán en la UI
@@ -62,14 +69,237 @@ class AuthProvider with ChangeNotifier {
 
   // Guardar FCM token para recibir notificaciones push
   Future<void> _saveFCMToken() async {
+    if (_user == null) return;
+    
     try {
-      final fcmToken = await NotificationService().fcmToken;
+      final notificationService = NotificationService();
+      final firebaseMessaging = FirebaseMessaging.instance;
+      
+      // Asegurarse de que el NotificationService esté inicializado
+      try {
+        await notificationService.initialize();
+      } catch (e) {
+        print('⚠️ Error inicializando NotificationService: $e');
+      }
+      
+      // En iOS, verificar permisos antes de intentar obtener tokens
+      if (Platform.isIOS) {
+        try {
+          final settings = await firebaseMessaging.getNotificationSettings();
+          if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+              settings.authorizationStatus != AuthorizationStatus.provisional) {
+            print('⚠️ Permisos de notificación no concedidos. Estado: ${settings.authorizationStatus}');
+            print('ℹ️ Solicitando permisos...');
+            final newSettings = await firebaseMessaging.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+              provisional: false,
+            );
+            if (newSettings.authorizationStatus != AuthorizationStatus.authorized &&
+                newSettings.authorizationStatus != AuthorizationStatus.provisional) {
+              print('❌ Permisos de notificación denegados. El token FCM no estará disponible.');
+              return;
+            }
+            print('✅ Permisos de notificación concedidos');
+          }
+        } catch (e) {
+          print('⚠️ Error verificando permisos: $e');
+        }
+      }
+      
+      // Intentar obtener el token inmediatamente desde el servicio
+      String? fcmToken = notificationService.fcmToken;
+      
+      // En iOS, primero necesitamos asegurarnos de que el token APNS esté disponible
+      if (Platform.isIOS && fcmToken == null) {
+        print('🍎 iOS detectado: esperando token APNS antes de obtener token FCM...');
+        String? apnsToken;
+        
+        // Intentar obtener el token APNS primero (con más intentos y delays más largos)
+        for (int i = 0; i < 15; i++) {
+          try {
+            apnsToken = await firebaseMessaging.getAPNSToken();
+            if (apnsToken != null) {
+              print('✅ Token APNS obtenido después de ${i + 1} intento(s)');
+              break;
+            }
+          } catch (e) {
+            // El token APNS aún no está disponible, continuar esperando
+            if (i % 3 == 0) {
+              print('⏳ Esperando token APNS... (intento ${i + 1})');
+            }
+          }
+          
+          // Esperar antes del siguiente intento (delays más largos)
+          if (i < 14) {
+            final delaySeconds = i < 5 ? 2 : (i < 10 ? 3 : 5);
+            await Future.delayed(Duration(seconds: delaySeconds));
+          }
+        }
+        
+        if (apnsToken == null) {
+          print('⚠️ Token APNS no disponible después de 15 intentos');
+          print('ℹ️ Esto puede ser normal si la app acaba de iniciarse. El token se obtendrá más tarde.');
+        }
+      }
+      
+      // Si no está disponible, intentar obtenerlo directamente desde FirebaseMessaging
+      if (fcmToken == null) {
+        try {
+          fcmToken = await firebaseMessaging.getToken();
+        } catch (e) {
+          final errorMsg = e.toString();
+          if (errorMsg.contains('apns-token-not-set')) {
+            print('⏳ Token APNS aún no configurado, continuando con reintentos...');
+          } else {
+            print('⚠️ No se pudo obtener token FCM directamente: $e');
+          }
+        }
+      }
+      
+      // Si aún no está disponible, intentar con delays (especialmente importante en iOS)
+      // En iOS, el token FCM depende del token APNS que puede tardar en estar disponible
+      if (fcmToken == null) {
+        print('⏳ Token FCM no disponible aún, intentando con delays...');
+        for (int i = 0; i < 10; i++) {
+          // En iOS, esperar más tiempo entre intentos
+          final delaySeconds = Platform.isIOS ? (i < 5 ? 3 : 5) : (i + 1);
+          await Future.delayed(Duration(seconds: delaySeconds));
+          
+          // En iOS, verificar token APNS antes de cada intento
+          if (Platform.isIOS) {
+            try {
+              final apnsToken = await firebaseMessaging.getAPNSToken();
+              if (apnsToken == null) {
+                if (i % 2 == 0) {
+                  print('⏳ Esperando token APNS... (intento ${i + 1})');
+                }
+                continue; // Continuar esperando si el token APNS no está disponible
+              } else {
+                if (i > 0) {
+                  print('✅ Token APNS disponible, intentando obtener token FCM...');
+                }
+              }
+            } catch (e) {
+              // Continuar esperando
+              continue;
+            }
+          }
+          
+          try {
+            fcmToken = await firebaseMessaging.getToken();
+            if (fcmToken != null) {
+              print('✅ Token FCM obtenido después de ${i + 1} intento(s)');
+              break;
+            }
+          } catch (e) {
+            final errorMsg = e.toString();
+            if (errorMsg.contains('apns-token-not-set')) {
+              if (i % 2 == 0) {
+                print('⏳ Token APNS aún no configurado, esperando... (intento ${i + 1})');
+              }
+            } else {
+              print('⚠️ Intento ${i + 1} fallido: $e');
+            }
+          }
+        }
+      }
+      
       if (fcmToken != null && _user != null) {
         await FirebaseService.saveFCMToken(_user!.uid, fcmToken);
         print('📱 FCM Token guardado para usuario ${_user!.email}');
+      } else {
+        print('⚠️ No se pudo obtener token FCM después de varios intentos');
+        print('ℹ️ El token se guardará automáticamente cuando esté disponible mediante el listener');
+        // Configurar listener para cuando el token esté disponible
+        _setupFCMTokenListener();
       }
     } catch (e) {
       print('⚠️ Error guardando FCM token: $e');
+      // Configurar listener para cuando el token esté disponible
+      _setupFCMTokenListener();
+    }
+  }
+  
+  // Configurar listener para cuando el token FCM esté disponible
+  void _setupFCMTokenListener() {
+    // Solo configurar una vez
+    if (_fcmTokenListenerSetup) return;
+    
+    // Escuchar cambios en el token FCM (se dispara cuando el token está disponible o se actualiza)
+    try {
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        if (_user != null && newToken.isNotEmpty) {
+          try {
+            await FirebaseService.saveFCMToken(_user!.uid, newToken);
+            print('📱 FCM Token guardado (desde listener) para usuario ${_user!.email}');
+          } catch (e) {
+            print('⚠️ Error guardando FCM token desde listener: $e');
+          }
+        }
+      });
+      
+      // También intentar obtener el token periódicamente si no está disponible (especialmente en iOS)
+      if (Platform.isIOS) {
+        _periodicallyCheckFCMToken();
+      }
+      
+      _fcmTokenListenerSetup = true;
+      print('✅ Listener de token FCM configurado');
+    } catch (e) {
+      print('⚠️ Error configurando listener de token FCM: $e');
+    }
+  }
+  
+  // Verificar periódicamente el token FCM en iOS (cuando el token APNS puede tardar en estar disponible)
+  void _periodicallyCheckFCMToken() {
+    if (_user == null) return;
+    
+    // Intentar obtener el token después de delays progresivos
+    Future.delayed(Duration(seconds: 10), () async {
+      if (_user == null) return;
+      await _tryGetFCMTokenOnce();
+    });
+    
+    Future.delayed(Duration(seconds: 30), () async {
+      if (_user == null) return;
+      await _tryGetFCMTokenOnce();
+    });
+    
+    Future.delayed(Duration(seconds: 60), () async {
+      if (_user == null) return;
+      await _tryGetFCMTokenOnce();
+    });
+  }
+  
+  // Intentar obtener el token FCM una vez
+  Future<void> _tryGetFCMTokenOnce() async {
+    if (_user == null) return;
+    
+    try {
+      final firebaseMessaging = FirebaseMessaging.instance;
+      
+      // En iOS, verificar token APNS primero
+      if (Platform.isIOS) {
+        try {
+          final apnsToken = await firebaseMessaging.getAPNSToken();
+          if (apnsToken == null) {
+            return; // Token APNS aún no disponible
+          }
+        } catch (e) {
+          return; // Error obteniendo token APNS
+        }
+      }
+      
+      // Intentar obtener token FCM
+      final fcmToken = await firebaseMessaging.getToken();
+      if (fcmToken != null && _user != null) {
+        await FirebaseService.saveFCMToken(_user!.uid, fcmToken);
+        print('📱 FCM Token guardado (verificación periódica) para usuario ${_user!.email}');
+      }
+    } catch (e) {
+      // Silenciar errores en verificaciones periódicas
     }
   }
   

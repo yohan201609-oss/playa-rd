@@ -149,9 +149,93 @@ class NotificationService {
       // Firebase Messaging no está completamente soportado en Windows
       // Solo funciona en Android, iOS y Web
       if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+        // En iOS, primero necesitamos obtener el token APNS
+        if (Platform.isIOS) {
+          try {
+            final apnsToken = await _firebaseMessaging.getAPNSToken();
+            if (apnsToken != null) {
+              print('✅ Token APNS obtenido: $apnsToken');
+            } else {
+              print(
+                '⚠️ Token APNS no disponible aún. Se intentará obtener más tarde.',
+              );
+              // Intentar obtener el token APNS después de un delay
+              Future.delayed(const Duration(seconds: 2), () async {
+                final delayedApnsToken = await _firebaseMessaging
+                    .getAPNSToken();
+                if (delayedApnsToken != null) {
+                  print('✅ Token APNS obtenido (retrasado): $delayedApnsToken');
+                }
+              });
+            }
+          } catch (e) {
+            print('⚠️ Error obteniendo token APNS: $e');
+          }
+        }
+
         // Obtener token FCM
-        _fcmToken = await _firebaseMessaging.getToken();
-        print('📱 Token FCM: $_fcmToken');
+        try {
+          _fcmToken = await _firebaseMessaging.getToken();
+          if (_fcmToken != null) {
+            print('');
+            print('📱 ==========================================');
+            print('📱 TOKEN FCM PARA NOTIFICACIONES PUSH');
+            print('📱 ==========================================');
+            print('📱 PROPÓSITO: Enviar notificaciones push al dispositivo');
+            print(
+              '📱 DÓNDE USAR: Firebase Console → Cloud Messaging → Enviar mensaje de prueba',
+            );
+            print('📱 ==========================================');
+            print('📱 TOKEN FCM (copia este para notificaciones):');
+            print(_fcmToken);
+            print('📱 ==========================================');
+            print('✅ INSTRUCCIONES PARA PROBAR NOTIFICACIONES:');
+            print('✅ 1. Copia el token FCM de arriba');
+            print('✅ 2. Ve a Firebase Console → Cloud Messaging');
+            print('✅ 3. Haz clic en "Enviar mensaje de prueba"');
+            print('✅ 4. Pega el token FCM en el campo "Token FCM"');
+            print('✅ 5. Escribe título y mensaje, luego "Probar"');
+            print('');
+            print(
+              '❌ NO confundas este token con el token de App Check (emoji 🔑)',
+            );
+            print('');
+          } else {
+            print(
+              '⚠️ Token FCM no disponible. Esto puede ser normal si el token APNS no está configurado.',
+            );
+          }
+        } catch (e) {
+          print('⚠️ Error obteniendo token FCM: $e');
+          // Intentar de nuevo después de un delay
+          Future.delayed(const Duration(seconds: 3), () async {
+            try {
+              _fcmToken = await _firebaseMessaging.getToken();
+              if (_fcmToken != null) {
+                print('');
+                print('📱 ==========================================');
+                print('📱 TOKEN FCM OBTENIDO (retrasado)');
+                print('📱 ==========================================');
+                print(
+                  '📱 PROPÓSITO: Enviar notificaciones push al dispositivo',
+                );
+                print(
+                  '📱 DÓNDE USAR: Firebase Console → Cloud Messaging → Enviar mensaje de prueba',
+                );
+                print('📱 ==========================================');
+                print('📱 TOKEN FCM (copia este para notificaciones):');
+                print(_fcmToken);
+                print('📱 ==========================================');
+                print(
+                  '✅ Copia este token para probar notificaciones desde Firebase Console',
+                );
+                print('');
+              }
+            } catch (e2) {
+              print('⚠️ Error obteniendo token FCM (intento retrasado): $e2');
+            }
+          });
+        }
 
         // Escuchar cambios en el token
         _firebaseMessaging.onTokenRefresh.listen((newToken) {
@@ -417,5 +501,272 @@ class NotificationService {
       // En Windows/Linux/Mac, asumimos que las notificaciones locales están disponibles
       return true;
     }
+  }
+
+  // ========================================
+  // MÉTODOS PARA OBTENER TOKEN FCM RÁPIDO
+  // ========================================
+
+  /// Obtener token FCM de forma rápida (especialmente útil en iOS)
+  /// Intenta obtener el token de forma más agresiva con múltiples intentos
+  /// Retorna el token si está disponible, o null si no se puede obtener
+  Future<String?> getFCMTokenFast({int maxAttempts = 10}) async {
+    if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS) {
+      print('⚠️ FCM no disponible en esta plataforma');
+      return null;
+    }
+
+    print('🚀 Intentando obtener token FCM rápidamente...');
+
+    // Paso 1: Verificar permisos primero (especialmente importante en iOS)
+    if (Platform.isIOS) {
+      try {
+        final settings = await _firebaseMessaging.getNotificationSettings();
+        print('📋 Estado de permisos: ${settings.authorizationStatus}');
+
+        if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+            settings.authorizationStatus != AuthorizationStatus.provisional) {
+          print('⚠️ Permisos de notificación no concedidos');
+          print('💡 Solicitando permisos...');
+
+          final newSettings = await _firebaseMessaging.requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          );
+
+          if (newSettings.authorizationStatus !=
+                  AuthorizationStatus.authorized &&
+              newSettings.authorizationStatus !=
+                  AuthorizationStatus.provisional) {
+            print(
+              '❌ Permisos denegados. No se puede obtener token FCM sin permisos.',
+            );
+            return null;
+          }
+
+          print(
+            '✅ Permisos concedidos, esperando un momento para que el sistema procese...',
+          );
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      } catch (e) {
+        print('⚠️ Error verificando permisos: $e');
+      }
+    }
+
+    // Paso 2: En iOS, obtener el token APNS primero (con más paciencia)
+    if (Platform.isIOS) {
+      String? apnsToken;
+      print('🍎 iOS detectado: obteniendo token APNS primero...');
+
+      // Intentar más veces con delays progresivamente más largos
+      for (int i = 0; i < maxAttempts; i++) {
+        try {
+          apnsToken = await _firebaseMessaging.getAPNSToken();
+          if (apnsToken != null) {
+            print('✅ Token APNS obtenido en intento ${i + 1}: $apnsToken');
+            break;
+          }
+
+          // Esperar con delays progresivos: 0.5s, 1s, 1.5s, 2s, etc.
+          if (i < maxAttempts - 1) {
+            final delayMs = 500 + (i * 500); // 500ms, 1000ms, 1500ms...
+            print(
+              '⏳ Esperando token APNS... (intento ${i + 2}/${maxAttempts})',
+            );
+            await Future.delayed(Duration(milliseconds: delayMs));
+          }
+        } catch (e) {
+          print('⚠️ Error obteniendo token APNS (intento ${i + 1}): $e');
+          if (i < maxAttempts - 1) {
+            final delayMs = 500 + (i * 500);
+            await Future.delayed(Duration(milliseconds: delayMs));
+          }
+        }
+      }
+
+      if (apnsToken == null) {
+        print('');
+        print('⚠️ ==========================================');
+        print('⚠️ NO SE PUDO OBTENER TOKEN APNS');
+        print('⚠️ ==========================================');
+        print('⚠️ Posibles causas:');
+        print('⚠️ 1. Permisos de notificación no concedidos');
+        print('⚠️ 2. App acaba de iniciar (espera unos segundos)');
+        print('⚠️ 3. Problema con configuración APNS en Firebase');
+        print('⚠️ 4. Entitlement "aps-environment" no configurado en Xcode');
+        print('⚠️ ==========================================');
+        print('💡 Intenta:');
+        print('💡 - Verificar permisos en Configuración del dispositivo');
+        print('💡 - Esperar 10-15 segundos después de iniciar la app');
+        print('💡 - Verificar configuración APNS en Firebase Console');
+        print('💡 - Revisar Runner.entitlements en Xcode');
+        print('');
+
+        // Aún así intentar obtener FCM, a veces funciona sin APNS visible
+        print('💡 Intentando obtener token FCM de todas formas...');
+      } else {
+        // Esperar un momento después de obtener APNS antes de intentar FCM
+        print('⏳ Esperando un momento para que FCM procese el token APNS...');
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    }
+
+    // Paso 3: Intentar obtener el token FCM (con más paciencia también)
+    print('📱 Intentando obtener token FCM...');
+    for (int i = 0; i < maxAttempts; i++) {
+      try {
+        final token = await _firebaseMessaging.getToken();
+        if (token != null) {
+          _fcmToken = token;
+          print('');
+          print('✅ ==========================================');
+          print('✅ TOKEN FCM OBTENIDO RÁPIDAMENTE');
+          print('✅ ==========================================');
+          print('✅ Token: $token');
+          print('✅ Intentos: ${i + 1}');
+          print('✅ ==========================================');
+          print('');
+          return token;
+        }
+
+        // Esperar con delays progresivos
+        if (i < maxAttempts - 1) {
+          final delayMs = 500 + (i * 500);
+          print('⏳ Esperando token FCM... (intento ${i + 2}/${maxAttempts})');
+          await Future.delayed(Duration(milliseconds: delayMs));
+        }
+      } catch (e) {
+        final errorMsg = e.toString();
+        print('⚠️ Error obteniendo token FCM (intento ${i + 1}): $errorMsg');
+
+        // Si el error es específico de APNS, dar más tiempo
+        if (errorMsg.contains('apns-token-not-set') && i < maxAttempts - 1) {
+          print('💡 Token APNS aún no disponible, esperando más tiempo...');
+          final delayMs = 1000 + (i * 500); // Delays más largos para este caso
+          await Future.delayed(Duration(milliseconds: delayMs));
+        } else if (i < maxAttempts - 1) {
+          final delayMs = 500 + (i * 500);
+          await Future.delayed(Duration(milliseconds: delayMs));
+        }
+      }
+    }
+
+    print('');
+    print('❌ ==========================================');
+    print('❌ NO SE PUDO OBTENER TOKEN FCM');
+    print('❌ ==========================================');
+    print('❌ Se intentó $maxAttempts veces sin éxito');
+    print('');
+    print('💡 Soluciones sugeridas:');
+    print('💡 1. Verifica que los permisos de notificación estén concedidos');
+    print(
+      '💡 2. Espera 15-20 segundos después de iniciar la app y vuelve a intentar',
+    );
+    print('💡 3. Verifica la configuración APNS en Firebase Console');
+    print(
+      '💡 4. Revisa que Runner.entitlements tenga "aps-environment" configurado',
+    );
+    print('💡 5. El token se obtendrá automáticamente cuando esté disponible');
+    print('');
+    return null;
+  }
+
+  // ========================================
+  // MÉTODOS PARA PROBAR NOTIFICACIONES EN BACKGROUND/KILLED
+  // ========================================
+
+  /// Obtener instrucciones para probar notificaciones en background o app muerta
+  /// Retorna un mensaje con instrucciones detalladas
+  String getBackgroundTestInstructions() {
+    return '''
+📋 INSTRUCCIONES PARA PROBAR NOTIFICACIONES EN BACKGROUND/APP MUERTA:
+
+1️⃣ OBTENER TOKEN FCM:
+   - Usa el botón "Obtener Token FCM Rápido" arriba
+   - O copia el token que aparece en los logs
+
+2️⃣ ENVIAR NOTIFICACIÓN DESDE FIREBASE CONSOLE:
+   - Ve a Firebase Console → Cloud Messaging
+   - Haz clic en "Enviar mensaje de prueba"
+   - Pega el token FCM
+   - Título: "Prueba Background"
+   - Texto: "Esta es una prueba de notificación"
+   - Haz clic en "Probar"
+
+3️⃣ PROBAR EN DIFERENTES ESTADOS:
+
+   📱 APP EN PRIMER PLANO:
+   - Deberías ver la notificación en la app
+   - Revisa los logs: "📨 Mensaje recibido en primer plano"
+
+   📱 APP EN SEGUNDO PLANO:
+   - Minimiza la app (no la cierres)
+   - Envía la notificación
+   - Deberías ver la notificación en el centro de notificaciones
+   - Al tocar, la app se abre
+   - Revisa los logs: "📨 Notificación tocada (app en segundo plano)"
+
+   📱 APP CERRADA/MUERTA:
+   - Cierra completamente la app (swipe up en iOS)
+   - Envía la notificación
+   - Deberías ver la notificación en el centro de notificaciones
+   - Al tocar, la app se abre
+   - Revisa los logs: "📨 App abierta desde notificación"
+
+4️⃣ VERIFICAR LOGS:
+   - Abre Xcode → Window → Devices and Simulators
+   - Selecciona tu dispositivo
+   - Revisa los logs para ver qué estado detectó la app
+
+⚠️ IMPORTANTE:
+   - Las notificaciones NO funcionan en el simulador iOS
+   - Debes usar un dispositivo físico
+   - Asegúrate de tener permisos de notificación concedidos
+''';
+  }
+
+  /// Probar notificación simulada para background/killed state
+  /// Muestra instrucciones y el token FCM para usar en Firebase Console
+  Future<Map<String, dynamic>> prepareBackgroundTest() async {
+    final token = await getFCMTokenFast();
+    final enabled = await areNotificationsEnabled();
+
+    return {
+      'token': token,
+      'notificationsEnabled': enabled,
+      'instructions': getBackgroundTestInstructions(),
+      'ready': token != null && enabled,
+    };
+  }
+
+  /// Verificar estado de la app para debugging de notificaciones
+  Future<Map<String, dynamic>> getNotificationDebugInfo() async {
+    final token = _fcmToken ?? await getFCMTokenFast();
+    final enabled = await areNotificationsEnabled();
+
+    String? apnsToken;
+    if (Platform.isIOS) {
+      try {
+        apnsToken = await _firebaseMessaging.getAPNSToken();
+      } catch (e) {
+        print('⚠️ Error obteniendo token APNS para debug: $e');
+      }
+    }
+
+    return {
+      'fcmToken': token,
+      'apnsToken': apnsToken,
+      'notificationsEnabled': enabled,
+      'platform': Platform.isIOS
+          ? 'iOS'
+          : (Platform.isAndroid ? 'Android' : 'Other'),
+      'initialized': _initialized,
+    };
   }
 }

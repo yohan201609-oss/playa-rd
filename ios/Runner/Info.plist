@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -20,57 +22,6 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>MBXAccessToken</key>
-	<string>pk.eyJ1Ijoiam9oYW4yNCIsImEiOiJjbWc0Znl6bnQxaGpjMndwdnlrdnBvbWFnIn0.E9INeyqu0C6gboE0V1ubpQ</string>
-	<!-- Permisos para notificaciones push -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
-	<!-- Permisos para cámara y galería -->
-	<key>NSCameraUsageDescription</key>
-	<string>Necesitamos acceso a la cámara para tomar fotos de las playas</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a la galería para seleccionar fotos de las playas</string>
-	<!-- Permisos para ubicación -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Necesitamos tu ubicación para mostrarte las playas cercanas en el mapa.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Permitimos el acceso a tu ubicación para mejorar tu experiencia.</string>
-	<!-- AdMob App ID -->
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2612958934827252~4943084922</string>
-	<!-- App ID de producción de AdMob -->
-	<!-- Google Sign-In Configuration -->
-	<key>GIDClientID</key>
-	<string>360714035813-j1q7j0elbuep49uurma34kkofh9v27i5.apps.googleusercontent.com</string>
-	<!-- URL Scheme para Google Sign-In -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -82,10 +33,48 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Descripción para solicitud de notificaciones -->
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-2612958934827252~4943084922</string>
+	<key>GIDClientID</key>
+	<string>360714035813-j1q7j0elbuep49uurma34kkofh9v27i5.apps.googleusercontent.com</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MBXAccessToken</key>
+	<string>pk.eyJ1Ijoiam9oYW4yNCIsImEiOiJjbWc0Znl6bnQxaGpjMndwdnlrdnBvbWFnIn0.E9INeyqu0C6gboE0V1ubpQ</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceso a la cámara para tomar fotos de las playas</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Permitimos el acceso a tu ubicación para mejorar tu experiencia.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para mostrarte las playas cercanas en el mapa.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceso a la galería para seleccionar fotos de las playas</string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
-	<!-- Habilitar notificaciones críticas (opcional) -->
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+		<string>audio</string>
+		<string>processing</string>
+		<string>location</string>
+		<string>external-accessory</string>
+		<string>push-to-talk</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>UIUserNotificationSettings</key>
 	<dict>
 		<key>UIUserNotificationTypeAlert</key>
