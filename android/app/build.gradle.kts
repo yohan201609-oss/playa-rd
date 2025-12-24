@@ -51,6 +51,11 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Especificar arquitecturas nativas soportadas
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
     }
 
     signingConfigs {
@@ -92,13 +97,10 @@ android {
         }
     }
     
-    // Deshabilitar stripping de símbolos en todas las librerías nativas
-    // Esto resuelve el error cuando la ruta del Android SDK contiene espacios
+    // Configuración de packaging para librerías nativas
     packaging {
         jniLibs {
             useLegacyPackaging = false
-            // Deshabilitar stripping para todas las librerías nativas
-            keepDebugSymbols += "**/*.so"
         }
     }
 }
@@ -110,29 +112,4 @@ flutter {
 dependencies {
     // Core library desugaring para flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-}
-
-// Deshabilitar stripping de símbolos para evitar error con rutas que contienen espacios
-// Esto se ejecuta después de que todas las tareas se hayan configurado
-afterEvaluate {
-    // Deshabilitar todas las tareas de stripping de símbolos
-    tasks.matching { 
-        it.name.contains("strip") || 
-        (it.name.contains("bundle") && it.name.contains("Release"))
-    }.configureEach {
-        // Para tareas de bundle, deshabilitar el stripping
-        if (it.name.contains("bundle")) {
-            doFirst {
-                // Configurar para no ejecutar stripping
-                println("ℹ️  Stripping de símbolos deshabilitado para evitar error con rutas que contienen espacios")
-            }
-        } else {
-            enabled = false
-        }
-    }
-    
-    // Configurar específicamente las tareas de bundle release
-    tasks.named("bundleRelease")?.doFirst {
-        println("ℹ️  Build de bundle release - Stripping deshabilitado")
-    }
 }

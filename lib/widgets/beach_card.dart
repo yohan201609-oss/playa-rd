@@ -6,6 +6,7 @@ import '../models/beach.dart';
 import '../utils/constants.dart';
 import '../providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/beach_provider.dart';
 import 'weather_card.dart';
 
 class BeachCard extends StatelessWidget {
@@ -26,7 +27,7 @@ class BeachCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: isDark ? 0 : 2,
@@ -43,27 +44,35 @@ class BeachCard extends StatelessWidget {
             // Información
             Padding(
               padding: EdgeInsets.all(
-                ResponsiveBreakpoints.isMobile(context) 
-                    ? 16.0 
-                    : ResponsiveBreakpoints.isTablet(context) 
-                        ? 20.0 
-                        : 24.0,
+                ResponsiveBreakpoints.isMobile(context)
+                    ? 16.0
+                    : ResponsiveBreakpoints.isTablet(context)
+                    ? 20.0
+                    : 24.0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTitle(context),
-                  SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12),
+                  SizedBox(
+                    height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12,
+                  ),
                   _buildLocation(context),
-                  SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12),
+                  SizedBox(
+                    height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12,
+                  ),
                   _buildRating(context),
-                  SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 12 : 16),
+                  SizedBox(
+                    height: ResponsiveBreakpoints.isMobile(context) ? 12 : 16,
+                  ),
                   // Widget compacto del clima
                   WeatherCompactCard(
                     latitude: beach.latitude,
                     longitude: beach.longitude,
                   ),
-                  SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 12 : 16),
+                  SizedBox(
+                    height: ResponsiveBreakpoints.isMobile(context) ? 12 : 16,
+                  ),
                   _buildActivities(context),
                 ],
               ),
@@ -75,12 +84,12 @@ class BeachCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    final imageHeight = ResponsiveBreakpoints.isMobile(context) 
-        ? 200.0 
-        : ResponsiveBreakpoints.isTablet(context) 
-            ? 220.0 
-            : 240.0;
-    
+    final imageHeight = ResponsiveBreakpoints.isMobile(context)
+        ? 200.0
+        : ResponsiveBreakpoints.isTablet(context)
+        ? 220.0
+        : 240.0;
+
     return Stack(
       children: [
         // Imagen principal
@@ -105,6 +114,20 @@ class BeachCard extends StatelessWidget {
                     );
                   },
                   errorWidget: (context, url, error) {
+                    // Si la URL es de Google Places y falló, intentar regenerarla
+                    if (url.contains(
+                      'maps.googleapis.com/maps/api/place/photo',
+                    )) {
+                      print('⚠️ URL de imagen expirada o inválida: $url');
+                      // Notificar al provider para regenerar las imágenes
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Provider.of<BeachProvider>(
+                          context,
+                          listen: false,
+                        ).regenerateExpiredImageUrls(beach);
+                      });
+                    }
+
                     final theme = Theme.of(context);
                     final isDark = theme.brightness == Brightness.dark;
                     return Container(
@@ -113,7 +136,9 @@ class BeachCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           Icons.beach_access,
-                          size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
+                          size: ResponsiveBreakpoints.isMobile(context)
+                              ? 64
+                              : 80,
                           color: theme.colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
@@ -130,7 +155,9 @@ class BeachCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           Icons.beach_access,
-                          size: ResponsiveBreakpoints.isMobile(context) ? 64 : 80,
+                          size: ResponsiveBreakpoints.isMobile(context)
+                              ? 64
+                              : 80,
                           color: theme.colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
@@ -146,7 +173,10 @@ class BeachCard extends StatelessWidget {
                 top: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: BeachConditions.getColor(beach.currentCondition),
                     borderRadius: BorderRadius.circular(20),
@@ -170,7 +200,10 @@ class BeachCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            BeachConditions.getLocalizedCondition(context, beach.currentCondition),
+                            BeachConditions.getLocalizedCondition(
+                              context,
+                              beach.currentCondition,
+                            ),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -189,7 +222,10 @@ class BeachCard extends StatelessWidget {
               top: 12,
               right: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey[600],
                   borderRadius: BorderRadius.circular(20),

@@ -78,14 +78,14 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
 
     try {
       print('📸 Cargando fotos para playa: ${beach.name} (ID: ${beach.id})');
-      
+
       // Obtener fotos de usuarios desde Firestore
       final userPhotos = await _fetchAllBeachPhotos(beach.id);
       print('📸 Fotos de usuarios encontradas: ${userPhotos.length}');
-      
+
       // Combinar fotos de beach.imageUrls con fotos de usuarios
       final allPhotos = <String>[];
-      
+
       // Primero agregar las fotos de la playa (si existen y son válidas)
       for (final photoUrl in beach.imageUrls) {
         if (_isValidImageUrl(photoUrl)) {
@@ -94,15 +94,17 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           print('⚠️ Foto original filtrada (no es imagen válida): $photoUrl');
         }
       }
-      print('📸 Fotos originales de la playa válidas: ${allPhotos.length} de ${beach.imageUrls.length}');
-      
+      print(
+        '📸 Fotos originales de la playa válidas: ${allPhotos.length} de ${beach.imageUrls.length}',
+      );
+
       // Luego agregar las fotos de usuarios (evitando duplicados y validando URLs)
       for (final photoUrl in userPhotos) {
         if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
           allPhotos.add(photoUrl);
         }
       }
-      
+
       // Si no hay suficientes fotos, intentar obtener de Google Maps
       if (allPhotos.isEmpty || allPhotos.length < 3) {
         print('📸 Pocas fotos encontradas, buscando en Google Maps...');
@@ -116,16 +118,18 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             longitude: beach.longitude,
             maxPhotos: 5,
           );
-          
-          print('📸 Fotos de Google Places encontradas: ${googlePhotos.length}');
-          
+
+          print(
+            '📸 Fotos de Google Places encontradas: ${googlePhotos.length}',
+          );
+
           // Agregar fotos de Google Places (evitando duplicados)
           for (final photoUrl in googlePhotos) {
             if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
               allPhotos.add(photoUrl);
             }
           }
-          
+
           // Si aún no hay fotos, generar imagen estática del mapa
           if (allPhotos.isEmpty) {
             print('📸 Generando imagen estática del mapa...');
@@ -136,9 +140,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               width: 800,
               height: 600,
               zoom: 15,
-              mapType: 'satellite', // Usar vista satelital para mostrar la playa
+              mapType:
+                  'satellite', // Usar vista satelital para mostrar la playa
             );
-            
+
             if (staticMapUrl.isNotEmpty) {
               allPhotos.add(staticMapUrl);
               print('✅ Imagen estática del mapa generada');
@@ -146,20 +151,21 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           }
         } catch (e) {
           print('⚠️ Error al obtener fotos de Google Maps: $e');
-          
+
           // En caso de error, intentar generar imagen estática del mapa como fallback
           if (allPhotos.isEmpty) {
             try {
-              final staticMapUrl = GooglePlacesService.generateStaticMapImageUrl(
-                latitude: beach.latitude,
-                longitude: beach.longitude,
-                beachName: beach.name,
-                width: 800,
-                height: 600,
-                zoom: 15,
-                mapType: 'satellite',
-              );
-              
+              final staticMapUrl =
+                  GooglePlacesService.generateStaticMapImageUrl(
+                    latitude: beach.latitude,
+                    longitude: beach.longitude,
+                    beachName: beach.name,
+                    width: 800,
+                    height: 600,
+                    zoom: 15,
+                    mapType: 'satellite',
+                  );
+
               if (staticMapUrl.isNotEmpty) {
                 allPhotos.add(staticMapUrl);
                 print('✅ Imagen estática del mapa generada (fallback)');
@@ -170,9 +176,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           }
         }
       }
-      
+
       print('📸 Total de fotos combinadas: ${allPhotos.length}');
-      
+
       if (mounted && _currentBeachId == beach.id) {
         setState(() {
           _allPhotos = allPhotos;
@@ -227,34 +233,34 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
         },
         child: CustomScrollView(
           controller: _scrollController,
-          physics: _isHorizontalDragging 
-              ? const NeverScrollableScrollPhysics() 
+          physics: _isHorizontalDragging
+              ? const NeverScrollableScrollPhysics()
               : const ClampingScrollPhysics(),
           slivers: [
             _buildAppBar(context, beach),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context, beach),
-                _buildQuickInfo(beach),
-                _buildDescription(beach),
-                // Widget del clima
-                WeatherDetailedCard(
-                  latitude: beach.latitude,
-                  longitude: beach.longitude,
-                ),
-                _buildPhotoSection(context, beach),
-                _buildAmenities(beach),
-                _buildActivities(beach),
-                _buildLocation(beach),
-                const SizedBox(height: 20),
-                _buildActionButtons(context, beach),
-                const SizedBox(height: 80),
-              ],
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, beach),
+                  _buildQuickInfo(beach),
+                  _buildDescription(beach),
+                  // Widget del clima
+                  WeatherDetailedCard(
+                    latitude: beach.latitude,
+                    longitude: beach.longitude,
+                  ),
+                  _buildPhotoSection(context, beach),
+                  _buildAmenities(beach),
+                  _buildActivities(beach),
+                  _buildLocation(beach),
+                  const SizedBox(height: 20),
+                  _buildActionButtons(context, beach),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -269,10 +275,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       // Mientras se cargan, usar las fotos originales si existen
       photosToShow.addAll(beach.imageUrls);
     }
-    
+
     // Solo mostrar el ícono si realmente NO hay fotos
     final hasPhotos = photosToShow.isNotEmpty;
-    
+
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -286,7 +292,8 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 onPointerMove: (event) {
                   // Si hay movimiento, actualizar posición
                   if (_lastTapPosition != null) {
-                    final distance = (event.position - _lastTapPosition!).distance;
+                    final distance =
+                        (event.position - _lastTapPosition!).distance;
                     if (distance > 10) {
                       // Hay movimiento significativo, no es un toque simple
                       _lastTapPosition = null;
@@ -298,8 +305,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   if (_lastTapTime != null && _lastTapPosition != null) {
                     final now = DateTime.now();
                     final duration = now.difference(_lastTapTime!);
-                    final distance = (event.position - _lastTapPosition!).distance;
-                    
+                    final distance =
+                        (event.position - _lastTapPosition!).distance;
+
                     // Si fue un toque rápido (menos de 300ms) y no hubo movimiento significativo
                     if (duration.inMilliseconds < 300 && distance < 15) {
                       // Es un toque simple, abrir visor
@@ -327,10 +335,32 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             color: Colors.grey[300],
-                            child: const Center(child: CircularProgressIndicator()),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           ),
                           errorWidget: (context, url, error) {
                             print('❌ Error al cargar imagen: $url - $error');
+                            // Si la URL es de Google Places y falló, intentar regenerarla
+                            if (url.contains(
+                              'maps.googleapis.com/maps/api/place/photo',
+                            )) {
+                              print(
+                                '⚠️ URL de imagen expirada o inválida: $url',
+                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                final beachProvider =
+                                    Provider.of<BeachProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                if (beachProvider.selectedBeach != null) {
+                                  beachProvider.regenerateExpiredImageUrls(
+                                    beachProvider.selectedBeach!,
+                                  );
+                                }
+                              });
+                            }
                             return Container(
                               color: Colors.grey[300],
                               child: const Center(
@@ -356,7 +386,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
                         ),
                       ),
                     ),
@@ -406,7 +439,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.7),
+                        ],
                       ),
                     ),
                   ),
@@ -454,7 +490,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final authProvider = context.watch<AuthProvider>();
     final padding = ResponsiveBreakpoints.horizontalPadding(context);
-    
+
     return Padding(
       padding: EdgeInsets.all(padding),
       child: Column(
@@ -525,7 +561,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                       tablet: 18,
                       desktop: 20,
                     ),
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ),
@@ -539,7 +577,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   Widget _buildQuickInfo(Beach beach) {
     final authProvider = context.watch<AuthProvider>();
     final padding = ResponsiveBreakpoints.horizontalPadding(context);
-    
+
     return Consumer<SettingsProvider>(
       builder: (context, settings, child) {
         final l10n = AppLocalizations.of(context)!;
@@ -560,7 +598,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 _buildInfoItem(
                   icon: BeachConditions.getIcon(beach.currentCondition),
                   label: l10n.beachCondition,
-                  value: BeachConditions.getLocalizedCondition(context, beach.currentCondition),
+                  value: BeachConditions.getLocalizedCondition(
+                    context,
+                    beach.currentCondition,
+                  ),
                   color: BeachConditions.getColor(beach.currentCondition),
                 ),
                 Container(width: 1, height: 40, color: Colors.grey[300]),
@@ -646,7 +687,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-              SizedBox(height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12),
+              SizedBox(
+                height: ResponsiveBreakpoints.isMobile(context) ? 8 : 12,
+              ),
               Text(
                 beach.getLocalizedDescription(settings.language),
                 style: TextStyle(
@@ -656,7 +699,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     tablet: 17,
                     desktop: 18,
                   ),
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.8),
                   height: 1.5,
                 ),
               ),
@@ -669,7 +714,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
 
   Widget _buildPhotoSection(BuildContext context, Beach beach) {
     final authProvider = context.watch<AuthProvider>();
-    
+
     // Si el usuario no está autenticado, mostrar mensaje para iniciar sesión
     if (!authProvider.isAuthenticated) {
       return Padding(
@@ -699,7 +744,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 'Los comentarios y experiencias de otros usuarios están disponibles solo para usuarios registrados.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -708,7 +755,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
         ),
       );
     }
-    
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -731,13 +778,19 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   if (snapshot.hasData) {
                     final reports = snapshot.data ?? [];
                     final reportsWithComments = reports
-                        .where((report) => report.comment != null && 
-                                           report.comment!.trim().isNotEmpty)
+                        .where(
+                          (report) =>
+                              report.comment != null &&
+                              report.comment!.trim().isNotEmpty,
+                        )
                         .toList();
-                    
+
                     if (reportsWithComments.isNotEmpty) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -745,9 +798,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.people, 
-                                 size: 16, 
-                                 color: AppColors.primary),
+                            Icon(
+                              Icons.people,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${reportsWithComments.length} ${reportsWithComments.length == 1 ? 'usuario' : 'usuarios'}',
@@ -780,16 +835,16 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, 
-                     size: 20, 
-                     color: AppColors.secondary),
+                Icon(Icons.info_outline, size: 20, color: AppColors.secondary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '¡Comparte tu experiencia! Tu comentario ayuda a otros usuarios a conocer mejor esta playa.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.8),
                       height: 1.3,
                     ),
                   ),
@@ -820,18 +875,21 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   ),
                 );
               }
-              
+
               final reports = snapshot.data ?? [];
               // Filtrar solo reportes con comentarios
               final reportsWithComments = reports
-                  .where((report) => report.comment != null && 
-                                     report.comment!.trim().isNotEmpty)
+                  .where(
+                    (report) =>
+                        report.comment != null &&
+                        report.comment!.trim().isNotEmpty,
+                  )
                   .toList();
-              
+
               if (reportsWithComments.isEmpty) {
                 final theme = Theme.of(context);
                 final isDark = theme.brightness == Brightness.dark;
-                
+
                 return Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
@@ -876,7 +934,8 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ReportScreen(initialBeach: beach),
+                                      builder: (context) =>
+                                          ReportScreen(initialBeach: beach),
                                     ),
                                   );
                                 },
@@ -903,28 +962,28 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   ),
                 );
               }
-                  
-                  return SizedBox(
-                    height: 200,
-                    child: PageView.builder(
-                      itemCount: reportsWithComments.length,
-                      itemBuilder: (context, index) {
-                        final report = reportsWithComments[index];
-                        return _buildCommentCard(report);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
+
+              return SizedBox(
+                height: 200,
+                child: PageView.builder(
+                  itemCount: reportsWithComments.length,
+                  itemBuilder: (context, index) {
+                    final report = reportsWithComments[index];
+                    return _buildCommentCard(report);
+                  },
+                ),
+              );
+            },
           ),
-        );
+        ],
+      ),
+    );
   }
 
   Widget _buildCommentCard(BeachReport report) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(16),
@@ -951,7 +1010,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 radius: 20,
                 backgroundColor: AppColors.primary.withOpacity(0.2),
                 child: Text(
-                  report.userName.isNotEmpty 
+                  report.userName.isNotEmpty
                       ? report.userName[0].toUpperCase()
                       : 'U',
                   style: TextStyle(
@@ -991,7 +1050,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                             report.rating!.toStringAsFixed(1),
                             style: TextStyle(
                               fontSize: 14,
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.7,
+                              ),
                             ),
                           ),
                         ],
@@ -1003,7 +1064,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: BeachConditions.getColor(report.condition).withOpacity(0.1),
+                  color: BeachConditions.getColor(
+                    report.condition,
+                  ).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1066,7 +1129,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
 
   Future<void> _pickAndUploadPhoto(BuildContext context, Beach beach) async {
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Mostrar diálogo para elegir entre cámara o galería
     final ImageSource? source = await showDialog<ImageSource>(
       context: context,
@@ -1077,7 +1140,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppColors.primary, size: 32),
+                leading: const Icon(
+                  Icons.camera_alt,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
                 title: Text(l10n.reportTakePhoto),
                 subtitle: const Text('Tomar una foto con la cámara'),
                 onTap: () {
@@ -1086,7 +1153,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppColors.primary, size: 32),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
                 title: Text(l10n.reportSelectFromGallery),
                 subtitle: const Text('Seleccionar una foto de la galería'),
                 onTap: () {
@@ -1115,9 +1186,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       imageQuality: 70,
       maxWidth: 1000,
     );
-    
+
     if (picked == null) return;
-    
+
     final file = File(picked.path);
     final uid = Provider.of<AuthProvider>(context, listen: false).user?.uid;
     if (uid == null) {
@@ -1126,19 +1197,19 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       );
       return;
     }
-    
+
     // Mostrar indicador de carga
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    
+
     try {
       final name = '${DateTime.now().millisecondsSinceEpoch}_${uid}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('beach_photos/${beach.id}/$name');
+      final ref = FirebaseStorage.instance.ref().child(
+        'beach_photos/${beach.id}/$name',
+      );
       final upload = await ref.putFile(file);
       final url = await upload.ref.getDownloadURL();
       await FirebaseFirestore.instance.collection('beach_photos').add({
@@ -1147,11 +1218,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
         'uid': uid,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      
+
       // Recargar todas las fotos para actualizar el carrusel
       _currentBeachId = null; // Forzar recarga
       await _loadAllPhotos(beach);
-      
+
       // Cerrar indicador de carga
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -1163,9 +1234,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       // Cerrar indicador de carga en caso de error
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al subir la foto: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al subir la foto: $e')));
       }
     }
   }
@@ -1173,7 +1244,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   // Validar que una URL sea realmente una imagen
   bool _isValidImageUrl(String url) {
     if (url.isEmpty) return false;
-    
+
     // Filtrar URLs que no son imágenes (enlaces de Google Maps, etc.)
     final invalidPatterns = [
       'maps.app.goo.gl',
@@ -1181,30 +1252,30 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       'goo.gl/maps',
       'maps.google.com',
     ];
-    
+
     for (final pattern in invalidPatterns) {
       if (url.contains(pattern)) {
         print('⚠️ URL filtrada (no es imagen): $url');
         return false;
       }
     }
-    
+
     // Verificar que la URL tenga una extensión de imagen válida
     final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
     final lowerUrl = url.toLowerCase();
-    
+
     // Si tiene extensión, verificar que sea de imagen
     if (imageExtensions.any((ext) => lowerUrl.contains(ext))) {
       return true;
     }
-    
+
     // Si no tiene extensión pero es de Firebase Storage o HTTPS, asumir que es imagen
-    if (url.contains('firebasestorage.googleapis.com') || 
-        url.startsWith('https://') || 
+    if (url.contains('firebasestorage.googleapis.com') ||
+        url.startsWith('https://') ||
         url.startsWith('http://')) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -1233,14 +1304,16 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             'timestamp': data['timestamp'] as Timestamp?,
           };
         }).toList();
-        
+
         photosWithTimestamp.sort((a, b) {
           if (a['timestamp'] == null && b['timestamp'] == null) return 0;
           if (a['timestamp'] == null) return 1;
           if (b['timestamp'] == null) return -1;
-          return (b['timestamp'] as Timestamp).compareTo(a['timestamp'] as Timestamp);
+          return (b['timestamp'] as Timestamp).compareTo(
+            a['timestamp'] as Timestamp,
+          );
         });
-        
+
         return photosWithTimestamp.map((p) => p['url'] as String).toList();
       } catch (e2) {
         print('Error al obtener fotos sin orderBy: $e2');
@@ -1293,35 +1366,35 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 children: beach.amenities.entries.map((entry) {
                   if (entry.value != true) return const SizedBox.shrink();
                   return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      amenityIcons[entry.key] ?? Icons.check_circle,
-                      color: Colors.green,
-                      size: 20,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      amenityLabels[entry.key] ?? entry.key,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.withOpacity(0.3)),
                     ),
-                  ],
-                ),
-              );
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          amenityIcons[entry.key] ?? Icons.check_circle,
+                          color: Colors.green,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          amenityLabels[entry.key] ?? entry.key,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 }).toList(),
               ),
             ],
@@ -1363,7 +1436,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1375,7 +1450,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          BeachActivities.getLocalizedActivity(context, activity),
+                          BeachActivities.getLocalizedActivity(
+                            context,
+                            activity,
+                          ),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -1452,7 +1530,8 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                             position: LatLng(beach.latitude, beach.longitude),
                             infoWindow: InfoWindow(
                               title: beach.name,
-                              snippet: '${beach.municipality}, ${beach.province}',
+                              snippet:
+                                  '${beach.municipality}, ${beach.province}',
                             ),
                             icon: BitmapDescriptor.defaultMarkerWithHue(
                               _getMarkerHue(beach.currentCondition),
@@ -1463,7 +1542,8 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         zoomControlsEnabled: false,
                         myLocationButtonEnabled: false,
                         mapToolbarEnabled: false,
-                        onTap: (LatLng position) => _openDirections(context, beach),
+                        onTap: (LatLng position) =>
+                            _openDirections(context, beach),
                       ),
                       // Botón flotante para abrir en Google Maps
                       Positioned(
@@ -1489,7 +1569,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 builder: (context) {
                   final theme = Theme.of(context);
                   final isDark = theme.brightness == Brightness.dark;
-                  
+
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -1499,68 +1579,76 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
                       ),
                     ),
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on, size: 20, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${beach.municipality}, ${beach.province}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                          if (beach.address != null) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.home,
-                                  size: 14,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${beach.municipality}, ${beach.province}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
                                 ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    beach.address!,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                              ),
+                              if (beach.address != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.home,
+                                      size: 14,
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.7),
                                     ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        beach.address!,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: theme.colorScheme.onSurface
+                                              .withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              if (beach.postalCode != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  beach.postalCode!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.7),
                                   ),
                                 ),
                               ],
-                            ),
-                          ],
-                          if (beach.postalCode != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              beach.postalCode!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Lat: ${beach.latitude.toStringAsFixed(6)}, '
+                                'Lng: ${beach.longitude.toStringAsFixed(6)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                ),
                               ),
-                            ),
-                          ],
-                          const SizedBox(height: 2),
-                          Text(
-                            'Lat: ${beach.latitude.toStringAsFixed(6)}, '
-                            'Lng: ${beach.longitude.toStringAsFixed(6)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                   );
                 },
               ),
@@ -1607,12 +1695,15 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     final userId = authProvider.user?.uid;
                     if (userId != null) {
                       if (isVisited) {
-                        await FirebaseService.removeVisitedBeach(userId, beach.id);
+                        await FirebaseService.removeVisitedBeach(
+                          userId,
+                          beach.id,
+                        );
                       } else {
                         await FirebaseService.addVisitedBeach(userId, beach.id);
                       }
                       await authProvider.reloadUserData();
-                      
+
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -1630,7 +1721,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                                 ),
                               ],
                             ),
-                            backgroundColor: isVisited ? Colors.grey[700] : Colors.green,
+                            backgroundColor: isVisited
+                                ? Colors.grey[700]
+                                : Colors.green,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1645,11 +1738,15 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     color: Colors.white,
                   ),
                   label: Text(
-                    isVisited ? l10n.beachAlreadyVisited : l10n.beachMarkAsVisited,
+                    isVisited
+                        ? l10n.beachAlreadyVisited
+                        : l10n.beachMarkAsVisited,
                     style: const TextStyle(fontSize: 16, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isVisited ? Colors.green : AppColors.secondary,
+                    backgroundColor: isVisited
+                        ? Colors.green
+                        : AppColors.secondary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1717,7 +1814,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   icon: const Icon(Icons.report, color: AppColors.primary),
                   label: Text(
                     l10n.navReport,
-                    style: const TextStyle(fontSize: 16, color: AppColors.primary),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.primary,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1739,11 +1839,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   Future<void> _showNavigationDialog(BuildContext context, Beach beach) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    
+
     // No verificamos si Waze está instalado antes de mostrar el diálogo
     // porque canLaunchUrl puede fallar en Android incluso si Waze está instalado.
     // En su lugar, intentaremos abrir Waze directamente cuando el usuario lo seleccione.
-    
+
     // Mostrar diálogo de selección
     final selectedApp = await showDialog<String>(
       context: context,
@@ -1777,24 +1877,28 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
         );
       },
     );
-    
+
     // Si el usuario seleccionó una opción, abrir la navegación
     if (selectedApp != null && mounted) {
       await _openDirections(context, beach, selectedApp);
     }
   }
 
-  Future<void> _openDirections(BuildContext context, Beach beach, [String? navigationApp]) async {
+  Future<void> _openDirections(
+    BuildContext context,
+    Beach beach, [
+    String? navigationApp,
+  ]) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
-    
+
     // Si no se especificó la app, mostrar diálogo de selección
     if (navigationApp == null) {
       await _showNavigationDialog(context, beach);
       return;
     }
-    
+
     // Función para abrir direcciones según la app seleccionada
     Future<void> openDirections() async {
       final placeName = NavigationService.getFullPlaceName(
@@ -1802,9 +1906,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
         municipality: beach.municipality,
         province: beach.province,
       );
-      
+
       bool success = false;
-      
+
       if (navigationApp == 'waze') {
         // Intentar abrir Waze
         success = await NavigationService.openWazeWithFallback(
@@ -1813,7 +1917,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           placeName: placeName,
           redirectToStore: false, // No redirigir automáticamente a la tienda
         );
-        
+
         // Si Waze falla, ofrecer Google Maps como alternativa
         if (!success) {
           // Mostrar diálogo ofreciendo Google Maps como alternativa
@@ -1823,9 +1927,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               builder: (BuildContext dialogContext) {
                 return AlertDialog(
                   title: Text(l10n.beachWazeNotInstalled),
-                  content: Text(
-                    l10n.beachWazeError,
-                  ),
+                  content: Text(l10n.beachWazeError),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -1839,7 +1941,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 );
               },
             );
-            
+
             // Si el usuario acepta, abrir Google Maps
             if (useGoogleMaps == true && mounted) {
               success = await NavigationService.openGoogleMaps(
@@ -1847,13 +1949,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                 longitude: beach.longitude,
                 placeName: placeName,
               );
-              
+
               if (!success) {
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.mapError),
-                  ),
-                );
+                messenger.showSnackBar(SnackBar(content: Text(l10n.mapError)));
               }
             } else if (useGoogleMaps == false && mounted) {
               // Si el usuario cancela, ofrecer instalar Waze
@@ -1876,17 +1974,13 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           longitude: beach.longitude,
           placeName: placeName,
         );
-        
+
         if (!success) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(l10n.mapError),
-            ),
-          );
+          messenger.showSnackBar(SnackBar(content: Text(l10n.mapError)));
         }
       }
     }
-    
+
     // Mostrar anuncio en video antes de abrir las direcciones
     if (_interstitialAdHelper?.isAdReady == true) {
       // Actualizar callbacks del helper existente para abrir direcciones después del anuncio
@@ -1903,7 +1997,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           openDirections();
         },
       );
-      
+
       // Mostrar el anuncio que ya está cargado
       final shown = await _interstitialAdHelper!.showInterstitialAd();
       if (!shown) {
@@ -1918,15 +2012,16 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
     }
   }
 
-
   // Mostrar visor de imágenes a pantalla completa
-  void _showImageViewer(BuildContext context, List<String> photos, int initialIndex) {
+  void _showImageViewer(
+    BuildContext context,
+    List<String> photos,
+    int initialIndex,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => _ImageViewerScreen(
-          photos: photos,
-          initialIndex: initialIndex,
-        ),
+        builder: (context) =>
+            _ImageViewerScreen(photos: photos, initialIndex: initialIndex),
         fullscreenDialog: true,
       ),
     );
@@ -1936,10 +2031,15 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   void _shareBeach(BuildContext context, Beach beach) {
     final l10n = AppLocalizations.of(context)!;
     final settings = Provider.of<SettingsProvider>(context, listen: false);
-    final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=${beach.latitude},${beach.longitude}';
-    final localizedCondition = BeachConditions.getLocalizedCondition(context, beach.currentCondition);
-    
-    final shareText = '''
+    final googleMapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=${beach.latitude},${beach.longitude}';
+    final localizedCondition = BeachConditions.getLocalizedCondition(
+      context,
+      beach.currentCondition,
+    );
+
+    final shareText =
+        '''
 🏖️ ${beach.name}
 
 📍 ${beach.municipality}, ${beach.province}
@@ -1953,12 +2053,10 @@ ${beach.getLocalizedDescription(settings.language)}
 ---
 Descargado desde ${l10n.appTitle} 🇩🇴
 ${l10n.appDescription}
-    '''.trim();
+    '''
+            .trim();
 
-    Share.share(
-      shareText,
-      subject: '${beach.name} - ${l10n.appTitle}',
-    );
+    Share.share(shareText, subject: '${beach.name} - ${l10n.appTitle}');
   }
 
   // Mostrar diálogo de calificación
@@ -2002,10 +2100,8 @@ ${l10n.appDescription}
                       itemCount: 5,
                       itemSize: 40,
                       itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      itemBuilder: (context, _) => const Icon(
-                        Icons.star,
-                        color: AppColors.secondary,
-                      ),
+                      itemBuilder: (context, _) =>
+                          const Icon(Icons.star, color: AppColors.secondary),
                       onRatingUpdate: (rating) {
                         setState(() {
                           selectedRating = rating;
@@ -2092,7 +2188,7 @@ ${l10n.appDescription}
     try {
       final userId = authProvider.user!.uid;
       final userName = authProvider.user!.displayName ?? 'Usuario';
-      
+
       // Determinar condición basada en la calificación
       String condition;
       if (rating >= 4.5) {
@@ -2132,7 +2228,9 @@ ${l10n.appDescription}
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('¡Calificación enviada! ${rating.toStringAsFixed(1)} estrellas'),
+                  child: Text(
+                    '¡Calificación enviada! ${rating.toStringAsFixed(1)} estrellas',
+                  ),
                 ),
               ],
             ),
@@ -2170,10 +2268,7 @@ class _ImageViewerScreen extends StatefulWidget {
   final List<String> photos;
   final int initialIndex;
 
-  const _ImageViewerScreen({
-    required this.photos,
-    required this.initialIndex,
-  });
+  const _ImageViewerScreen({required this.photos, required this.initialIndex});
 
   @override
   State<_ImageViewerScreen> createState() => _ImageViewerScreenState();
@@ -2232,7 +2327,28 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                         child: CircularProgressIndicator(color: Colors.white),
                       ),
                       errorWidget: (context, url, error) {
-                        print('❌ Error al cargar imagen en visor: $url - $error');
+                        print(
+                          '❌ Error al cargar imagen en visor: $url - $error',
+                        );
+                        // Si la URL es de Google Places y falló, intentar regenerarla
+                        if (url.contains(
+                          'maps.googleapis.com/maps/api/place/photo',
+                        )) {
+                          print(
+                            '⚠️ URL de imagen expirada o inválida en visor: $url',
+                          );
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            final beachProvider = Provider.of<BeachProvider>(
+                              context,
+                              listen: false,
+                            );
+                            if (beachProvider.selectedBeach != null) {
+                              beachProvider.regenerateExpiredImageUrls(
+                                beachProvider.selectedBeach!,
+                              );
+                            }
+                          });
+                        }
                         return const Center(
                           child: Icon(
                             Icons.broken_image,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/app_logo.dart';
@@ -198,7 +199,10 @@ class _LoginScreenState extends State<LoginScreen> {
               if (_isSignUp) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -341,7 +345,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscurePassword ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+            _obscurePassword
+                ? Icons.visibility_rounded
+                : Icons.visibility_off_rounded,
             color: Colors.grey[600],
           ),
           onPressed: () {
@@ -472,10 +478,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           _isSignUp ? '¿Ya tienes cuenta? ' : '¿No tienes cuenta? ',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 15,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 15),
         ),
         GestureDetector(
           onTap: () {
@@ -539,30 +542,65 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildSocialButtons() {
     return Center(
-      child: SizedBox(
-        width: double.infinity,
-        child: _buildSocialButton(
-          icon: Icons.g_mobiledata,
-          label: 'Google',
-          onTap: () async {
-            final success = await context
-                .read<AuthProvider>()
-                .signInWithGoogle();
-            if (success && mounted) {
-              Navigator.of(context).pop();
-            } else if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    context.read<AuthProvider>().errorMessage ??
-                        'Error al iniciar sesión con Google',
-                  ),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-        ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: _buildSocialButton(
+              icon: Icons.g_mobiledata,
+              label: 'Google',
+              onTap: () async {
+                final success = await context
+                    .read<AuthProvider>()
+                    .signInWithGoogle();
+                if (success && mounted) {
+                  Navigator.of(context).pop();
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        context.read<AuthProvider>().errorMessage ??
+                            'Error al iniciar sesión con Google',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          // Botón de Apple Sign In (solo mostrar en iOS)
+          if (Platform.isIOS) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: _buildSocialButton(
+                icon: Icons.apple,
+                label: 'Apple',
+                backgroundColor: Colors.black,
+                iconColor: Colors.white,
+                onTap: () async {
+                  final success = await context
+                      .read<AuthProvider>()
+                      .signInWithApple();
+                  if (success && mounted) {
+                    Navigator.of(context).pop();
+                  } else if (mounted) {
+                    final error = context.read<AuthProvider>().errorMessage;
+                    if (error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -598,11 +636,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  color: iconColor ?? Colors.grey[700],
-                  size: 22,
-                ),
+                Icon(icon, color: iconColor ?? Colors.grey[700], size: 22),
                 const SizedBox(width: 8),
                 Text(
                   label,
@@ -790,9 +824,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
             Container(
@@ -803,7 +835,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.lock_reset_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -869,7 +905,10 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.gradientTop, AppColors.gradientTop.withOpacity(0.8)],
+                colors: [
+                  AppColors.gradientTop,
+                  AppColors.gradientTop.withOpacity(0.8),
+                ],
               ),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -898,7 +937,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 }
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
               ),

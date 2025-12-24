@@ -9,13 +9,13 @@ import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/app_logo.dart';
 import '../services/admob_service.dart';
+import '../services/firebase_service.dart';
 import 'login_screen.dart';
 import 'favorites_screen.dart';
 import 'visited_beaches_screen.dart';
 import 'my_reports_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
-import 'test_notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -428,25 +428,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _showAboutDialog(context, l10n);
                 },
               ),
-              // ⚠️ SOLO PARA DESARROLLO - Eliminar en producción
-              if (const bool.fromEnvironment('dart.vm.product') == false)
-                _MenuItemData(
-                  icon: Icons.bug_report,
-                  title: '🧪 Prueba Notificaciones',
-                  subtitle: 'Pantalla de pruebas (solo desarrollo)',
-                  iconColor: Colors.purple,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TestNotificationsScreen(),
-                      ),
-                    );
-                  },
-                ),
             ],
           ),
           const SizedBox(height: 20),
+
+          // Botón de eliminar cuenta
+          _buildDeleteAccountButton(context, authProvider, l10n),
+          const SizedBox(height: 12),
 
           // Botón de cerrar sesión
           _buildLogoutButton(context, authProvider, l10n),
@@ -929,6 +917,598 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildDeleteAccountButton(
+    BuildContext context,
+    AuthProvider authProvider,
+    AppLocalizations l10n,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete_outline,
+            color: Colors.orange,
+            size: 24,
+          ),
+        ),
+        title: const Text(
+          'Eliminar cuenta',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: Colors.orange,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.orange,
+            size: 20,
+          ),
+        ),
+        onTap: () => _showDeleteAccountDialog(context, authProvider, l10n),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+    AppLocalizations l10n,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.orange),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Eliminar cuenta',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '¿Cómo deseas eliminar tu cuenta?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Eliminación temporal:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tu cuenta se desactivará pero podrás recuperarla más tarde. Tus datos se mantendrán guardados.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Eliminación permanente:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tu cuenta y todos tus datos se eliminarán permanentemente. Esta acción no se puede deshacer.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    _showDeleteAccountConfirmationDialog(
+                      context,
+                      authProvider,
+                      l10n,
+                      isPermanent: false,
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    minimumSize: const Size(0, 48),
+                    backgroundColor: Colors.orange.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Temporal',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    _showDeleteAccountConfirmationDialog(
+                      context,
+                      authProvider,
+                      l10n,
+                      isPermanent: true,
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    minimumSize: const Size(0, 48),
+                    backgroundColor: Colors.red.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Permanente',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountConfirmationDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+    AppLocalizations l10n, {
+    required bool isPermanent,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (isPermanent ? Colors.red : Colors.orange).withOpacity(
+                  0.15,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: isPermanent ? Colors.red : Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isPermanent
+                    ? 'Confirmar eliminación permanente'
+                    : 'Confirmar desactivación',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isPermanent
+              ? '¿Estás seguro de que deseas eliminar tu cuenta permanentemente? Esta acción no se puede deshacer y se eliminarán todos tus datos, incluyendo favoritos, reportes y fotos de perfil.'
+              : '¿Estás seguro de que deseas desactivar tu cuenta temporalmente? Podrás recuperarla más tarde iniciando sesión nuevamente.',
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (context.mounted) {
+                Navigator.pop(context);
+
+                if (isPermanent) {
+                  // Para eliminación permanente, intentar primero sin contraseña
+                  // Si falla, solicitar reautenticación
+                  await _deleteAccountPermanentWithReauth(
+                    context,
+                    authProvider,
+                  );
+                } else {
+                  // Para eliminación temporal, proceder normalmente
+                  _showLoadingDialog(context);
+                  final success = await authProvider.deleteAccountTemporary();
+                  if (context.mounted) {
+                    Navigator.pop(context); // Cerrar indicador de carga
+                    _showResultSnackBar(
+                      context,
+                      success,
+                      authProvider.errorMessage,
+                      isPermanent: false,
+                    );
+                  }
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: (isPermanent ? Colors.red : Colors.orange)
+                  .withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              isPermanent ? 'Eliminar permanentemente' : 'Desactivar cuenta',
+              style: TextStyle(
+                color: isPermanent ? Colors.red : Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccountPermanentWithReauth(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    _showLoadingDialog(context);
+
+    bool success = await authProvider.deleteAccountPermanent();
+
+    if (context.mounted) {
+      // Cerrar todos los diálogos abiertos
+      Navigator.of(context, rootNavigator: true).popUntil((route) {
+        return route.isFirst || route.settings.name == '/';
+      });
+
+      if (success) {
+        // La cuenta fue eliminada, el usuario ya no está autenticado
+        // El AuthProvider automáticamente actualizará el estado
+        // Solo mostrar mensaje y esperar a que el estado cambie
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cuenta eliminada permanentemente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else if (authProvider.errorMessage == 'requires-recent-login') {
+        // Solicitar contraseña para reautenticación
+        final user = authProvider.user;
+        if (user != null && user.email != null) {
+          // Verificar si es usuario de email/contraseña o Google
+          final providers = user.providerData;
+          final isEmailProvider = providers.any(
+            (p) => p.providerId == 'password',
+          );
+          final isGoogleProvider = providers.any(
+            (p) => p.providerId == 'google.com',
+          );
+
+          if (isEmailProvider) {
+            // Solicitar contraseña
+            await _showPasswordDialog(context, authProvider, user.email!);
+          } else if (isGoogleProvider) {
+            // Reautenticar con Google
+            await _reauthenticateWithGoogle(context, authProvider);
+          } else {
+            _showResultSnackBar(
+              context,
+              false,
+              'Por favor, inicia sesión nuevamente antes de eliminar tu cuenta',
+              isPermanent: true,
+            );
+          }
+        }
+      } else {
+        _showResultSnackBar(
+          context,
+          false,
+          authProvider.errorMessage,
+          isPermanent: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _showPasswordDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+    String email,
+  ) async {
+    final passwordController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_outline, color: Colors.orange),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Reautenticación requerida',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Por seguridad, necesitamos verificar tu identidad antes de eliminar tu cuenta.',
+              style: TextStyle(fontSize: 14, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Contraseña',
+                hintText: 'Ingresa tu contraseña',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.lock),
+              ),
+              onSubmitted: (_) {
+                if (passwordController.text.isNotEmpty) {
+                  Navigator.pop(context, true);
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (passwordController.text.isNotEmpty) {
+                Navigator.pop(context, true);
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.orange.withOpacity(0.1),
+            ),
+            child: const Text(
+              'Continuar',
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && passwordController.text.isNotEmpty) {
+      _showLoadingDialog(context);
+      final success = await authProvider.deleteAccountPermanent(
+        password: passwordController.text,
+      );
+
+      if (context.mounted) {
+        // Cerrar todos los diálogos abiertos
+        Navigator.of(context, rootNavigator: true).popUntil((route) {
+          return route.isFirst || route.settings.name == '/';
+        });
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cuenta eliminada permanentemente'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          _showResultSnackBar(
+            context,
+            false,
+            authProvider.errorMessage,
+            isPermanent: true,
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _reauthenticateWithGoogle(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    _showLoadingDialog(context);
+
+    try {
+      final success = await FirebaseService.reauthenticateWithGoogle();
+      if (success) {
+        // Reintentar eliminar cuenta después de reautenticar
+        final deleteSuccess = await authProvider.deleteAccountPermanent();
+        if (context.mounted) {
+          // Cerrar todos los diálogos abiertos
+          Navigator.of(context, rootNavigator: true).popUntil((route) {
+            return route.isFirst || route.settings.name == '/';
+          });
+
+          if (deleteSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Cuenta eliminada permanentemente'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else {
+            _showResultSnackBar(
+              context,
+              false,
+              authProvider.errorMessage,
+              isPermanent: true,
+            );
+          }
+        }
+      } else {
+        if (context.mounted) {
+          Navigator.pop(context);
+          _showResultSnackBar(
+            context,
+            false,
+            'Reautenticación cancelada',
+            isPermanent: true,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        _showResultSnackBar(
+          context,
+          false,
+          'Error en reautenticación: $e',
+          isPermanent: true,
+        );
+      }
+    }
+  }
+
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  void _showResultSnackBar(
+    BuildContext context,
+    bool success,
+    String? errorMessage, {
+    required bool isPermanent,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (isPermanent
+                    ? 'Cuenta eliminada permanentemente'
+                    : 'Cuenta desactivada. Puedes recuperarla iniciando sesión nuevamente.')
+              : (errorMessage ??
+                    'Error al ${isPermanent ? "eliminar" : "desactivar"} la cuenta'),
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 

@@ -44,7 +44,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create, update: if isSignedIn() && isOwner(userId);
-      allow delete: if false; // No permitir borrar usuarios
+      allow delete: if isSignedIn() && isOwner(userId); // Permitir que los usuarios eliminen su propia cuenta
     }
     
     // FOTOS DE VISITANTES - Todos pueden ver, usuarios autenticados pueden crear

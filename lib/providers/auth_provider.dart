@@ -23,7 +23,7 @@ class AuthProvider with ChangeNotifier {
   AuthProvider() {
     // Configurar listener de token FCM al inicializar
     _setupFCMTokenListener();
-    
+
     // Escuchar cambios de autenticación
     FirebaseService.authStateChanges.listen((User? user) {
       _user = user;
@@ -45,7 +45,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadUserData() async {
     if (_user != null) {
       _appUser = await FirebaseService.getUserData(_user!.uid);
-      
+
       // Sincronizar contador de reportes si está desactualizado
       if (_appUser != null) {
         final realCount = await FirebaseService.getUserReportsCount(_user!.uid);
@@ -55,14 +55,14 @@ class AuthProvider with ChangeNotifier {
           // Recargar datos del usuario para obtener el contador actualizado
           _appUser = await FirebaseService.getUserData(_user!.uid);
         }
-        
+
         // Notificar cambio en favoritos
         onFavoritesChanged?.call(_appUser!.favoriteBeaches);
       }
-      
+
       // Guardar FCM token para notificaciones push
       await _saveFCMToken();
-      
+
       notifyListeners();
     }
   }
@@ -70,25 +70,27 @@ class AuthProvider with ChangeNotifier {
   // Guardar FCM token para recibir notificaciones push
   Future<void> _saveFCMToken() async {
     if (_user == null) return;
-    
+
     try {
       final notificationService = NotificationService();
       final firebaseMessaging = FirebaseMessaging.instance;
-      
+
       // Asegurarse de que el NotificationService esté inicializado
       try {
         await notificationService.initialize();
       } catch (e) {
         print('⚠️ Error inicializando NotificationService: $e');
       }
-      
+
       // En iOS, verificar permisos antes de intentar obtener tokens
       if (Platform.isIOS) {
         try {
           final settings = await firebaseMessaging.getNotificationSettings();
           if (settings.authorizationStatus != AuthorizationStatus.authorized &&
               settings.authorizationStatus != AuthorizationStatus.provisional) {
-            print('⚠️ Permisos de notificación no concedidos. Estado: ${settings.authorizationStatus}');
+            print(
+              '⚠️ Permisos de notificación no concedidos. Estado: ${settings.authorizationStatus}',
+            );
             print('ℹ️ Solicitando permisos...');
             final newSettings = await firebaseMessaging.requestPermission(
               alert: true,
@@ -96,9 +98,13 @@ class AuthProvider with ChangeNotifier {
               sound: true,
               provisional: false,
             );
-            if (newSettings.authorizationStatus != AuthorizationStatus.authorized &&
-                newSettings.authorizationStatus != AuthorizationStatus.provisional) {
-              print('❌ Permisos de notificación denegados. El token FCM no estará disponible.');
+            if (newSettings.authorizationStatus !=
+                    AuthorizationStatus.authorized &&
+                newSettings.authorizationStatus !=
+                    AuthorizationStatus.provisional) {
+              print(
+                '❌ Permisos de notificación denegados. El token FCM no estará disponible.',
+              );
               return;
             }
             print('✅ Permisos de notificación concedidos');
@@ -107,15 +113,17 @@ class AuthProvider with ChangeNotifier {
           print('⚠️ Error verificando permisos: $e');
         }
       }
-      
+
       // Intentar obtener el token inmediatamente desde el servicio
       String? fcmToken = notificationService.fcmToken;
-      
+
       // En iOS, primero necesitamos asegurarnos de que el token APNS esté disponible
       if (Platform.isIOS && fcmToken == null) {
-        print('🍎 iOS detectado: esperando token APNS antes de obtener token FCM...');
+        print(
+          '🍎 iOS detectado: esperando token APNS antes de obtener token FCM...',
+        );
         String? apnsToken;
-        
+
         // Intentar obtener el token APNS primero (con más intentos y delays más largos)
         for (int i = 0; i < 15; i++) {
           try {
@@ -130,20 +138,22 @@ class AuthProvider with ChangeNotifier {
               print('⏳ Esperando token APNS... (intento ${i + 1})');
             }
           }
-          
+
           // Esperar antes del siguiente intento (delays más largos)
           if (i < 14) {
             final delaySeconds = i < 5 ? 2 : (i < 10 ? 3 : 5);
             await Future.delayed(Duration(seconds: delaySeconds));
           }
         }
-        
+
         if (apnsToken == null) {
           print('⚠️ Token APNS no disponible después de 15 intentos');
-          print('ℹ️ Esto puede ser normal si la app acaba de iniciarse. El token se obtendrá más tarde.');
+          print(
+            'ℹ️ Esto puede ser normal si la app acaba de iniciarse. El token se obtendrá más tarde.',
+          );
         }
       }
-      
+
       // Si no está disponible, intentar obtenerlo directamente desde FirebaseMessaging
       if (fcmToken == null) {
         try {
@@ -151,13 +161,15 @@ class AuthProvider with ChangeNotifier {
         } catch (e) {
           final errorMsg = e.toString();
           if (errorMsg.contains('apns-token-not-set')) {
-            print('⏳ Token APNS aún no configurado, continuando con reintentos...');
+            print(
+              '⏳ Token APNS aún no configurado, continuando con reintentos...',
+            );
           } else {
             print('⚠️ No se pudo obtener token FCM directamente: $e');
           }
         }
       }
-      
+
       // Si aún no está disponible, intentar con delays (especialmente importante en iOS)
       // En iOS, el token FCM depende del token APNS que puede tardar en estar disponible
       if (fcmToken == null) {
@@ -166,7 +178,7 @@ class AuthProvider with ChangeNotifier {
           // En iOS, esperar más tiempo entre intentos
           final delaySeconds = Platform.isIOS ? (i < 5 ? 3 : 5) : (i + 1);
           await Future.delayed(Duration(seconds: delaySeconds));
-          
+
           // En iOS, verificar token APNS antes de cada intento
           if (Platform.isIOS) {
             try {
@@ -178,7 +190,9 @@ class AuthProvider with ChangeNotifier {
                 continue; // Continuar esperando si el token APNS no está disponible
               } else {
                 if (i > 0) {
-                  print('✅ Token APNS disponible, intentando obtener token FCM...');
+                  print(
+                    '✅ Token APNS disponible, intentando obtener token FCM...',
+                  );
                 }
               }
             } catch (e) {
@@ -186,7 +200,7 @@ class AuthProvider with ChangeNotifier {
               continue;
             }
           }
-          
+
           try {
             fcmToken = await firebaseMessaging.getToken();
             if (fcmToken != null) {
@@ -197,7 +211,9 @@ class AuthProvider with ChangeNotifier {
             final errorMsg = e.toString();
             if (errorMsg.contains('apns-token-not-set')) {
               if (i % 2 == 0) {
-                print('⏳ Token APNS aún no configurado, esperando... (intento ${i + 1})');
+                print(
+                  '⏳ Token APNS aún no configurado, esperando... (intento ${i + 1})',
+                );
               }
             } else {
               print('⚠️ Intento ${i + 1} fallido: $e');
@@ -205,13 +221,15 @@ class AuthProvider with ChangeNotifier {
           }
         }
       }
-      
+
       if (fcmToken != null && _user != null) {
         await FirebaseService.saveFCMToken(_user!.uid, fcmToken);
         print('📱 FCM Token guardado para usuario ${_user!.email}');
       } else {
         print('⚠️ No se pudo obtener token FCM después de varios intentos');
-        print('ℹ️ El token se guardará automáticamente cuando esté disponible mediante el listener');
+        print(
+          'ℹ️ El token se guardará automáticamente cuando esté disponible mediante el listener',
+        );
         // Configurar listener para cuando el token esté disponible
         _setupFCMTokenListener();
       }
@@ -221,65 +239,67 @@ class AuthProvider with ChangeNotifier {
       _setupFCMTokenListener();
     }
   }
-  
+
   // Configurar listener para cuando el token FCM esté disponible
   void _setupFCMTokenListener() {
     // Solo configurar una vez
     if (_fcmTokenListenerSetup) return;
-    
+
     // Escuchar cambios en el token FCM (se dispara cuando el token está disponible o se actualiza)
     try {
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
         if (_user != null && newToken.isNotEmpty) {
           try {
             await FirebaseService.saveFCMToken(_user!.uid, newToken);
-            print('📱 FCM Token guardado (desde listener) para usuario ${_user!.email}');
+            print(
+              '📱 FCM Token guardado (desde listener) para usuario ${_user!.email}',
+            );
           } catch (e) {
             print('⚠️ Error guardando FCM token desde listener: $e');
           }
         }
       });
-      
+
       // También intentar obtener el token periódicamente si no está disponible (especialmente en iOS)
       if (Platform.isIOS) {
         _periodicallyCheckFCMToken();
       }
-      
+
       _fcmTokenListenerSetup = true;
       print('✅ Listener de token FCM configurado');
     } catch (e) {
       print('⚠️ Error configurando listener de token FCM: $e');
     }
   }
-  
+
   // Verificar periódicamente el token FCM en iOS (cuando el token APNS puede tardar en estar disponible)
   void _periodicallyCheckFCMToken() {
     if (_user == null) return;
-    
+
     // Intentar obtener el token después de delays progresivos
     Future.delayed(Duration(seconds: 10), () async {
       if (_user == null) return;
       await _tryGetFCMTokenOnce();
     });
-    
+
     Future.delayed(Duration(seconds: 30), () async {
       if (_user == null) return;
       await _tryGetFCMTokenOnce();
     });
-    
+
     Future.delayed(Duration(seconds: 60), () async {
       if (_user == null) return;
       await _tryGetFCMTokenOnce();
     });
   }
-  
+
   // Intentar obtener el token FCM una vez
   Future<void> _tryGetFCMTokenOnce() async {
     if (_user == null) return;
-    
+
     try {
       final firebaseMessaging = FirebaseMessaging.instance;
-      
+
       // En iOS, verificar token APNS primero
       if (Platform.isIOS) {
         try {
@@ -291,24 +311,28 @@ class AuthProvider with ChangeNotifier {
           return; // Error obteniendo token APNS
         }
       }
-      
+
       // Intentar obtener token FCM
       final fcmToken = await firebaseMessaging.getToken();
       if (fcmToken != null && _user != null) {
         await FirebaseService.saveFCMToken(_user!.uid, fcmToken);
-        print('📱 FCM Token guardado (verificación periódica) para usuario ${_user!.email}');
+        print(
+          '📱 FCM Token guardado (verificación periódica) para usuario ${_user!.email}',
+        );
       }
     } catch (e) {
       // Silenciar errores en verificaciones periódicas
     }
   }
-  
+
   // Recargar datos del usuario (útil después de modificar favoritos)
   Future<void> reloadUserData() async {
     print('🔄 Recargando datos del usuario...');
     await _loadUserData();
     if (_appUser != null) {
-      print('✅ Datos del usuario recargados. Favoritos: ${_appUser!.favoriteBeaches.length}');
+      print(
+        '✅ Datos del usuario recargados. Favoritos: ${_appUser!.favoriteBeaches.length}',
+      );
       print('📋 IDs de favoritos: ${_appUser!.favoriteBeaches}');
     } else {
       print('⚠️ No se pudieron cargar los datos del usuario');
@@ -318,13 +342,16 @@ class AuthProvider with ChangeNotifier {
   // Actualizar foto de perfil
   Future<bool> updateProfilePhoto(File imageFile) async {
     if (_user == null) return false;
-    
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final photoUrl = await FirebaseService.updateProfilePhoto(_user!.uid, imageFile);
+      final photoUrl = await FirebaseService.updateProfilePhoto(
+        _user!.uid,
+        imageFile,
+      );
       if (photoUrl != null) {
         // Recargar datos del usuario para obtener la nueva foto
         await _loadUserData();
@@ -429,13 +456,13 @@ class AuthProvider with ChangeNotifier {
       final result = await FirebaseService.signInWithGoogle();
       _isLoading = false;
       notifyListeners();
-      
+
       // Si el resultado es null, el usuario canceló el proceso
       if (result == null) {
         _errorMessage = null; // No mostrar error si el usuario canceló
         return false;
       }
-      
+
       return true;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
@@ -447,6 +474,39 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       _errorMessage = 'Error al iniciar sesión con Google: ${e.toString()}';
       print('❌ Error en Google Sign-In: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Iniciar sesión con Apple
+  Future<bool> signInWithApple() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await FirebaseService.signInWithApple();
+      _isLoading = false;
+      notifyListeners();
+
+      // Si el resultado es null, el usuario canceló el proceso
+      if (result == null) {
+        _errorMessage = null; // No mostrar error si el usuario canceló
+        return false;
+      }
+
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _errorMessage = _getErrorMessage(e.code);
+      print('❌ Error de Firebase Auth: ${e.code} - ${e.message}');
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error al iniciar sesión con Apple: ${e.toString()}';
+      print('❌ Error en Apple Sign-In: $e');
       notifyListeners();
       return false;
     }
@@ -478,5 +538,68 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Eliminar cuenta temporalmente (desactivar)
+  Future<bool> deleteAccountTemporary() async {
+    if (_user == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await FirebaseService.deleteAccountTemporary(_user!.uid);
+      if (success) {
+        _user = null;
+        _appUser = null;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error al desactivar la cuenta: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Eliminar cuenta permanentemente
+  Future<bool> deleteAccountPermanent({String? password}) async {
+    if (_user == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final userId = _user!.uid;
+      final success = await FirebaseService.deleteAccountPermanent(
+        userId,
+        password: password,
+      );
+      if (success) {
+        _user = null;
+        _appUser = null;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      if (e.code == 'requires-recent-login') {
+        _errorMessage = 'requires-recent-login'; // Código especial para la UI
+      } else {
+        _errorMessage = 'Error al eliminar la cuenta: ${e.message}';
+      }
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error al eliminar la cuenta: $e';
+      notifyListeners();
+      return false;
+    }
   }
 }
