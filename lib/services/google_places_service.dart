@@ -123,7 +123,12 @@ class GooglePlacesService {
       final url = 
           'https://maps.googleapis.com/maps/api/place/textsearch/json?query=$encodedQuery&key=$apiKey&region=do&language=es';
       
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -185,7 +190,12 @@ class GooglePlacesService {
       final url = 
           'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey&fields=$fields&language=es';
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -490,7 +500,12 @@ class GooglePlacesService {
 
       print('🔍 Buscando: $beachName');
       
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -641,7 +656,12 @@ class GooglePlacesService {
       final url = 
           'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey&fields=photos&language=es';
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

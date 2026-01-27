@@ -417,7 +417,12 @@ class _MapScreenState extends State<MapScreen> {
                 color: isDark ? Colors.grey[800] : Colors.grey[200],
                 image: beach.imageUrls.isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(beach.imageUrls.first),
+                        image: NetworkImage(
+                          beach.imageUrls.first,
+                          headers: const {
+                            'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+                          },
+                        ),
                         fit: BoxFit.cover,
                       )
                     : null,

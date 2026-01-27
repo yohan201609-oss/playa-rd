@@ -5,7 +5,7 @@
 Aplicación completa para descubrir y reportar las mejores playas de República Dominicana 🇩🇴
 
 **Nombre de la aplicación:** Playas RD  
-**Versión:** 1.0.0  
+**Versión:** 1.0.1+4  
 **Plataformas:** Android, iOS, Web, Windows, macOS, Linux
 
 ## 📱 Proyecto Original
@@ -14,35 +14,120 @@ Aplicación completa para descubrir y reportar las mejores playas de República 
 
 ## 🎯 Características Implementadas
 
-- [x] Lista de playas (20 playas reales de RD)
+### Funcionalidades Principales
+- [x] Lista de playas (102 playas reales de RD con coordenadas GPS verificadas)
 - [x] Mapa interactivo con Google Maps
-- [x] Detalles de playa
-- [x] Sistema de reportes
-- [x] Perfil de usuario
-- [x] Firebase Authentication
-- [x] Firestore Database
-- [x] Sistema de favoritos
-- [x] Sistema de puntos y gamificación
+- [x] Detalles completos de playa con información detallada
+- [x] Sistema de reportes en tiempo real con fotos
+- [x] Perfil de usuario completo
+- [x] Sistema de favoritos sincronizado en la nube
+- [x] Sistema de puntos
 - [x] Búsqueda y filtros avanzados
-- [x] Ratings y reseñas
+- [x] Ratings y reseñas de usuarios
+- [x] Clima en tiempo real por playa (OpenWeatherMap)
+- [x] Sistema de playas visitadas
+- [x] Historial de reportes del usuario
+
+### Autenticación y Usuarios
+- [x] Firebase Authentication
+- [x] Registro e inicio de sesión con email y contraseña
+- [x] Google Sign-In (Android, iOS, Web)
+- [x] Apple Sign-In (iOS, macOS)
+- [x] Recuperación de contraseña
+- [x] Perfiles de usuario con sincronización en la nube
+- [x] Favoritos sincronizados automáticamente
+
+### Notificaciones
+- [x] Notificaciones push con Firebase Cloud Messaging
+- [x] Notificaciones locales
+- [x] Configuración de preferencias de notificaciones
+- [x] Pantalla de prueba de notificaciones
+
+### Integraciones y Servicios
+- [x] Firebase Firestore Database
+- [x] Firebase Storage para imágenes
+- [x] Firebase Cloud Functions (procesamiento de imágenes, emails de soporte)
+- [x] Google Maps API con navegación integrada
+- [x] OpenWeatherMap API para datos climáticos
+- [x] Google Mobile Ads (AdMob) - Banners, Intersticiales y Recompensados
+- [x] Sistema de soporte por email integrado
+
+### UI/UX
+- [x] Diseño responsive (adaptable a diferentes tamaños de pantalla)
+- [x] Tema claro y oscuro
+- [x] Localización completa (Español e Inglés)
+- [x] Animaciones y transiciones suaves
+- [x] Skeleton loading (shimmer effects)
+- [x] Caché de imágenes con `cached_network_image`
+- [x] Compartir playas y reportes
+
+### Pantallas y Navegación
+- [x] Pantalla de inicio (Home) con lista de playas
+- [x] Pantalla de mapa interactivo
+- [x] Pantalla de detalles de playa
+- [x] Pantalla de reportes
+- [x] Pantalla de perfil de usuario
+- [x] Pantalla de login/registro
+- [x] Pantalla de favoritos
+- [x] Pantalla de playas visitadas
+- [x] Pantalla de mis reportes
+- [x] Pantalla de configuración
+- [x] Pantalla de ayuda
+- [x] Pantalla de política de privacidad
+- [x] Pantalla de términos de servicio
+- [x] Pantalla de prueba de notificaciones
+- [x] Splash screen con inicialización
 
 ## 🚀 Configuración e Instalación
 
+### Requisitos Previos
+- Flutter SDK 3.9.2 o superior
+- Dart SDK compatible
+- Cuenta de Firebase (proyecto: `playas-rd-2b475`)
+- API Keys:
+  - Google Maps API Key
+  - OpenWeatherMap API Key
+  - Google Mobile Ads (AdMob) - Opcional para desarrollo
+
 ### 1. Instalar dependencias
+
 ```bash
 cd D:\playas_rd_flutter
 flutter pub get
 ```
 
-### 2. Configurar Google Maps
+### 2. Configurar Variables de Entorno
+
+Crear archivo `.env` en la raíz del proyecto con las siguientes variables:
+
+```env
+# Google Maps API Key
+GOOGLE_MAPS_API_KEY=tu_api_key_aqui
+
+# OpenWeatherMap API Key
+OPENWEATHER_API_KEY=tu_api_key_aqui
+
+# Firebase (ya configurado, pero puedes agregar si es necesario)
+FIREBASE_PROJECT_ID=playas-rd-2b475
+```
+
+**Nota:** El archivo `.env` está en `.gitignore` por seguridad. No subas tus API keys al repositorio.
+
+### 3. Configurar Google Maps
 
 ✅ **Google Maps API Key configurada** en:
 - ✅ `.env` como `GOOGLE_MAPS_API_KEY`
 - ✅ Android (`android/app/src/main/AndroidManifest.xml`)
+- ✅ iOS (`ios/Runner/AppDelegate.swift` o `Info.plist`)
+- ✅ Web (`web/index.html`)
 
-**Nota:** Asegúrate de tener configurada la API Key de Google Maps en el archivo `.env` en la raíz del proyecto.
+**Requisitos de la API Key:**
+- Habilitar "Maps SDK for Android"
+- Habilitar "Maps SDK for iOS"
+- Habilitar "Maps JavaScript API" (para Web)
+- Configurar restricciones de aplicación (recomendado para producción)
 
-### 3. Firebase - ¡YA CONFIGURADO! 🔥
+### 4. Firebase - ¡YA CONFIGURADO! 🔥
 
 **Estado de Firebase:**
 - ✅ **Web**: Completamente configurado y listo para usar
@@ -59,6 +144,7 @@ flutter run -d chrome
 # Android
 flutter run -d android
 flutter build apk
+flutter build appbundle
 
 # iOS (requiere Mac)
 flutter run -d ios
@@ -67,18 +153,41 @@ flutter build ios
 # macOS (requiere Mac)
 flutter run -d macos
 flutter build macos
+
+# Windows
+flutter run -d windows
+flutter build windows
+
+# Linux
+flutter run -d linux
+flutter build linux
 ```
 
-📖 **Ver guía completa:** `FIREBASE_SETUP.md`
+📖 **Ver guía completa:** `FIREBASE_PRODUCCION.md`
 
 **Funcionalidades con Firebase:**
-- ✅ Autenticación de usuarios
-- ✅ Reportes de condiciones
-- ✅ Guardar favoritos
-- ✅ Sistema de puntos
-- ✅ Perfil de usuario
+- ✅ Autenticación de usuarios (Email, Google, Apple)
+- ✅ Firestore Database (playas, reportes, usuarios)
+- ✅ Firebase Storage (imágenes de reportes)
+- ✅ Firebase Cloud Messaging (notificaciones push)
+- ✅ Firebase App Check (protección contra abuso)
+- ✅ Firebase Cloud Functions (procesamiento backend)
 
-### 4. Ejecutar la aplicación
+### 5. Configurar Firebase Cloud Functions (Opcional)
+
+Las Cloud Functions están en la carpeta `functions/` y proporcionan:
+- Procesamiento automático de imágenes (redimensionado)
+- Envío de emails de soporte
+- Tareas programadas
+
+Para desplegar:
+```bash
+cd functions
+npm install
+firebase deploy --only functions
+```
+
+### 6. Ejecutar la aplicación
 
 ```bash
 # Ejecutar en Chrome (Web)
@@ -86,6 +195,9 @@ flutter run -d chrome
 
 # Ejecutar en Android
 flutter run -d android
+
+# Ejecutar en iOS (requiere Mac)
+flutter run -d ios
 
 # Ejecutar en Windows
 flutter run -d windows
@@ -99,6 +211,7 @@ flutter run -d windows
 | Tamaño | ~30 MB | ~70 MB |
 | Performance | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
 | Hot Reload | ⚡ Muy rápido | ⚡ Rápido |
+| Plataformas | 6 (Android, iOS, Web, Windows, macOS, Linux) | 2 (Android, iOS) |
 
 ## 🔧 Dependencias principales
 
@@ -112,6 +225,15 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   firebase_storage: ^12.3.4
+  firebase_messaging: ^15.1.3
+  firebase_app_check: ^0.3.1+2
+  
+  # Notificaciones locales
+  flutter_local_notifications: ^18.0.1
+  
+  # Autenticación Social
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
   
   # Maps - Google Maps
   google_maps_flutter: ^2.5.3
@@ -129,44 +251,107 @@ dependencies:
   shimmer: ^3.0.0
   
   # Utils
-  intl: ^0.19.0
+  intl: ^0.20.2
   uuid: ^4.5.1
   share_plus: ^10.1.2
+  url_launcher: ^6.3.0
+  
+  # HTTP y API
+  http: ^1.2.0
+  flutter_dotenv: ^5.1.0
+  
+  # Caché local
+  shared_preferences: ^2.2.2
+  
+  # AdMob
+  google_mobile_ads: ^5.1.0
 ```
 
 ## 📝 Estructura del proyecto
 
 ```
 lib/
-├── main.dart                      # Entry point
+├── main.dart                      # Entry point de la aplicación
 ├── models/                        # Modelos de datos
-│   └── beach.dart                 # Beach, BeachReport, AppUser
-├── screens/                       # Pantallas
+│   ├── beach.dart                 # Beach, BeachReport, AppUser
+│   └── weather.dart               # WeatherData, WeatherCondition
+├── screens/                       # Pantallas de la aplicación
 │   ├── home_screen.dart           # Lista de playas con búsqueda/filtros
-│   ├── map_screen.dart            # Mapa con Google Maps
+│   ├── map_screen.dart            # Mapa interactivo con Google Maps
 │   ├── beach_detail_screen.dart   # Detalles completos de playa
 │   ├── report_screen.dart         # Formulario de reportes
-│   ├── profile_screen.dart        # Perfil de usuario
-│   └── login_screen.dart          # Autenticación
+│   ├── profile_screen.dart         # Perfil de usuario
+│   ├── login_screen.dart          # Autenticación (Email, Google, Apple)
+│   ├── favorites_screen.dart      # Lista de favoritos
+│   ├── visited_beaches_screen.dart # Playas visitadas
+│   ├── my_reports_screen.dart     # Mis reportes
+│   ├── settings_screen.dart       # Configuración
+│   ├── help_screen.dart           # Ayuda y FAQ
+│   ├── privacy_policy_screen.dart # Política de privacidad
+│   ├── terms_of_service_screen.dart # Términos de servicio
+│   ├── test_notifications_screen.dart # Prueba de notificaciones
+│   └── splash_screen.dart         # Pantalla de inicio
 ├── widgets/                       # Componentes reutilizables
 │   ├── beach_card.dart            # Card de playa
-│   └── loading_shimmer.dart       # Skeleton loading
-├── providers/                     # State Management
+│   ├── loading_shimmer.dart       # Skeleton loading
+│   ├── weather_card.dart          # Card de clima
+│   └── app_logo.dart              # Logo de la aplicación
+├── providers/                     # State Management (Provider)
 │   ├── beach_provider.dart        # Estado de playas
-│   └── auth_provider.dart         # Estado de autenticación
-├── services/                      # Servicios
-│   ├── firebase_service.dart      # Firebase operations
-│   └── beach_service.dart         # 20 playas reales de RD
-└── utils/                         # Utilidades
-    └── constants.dart             # Colores, constantes, helpers
+│   ├── auth_provider.dart         # Estado de autenticación
+│   ├── weather_provider.dart      # Estado del clima
+│   └── settings_provider.dart     # Estado de configuración
+├── services/                      # Servicios y lógica de negocio
+│   ├── firebase_service.dart      # Operaciones de Firebase
+│   ├── beach_service.dart         # 20 playas reales de RD
+│   ├── weather_service.dart       # Servicio de clima (OpenWeatherMap)
+│   ├── notification_service.dart  # Notificaciones push y locales
+│   ├── admob_service.dart         # Gestión de anuncios AdMob
+│   ├── app_initializer.dart      # Inicialización de la app
+│   ├── navigation_service.dart    # Servicio de navegación
+│   ├── preferences_service.dart   # Preferencias locales
+│   ├── support_service.dart       # Servicio de soporte
+│   ├── google_geocoding_service.dart # Geocodificación
+│   ├── google_places_service.dart # Google Places API
+│   └── beach_coordinates_updater.dart # Actualizador de coordenadas
+├── utils/                         # Utilidades
+│   ├── constants.dart             # Colores, constantes, helpers
+│   ├── responsive.dart            # Utilidades de responsividad
+│   ├── app_assets.dart            # Gestión de assets
+│   ├── api_key_verifier.dart      # Verificación de API keys
+│   ├── notification_helper.dart   # Helpers de notificaciones
+│   └── coordinate_updater_helper.dart # Helpers de coordenadas
+├── l10n/                          # Localización (i18n)
+│   ├── app_es.arb                 # Traducciones en español
+│   ├── app_en.arb                 # Traducciones en inglés
+│   ├── app_localizations.dart     # Clase principal de localización
+│   ├── app_localizations_es.dart  # Localización español
+│   └── app_localizations_en.dart  # Localización inglés
+└── scripts/                       # Scripts de utilidad
+    └── sync_new_beaches.dart      # Sincronización de nuevas playas
+
+functions/                         # Firebase Cloud Functions
+├── index.js                       # Funciones serverless
+├── package.json                   # Dependencias de Node.js
+└── README.md                      # Documentación de funciones
+
+assets/                            # Recursos estáticos
+├── logo.png                       # Logo de la aplicación
+├── images/                        # Imágenes de playas
+└── icons/                         # Iconos de la aplicación
 ```
 
 ## 🎨 Tema de la app
 
 ```dart
 primaryColor: Color(0xFF00A9E0)  // Azul océano
-accentColor: Color(0xFFFFC107)   // Amarillo arena
+secondaryColor: Color(0xFFFFC107)   // Amarillo arena
 ```
+
+La aplicación soporta:
+- **Tema claro**: Fondo gris claro (#F5F5F5)
+- **Tema oscuro**: Fondo oscuro (#121212)
+- **Material Design 3**: Implementación completa de Material 3
 
 ## 🏖️ Base de Datos de Playas (GPS Verificadas)
 
@@ -208,9 +393,11 @@ La app incluye **20 playas reales de República Dominicana** con coordenadas GPS
 
 ### Sistema de Reportes
 - Los usuarios pueden reportar condiciones actuales de playas
-- Subir fotos de las playas
+- Subir hasta 3 fotos por reporte
 - Agregar comentarios y detalles
 - Gana 10 puntos por reporte + 5 por foto
+- Historial completo de reportes del usuario
+- Marcar reportes como útiles (+2 puntos)
 
 ### Sistema de Puntos
 - Reportar condiciones: +10 puntos
@@ -218,36 +405,93 @@ La app incluye **20 playas reales de República Dominicana** con coordenadas GPS
 - Marcar como útil: +2 puntos
 - Visitar playa: +15 puntos
 
-### Filtros y Búsqueda
+### Clima en Tiempo Real
+- Datos climáticos actualizados de OpenWeatherMap
+- Información detallada: temperatura, sensación térmica, humedad, viento, índice UV
+- Horarios de amanecer y atardecer
+- Recomendaciones inteligentes sobre el mejor momento para visitar
+- Caché local para reducir llamadas a la API (45 minutos)
+
+### Filtros y Búsqueda Avanzada
 - Buscar por nombre, provincia o municipio
 - Filtrar por provincia
 - Filtrar por condición (Excelente, Bueno, Moderado, Peligroso)
 - Ordenar por calificación, nombre o condición
+- Filtrar solo favoritos
+- Filtrar solo visitadas
 
 ### Mapa Interactivo
 - Visualiza todas las playas en un mapa de Google Maps
 - Markers con código de colores según condición
 - Tap en marker para ver información rápida
 - Navegación a detalles completos
+- Integración con Google Maps y Waze para navegación
+- Geolocalización del usuario
+
+### Notificaciones Push
+- Notificaciones push con Firebase Cloud Messaging
+- Notificaciones locales programadas
+- Configuración de preferencias
+- Pantalla de prueba de notificaciones
+- Sincronización de tokens FCM
+
+### Anuncios AdMob
+- Banners publicitarios
+- Anuncios intersticiales
+- Anuncios recompensados
+- Modo de prueba para desarrollo
+- IDs de producción configurados
 
 ## 🔐 Autenticación
 
-- Registro con email y contraseña
-- Inicio de sesión
-- Recuperación de contraseña
-- Sistema de perfiles de usuario
+### Métodos de Autenticación
+- ✅ Registro con email y contraseña
+- ✅ Inicio de sesión con email y contraseña
+- ✅ Google Sign-In (Android, iOS, Web)
+- ✅ Apple Sign-In (iOS, macOS)
+- ✅ Recuperación de contraseña por email
+- ✅ Verificación de email (opcional)
+
+### Funcionalidades de Usuario
+- Perfiles de usuario completos
 - Favoritos sincronizados en la nube
+- Historial de reportes
+- Playas visitadas
+- Sistema de puntos y ranking
+- Configuración de preferencias
+
+## 🌍 Localización (i18n)
+
+La aplicación está completamente localizada en:
+- **Español** (español dominicano)
+- **Inglés** (inglés americano)
+
+La localización incluye:
+- Todas las cadenas de texto de la UI
+- Mensajes de error y validación
+- Formatos de fecha y hora
+- Nombres de provincias y regiones
 
 ## 🚧 Próximas características
 
-- [ ] Integración con Google/Facebook Sign In
-- [ ] Notificaciones push para alertas
+### Funcionalidades Planificadas
+- [ ] Modo offline completo con sincronización
 - [ ] Sistema de logros y badges
-- [ ] Compartir en redes sociales
-- [ ] Modo offline
-- [ ] Rutas y direcciones a playas
-- [ ] Reviews y comentarios
-- [ ] Galería de fotos de usuarios
+- [ ] Compartir en redes sociales (Facebook, Twitter, Instagram)
+- [ ] Rutas y direcciones detalladas a playas
+- [ ] Sistema de comentarios en reportes
+- [ ] Galería de fotos de usuarios por playa
+- [ ] Filtros avanzados (accesibilidad, servicios, actividades)
+- [ ] Integración con redes sociales para login (Facebook, Twitter)
+- [ ] Widgets para pantalla de inicio
+- [ ] Modo de realidad aumentada (AR) para visualizar playas
+
+### Mejoras Técnicas
+- [ ] Optimización de rendimiento para listas grandes
+- [ ] Implementación de caché más robusto
+- [ ] Mejoras en la accesibilidad (a11y)
+- [ ] Tests unitarios y de integración
+- [ ] Documentación de API interna
 
 ---
 
@@ -271,42 +515,30 @@ Se ha realizado un análisis exhaustivo del proyecto y se creó documentación c
    - Google Play Console y App Store Connect
    - Checklist final completo
 
-2. **[RESUMEN_CONFIGURACIONES_FALTANTES.md](RESUMEN_CONFIGURACIONES_FALTANTES.md)** ← **📋 RESUMEN EJECUTIVO**
-   - Resumen rápido de lo que falta
-   - Prioridades (Crítico, Alta, Media)
-   - Plan de acción por días
-   - Costos y tiempos estimados
-
 #### 📖 **Otras Guías Disponibles**
 
-3. **[INICIO_PRODUCCION.md](INICIO_PRODUCCION.md)** (si existe)
-   - Resumen ejecutivo y plan de acción
-   - Primeros pasos rápidos (15 minutos)
-   - Índice de toda la documentación
+3. **[FIREBASE_PRODUCCION.md](FIREBASE_PRODUCCION.md)**
+   - Configuración completa de Firebase para producción
+   - Reglas de seguridad de Firestore
+   - Configuración de Storage
+   - App Check y protección
 
-4. **[RESUMEN_PROBLEMAS_ENCONTRADOS.md](RESUMEN_PROBLEMAS_ENCONTRADOS.md)** (si existe)
-   - 8 problemas críticos identificados
-   - 15 mejoras recomendadas
-   - Tabla de prioridades y tiempos
+4. **[GUIA_PRODUCCION_ANDROID.md](GUIA_PRODUCCION_ANDROID.md)**
+   - Configuración de keystore
+   - Firma de aplicaciones
+   - ProGuard y ofuscación
+   - Google Play Console
 
-5. **[GUIA_PRODUCCION_COMPLETA.md](GUIA_PRODUCCION_COMPLETA.md)** (si existe)
-   - Guía paso a paso completa (12 secciones)
-   - Android: Keystore, firma, ProGuard
-   - iOS: Permisos, configuración, firma
-   - Firebase: Reglas de seguridad
-   - APIs: Restricciones y configuración
-   - Legal: Políticas de privacidad y términos
-   - Testing, optimización y deployment
+5. **[GUIA_PRODUCCION_IOS.md](GUIA_PRODUCCION_IOS.md)**
+   - Configuración de certificados
+   - App Store Connect
+   - Configuración de notificaciones push (APNS)
+   - Apple Sign-In
 
-6. **[CHECKLIST_PRODUCCION.md](CHECKLIST_PRODUCCION.md)** (si existe)
-   - 75+ tareas organizadas
-   - Seguimiento interactivo
-   - Comandos de referencia rápida
-
-7. **[CONFIGURACION_ENV.md](CONFIGURACION_ENV.md)** (si existe)
-   - ⚠️ **URGENTE:** Configuración de variables de entorno
-   - Obtener API key de OpenWeatherMap
-   - Solución de problemas
+6. **[METADATOS_APP_STORE_IOS.md](METADATOS_APP_STORE_IOS.md)**
+   - Textos para App Store Connect
+   - Descripciones y screenshots
+   - Categorías y palabras clave
 
 ### ⏱️ Tiempo Estimado a Producción
 - **Publicación rápida:** 2-3 días (16-24 horas)
@@ -319,10 +551,21 @@ Se ha realizado un análisis exhaustivo del proyecto y se creó documentación c
 - **Total año 1: $124 USD**
 
 ### 🎯 Primeros Pasos (15 minutos)
-1. **Lee el resumen:** [RESUMEN_CONFIGURACIONES_FALTANTES.md](RESUMEN_CONFIGURACIONES_FALTANTES.md)
-2. **Sigue la guía completa:** [GUIA_CONFIGURACIONES_PRODUCCION.md](GUIA_CONFIGURACIONES_PRODUCCION.md)
-3. **Empieza por lo crítico:** Sección 1 - Variables de entorno (crear `.env`)
-4. **Continúa con Android:** Sección 2 - Configuración de keystore y firma
+1. **Sigue la guía completa:** [GUIA_CONFIGURACIONES_PRODUCCION.md](GUIA_CONFIGURACIONES_PRODUCCION.md)
+2. **Empieza por lo crítico:** Sección 1 - Variables de entorno (crear `.env`)
+3. **Continúa con Android:** Sección 2 - Configuración de keystore y firma
+
+---
+
+## 📄 Licencia
+
+Este proyecto es privado y está destinado para uso personal/comercial.
+
+---
+
+## 👥 Contribuciones
+
+Este es un proyecto privado. Para sugerencias o reportes de bugs, contacta al equipo de desarrollo.
 
 ---
 

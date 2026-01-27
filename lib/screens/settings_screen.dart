@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/settings_provider.dart';
 import '../providers/beach_provider.dart';
 import '../utils/constants.dart';
+import '../widgets/migration_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -99,6 +100,19 @@ class SettingsScreen extends StatelessWidget {
             subtitle: l10n.settingsResetSettingsDesc,
             iconColor: Colors.orange,
             onTap: () => _showResetDialog(context, settingsProvider, l10n),
+          ),
+          // 🚀 Botón de migración de imágenes
+          _buildActionTile(
+            icon: Icons.cloud_upload_rounded,
+            title: '🚀 Migrar Imágenes a Firebase',
+            subtitle: 'Evitar imágenes rotas en iOS y reducir costos de Google',
+            iconColor: Colors.red,
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => const MigrationDialog(),
+              );
+            },
           ),
           const SizedBox(height: 40),
         ],

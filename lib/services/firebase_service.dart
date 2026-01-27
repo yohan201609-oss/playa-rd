@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'dart:typed_data';
 import '../models/beach.dart';
 import '../utils/notification_helper.dart';
 import 'beach_service.dart';
@@ -1092,6 +1094,7 @@ class FirebaseService {
   }
 
   // Obtener fotos de las 45 playas originales desde Google Places API
+  // ACTUALIZADO: Ahora transfiere automáticamente a Firebase Storage para evitar costos recurrentes
   static Future<void> fetchPhotosFromGooglePlacesForOriginalBeaches({
     Function(int current, int total, String name)? onProgress,
   }) async {
@@ -1141,18 +1144,45 @@ class FirebaseService {
             noPhotos++;
             print('⚠️ No se encontraron fotos para: ${beach.name}');
           } else {
-            // Actualizar en Firebase
+            // Transferir las fotos a Firebase Storage (para evitar costos recurrentes de Google)
+            print('📤 Transfiriendo ${photos.length} foto(s) a Firebase Storage...');
+            
+            final List<String> firebaseUrls = [];
+            int photosTransferred = 0;
+
+            for (int j = 0; j < photos.length; j++) {
+              final googleUrl = photos[j];
+              final firebaseUrl =
+                  await transferImageToFirebase(googleUrl, beach.id, j);
+
+              if (firebaseUrl != null) {
+                firebaseUrls.add(firebaseUrl);
+                photosTransferred++;
+                print('   ✅ Foto ${j + 1}/${photos.length} migrada a Firebase');
+              } else {
+                // Si falla la transferencia, usar la URL original como fallback
+                firebaseUrls.add(googleUrl);
+                print('   ⚠️ Foto ${j + 1}/${photos.length} falló (usando original)');
+              }
+
+              // Pequeña pausa entre transferencias
+              await Future.delayed(const Duration(milliseconds: 300));
+            }
+
+            // Actualizar en Firebase con las nuevas URLs de Firebase Storage
             final docRef = _firestore.collection('beaches').doc(beach.id);
             final doc = await docRef.get();
 
             if (doc.exists) {
               await docRef.update({
-                'imageUrls': photos,
+                'imageUrls': firebaseUrls,
                 'lastUpdated': FieldValue.serverTimestamp(),
               });
 
               updated++;
-              print('✅ ${photos.length} foto(s) agregada(s) a: ${beach.name}');
+              print(
+                '✅ ${beach.name}: $photosTransferred/${photos.length} foto(s) en Firebase (ahorro de costos: \$${(photosTransferred * 0.007).toStringAsFixed(3)})',
+              );
             } else {
               notFound++;
               print(
@@ -1176,6 +1206,10 @@ class FirebaseService {
       print('   - No encontradas en Firebase: $notFound');
       print('   - Errores: $errors');
       print('   - Total procesadas: ${originalBeaches.length}');
+      print('');
+      print(
+        '💰 AHORRO TOTAL ESTIMADO: \$${(updated * 5 * 0.007).toStringAsFixed(2)} (si cada playa tiene 5 fotos)',
+      );
     } catch (e) {
       print('❌ Error obteniendo fotos desde Google Places: $e');
       rethrow;
@@ -1471,6 +1505,270 @@ class FirebaseService {
       print('🔔 Notificación enviada: Nuevo reporte en ${beach.name}');
     } catch (e) {
       print('⚠️ Error enviando notificación: $e');
+    }
+  }
+
+  // =======================
+  // MIGRACIÓN DE IMÁGENES
+  // =======================
+
+  /// Descarga una imagen desde Google y la sube a Firebase Storage
+  /// Retorna la URL pública de Firebase para usar en la app
+  static Future<String?> transferImageToFirebase(
+    String googleUrl,
+    String beachId,
+    int index,
+  ) async {
+    try {
+      print('📥 Descargando imagen desde Google: $googleUrl');
+
+      // 1. Descargar desde Google
+      final response = await http.get(
+        Uri.parse(googleUrl),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        print('❌ Error descargando imagen: ${response.statusCode}');
+        return null;
+      }
+
+      final Uint8List bytes = response.bodyBytes;
+      print('✅ Imagen descargada (${(bytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
+
+      // 2. Subir a Firebase Storage
+      print('📤 Subiendo a Firebase Storage...');
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('beaches')
+          .child(beachId)
+          .child('photo_$index.jpg');
+
+      final uploadTask = await storageRef.putData(
+        bytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      // 3. Obtener la nueva URL permanente
+      final firebaseUrl = await uploadTask.ref.getDownloadURL();
+      print('✅ Imagen subida a Firebase: $firebaseUrl');
+
+      return firebaseUrl;
+    } catch (e) {
+      print('❌ Error transfiriendo imagen desde Google a Firebase: $e');
+      return null;
+    }
+  }
+
+  /// Migrar todas las imágenes de Google Places a Firebase Storage
+  /// Esta función recorre todas las playas en Firestore y cambia las URLs de Google por URLs de Firebase
+  /// SOLO se procesarán las imágenes que contengan "maps.googleapis.com"
+  static Future<Map<String, dynamic>> migrateAllGoogleImagesToFirebase({
+    Function(int current, int total, String beachName, int photosTransferred)?
+        onProgress,
+  }) async {
+    try {
+      print('');
+      print('🚀 ========================================');
+      print('🚀 INICIANDO MIGRACIÓN DE IMÁGENES A FIREBASE');
+      print('🚀 ========================================');
+      print('');
+
+      // Obtener todas las playas de Firestore
+      final snapshot = await _firestore.collection('beaches').get();
+      final allBeaches = snapshot.docs;
+
+      print(
+        '📊 Total de playas a procesar: ${allBeaches.length}',
+      );
+      print('');
+
+      int totalMigrated = 0;
+      int totalPhotos = 0;
+      int beachesModified = 0;
+      int errors = 0;
+
+      // Procesar cada playa
+      for (int i = 0; i < allBeaches.length; i++) {
+        final doc = allBeaches[i];
+        final beachId = doc.id;
+        final data = doc.data();
+        final beachName = data['name'] ?? 'Sin nombre';
+        final imageUrls = List<String>.from(data['imageUrls'] ?? []);
+
+        try {
+          if (imageUrls.isEmpty) {
+            print('⏭️ [${i + 1}/${allBeaches.length}] $beachName: Sin imágenes');
+            continue;
+          }
+
+          // Filtrar solo URLs de Google Places
+          final googleUrls = imageUrls
+              .where((url) => url.contains('maps.googleapis.com'))
+              .toList();
+
+          if (googleUrls.isEmpty) {
+            print(
+              '⏭️ [${i + 1}/${allBeaches.length}] $beachName: Ya migrada o sin URLs de Google',
+            );
+            continue;
+          }
+
+          print(
+            '🔄 [${i + 1}/${allBeaches.length}] Procesando: $beachName (${googleUrls.length} foto(s) de Google)',
+          );
+
+          // Transferir cada imagen a Firebase
+          final List<String> newUrls = [];
+          int photosTransferred = 0;
+
+          for (int j = 0; j < imageUrls.length; j++) {
+            final url = imageUrls[j];
+
+            if (url.contains('maps.googleapis.com')) {
+              // Es una URL de Google, transferirla
+              final newUrl = await transferImageToFirebase(url, beachId, j);
+              if (newUrl != null) {
+                newUrls.add(newUrl);
+                photosTransferred++;
+                totalPhotos++;
+                print('   ✅ Foto ${j + 1}/${imageUrls.length} migrada');
+              } else {
+                // Si falló la transferencia, mantener la URL original como fallback
+                newUrls.add(url);
+                print('   ⚠️ Foto ${j + 1}/${imageUrls.length} falló (manteniendo original)');
+              }
+            } else {
+              // Ya es una URL de Firebase o externa, mantenerla
+              newUrls.add(url);
+            }
+
+            // Pequeña pausa entre transferencias para no sobrecargar
+            await Future.delayed(const Duration(milliseconds: 300));
+          }
+
+          // Actualizar Firestore con las nuevas URLs
+          if (photosTransferred > 0) {
+            await _firestore.collection('beaches').doc(beachId).update({
+              'imageUrls': newUrls,
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+
+            totalMigrated += photosTransferred;
+            beachesModified++;
+            print('✅ $beachName: $photosTransferred foto(s) migrada(s) a Firebase');
+            print('');
+
+            // Reportar progreso
+            if (onProgress != null) {
+              onProgress(i + 1, allBeaches.length, beachName, photosTransferred);
+            }
+          }
+        } catch (e) {
+          errors++;
+          print('❌ Error procesando $beachName: $e');
+          print('');
+        }
+
+        // Pausa más larga entre playas para dar respiro a la API
+        await Future.delayed(const Duration(seconds: 1));
+      }
+
+      print('');
+      print('✅ ========================================');
+      print('✅ MIGRACIÓN COMPLETADA');
+      print('✅ ========================================');
+      print('📊 Playas procesadas: ${allBeaches.length}');
+      print('📊 Playas modificadas: $beachesModified');
+      print('📊 Total de fotos migradas: $totalMigrated');
+      print('📊 Total de fotos procesadas: $totalPhotos');
+      print('📊 Errores: $errors');
+      print('');
+      print('💰 AHORRO ESTIMADO: Cada foto de Google costaba ~\$0.007, ahora Firebase es gratis');
+      print('');
+
+      return {
+        'success': true,
+        'totalMigrated': totalMigrated,
+        'beachesModified': beachesModified,
+        'totalPhotos': totalPhotos,
+        'errors': errors,
+        'totalBeaches': allBeaches.length,
+      };
+    } catch (e) {
+      print('❌ Error en migración general: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  /// Migrar imágenes de una playa específica
+  static Future<bool> migrateBeachImagesToFirebase(String beachId) async {
+    try {
+      print('🔄 Iniciando migración para playa ID: $beachId');
+
+      final doc = await _firestore.collection('beaches').doc(beachId).get();
+
+      if (!doc.exists) {
+        print('⚠️ Playa no encontrada: $beachId');
+        return false;
+      }
+
+      final data = doc.data() as Map<String, dynamic>;
+      final beachName = data['name'] ?? 'Sin nombre';
+      final imageUrls = List<String>.from(data['imageUrls'] ?? []);
+
+      if (imageUrls.isEmpty) {
+        print('⚠️ La playa $beachName no tiene imágenes');
+        return false;
+      }
+
+      // Filtrar solo URLs de Google
+      final googleUrls = imageUrls
+          .where((url) => url.contains('maps.googleapis.com'))
+          .toList();
+
+      if (googleUrls.isEmpty) {
+        print('⚠️ La playa $beachName ya está migrada o no tiene URLs de Google');
+        return false;
+      }
+
+      print('📤 Migrando ${googleUrls.length} imagen(s) para $beachName...');
+
+      final List<String> newUrls = [];
+
+      for (int j = 0; j < imageUrls.length; j++) {
+        final url = imageUrls[j];
+
+        if (url.contains('maps.googleapis.com')) {
+          final newUrl = await transferImageToFirebase(url, beachId, j);
+          if (newUrl != null) {
+            newUrls.add(newUrl);
+          } else {
+            newUrls.add(url);
+          }
+        } else {
+          newUrls.add(url);
+        }
+
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      // Actualizar Firestore
+      await _firestore.collection('beaches').doc(beachId).update({
+        'imageUrls': newUrls,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+
+      print('✅ Migración completada para $beachName');
+      return true;
+    } catch (e) {
+      print('❌ Error migrando playa: $e');
+      return false;
     }
   }
 }

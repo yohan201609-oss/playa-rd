@@ -785,7 +785,7 @@ Para cada nueva versión:
 
 **Ejemplo:**
 - Versión 1: `1.0.1+4`
-- Versión 2: `1.0.2+5` (parche)
+- Versión 3: `1.0.3+6` (parche)
 - Versión 3: `1.1.0+6` (nueva funcionalidad)
 
 ### Costos

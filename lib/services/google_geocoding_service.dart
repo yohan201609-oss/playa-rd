@@ -103,7 +103,12 @@ class GoogleGeocodingService {
 
       print('🔍 Buscando coordenadas para: $searchQuery');
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -187,7 +192,12 @@ class GoogleGeocodingService {
 
       print('🔍 Buscando lugar en Places API: $searchQuery');
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -258,7 +268,12 @@ class GoogleGeocodingService {
       final url = 
           'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey&fields=geometry,formatted_address,name,rating,photos,opening_hours';
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -306,7 +321,12 @@ class GoogleGeocodingService {
           'https://maps.googleapis.com/maps/api/geocode/json?address=Santo%20Domingo&key=$apiKey';
       
       print('🔍 Verificando API Key con Google...');
-      final response = await http.get(Uri.parse(testUrl));
+      final response = await http.get(
+        Uri.parse(testUrl),
+        headers: {
+          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+        },
+      );
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

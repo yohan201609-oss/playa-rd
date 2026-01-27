@@ -30,6 +30,13 @@ subprojects {
             }
         }
     }
+    
+    // Forzar Kotlin JVM target a 17 en todos los subproyectos (soluciona incompatibilidad con sign_in_with_apple)
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")

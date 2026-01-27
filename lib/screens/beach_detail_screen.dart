@@ -333,6 +333,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                         return CachedNetworkImage(
                           imageUrl: photosToShow[index],
                           fit: BoxFit.cover,
+                          httpHeaders: const {
+                            'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+                          },
                           placeholder: (context, url) => Container(
                             color: Colors.grey[300],
                             child: const Center(
@@ -2323,6 +2326,9 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                     child: CachedNetworkImage(
                       imageUrl: widget.photos[index],
                       fit: BoxFit.contain,
+                      httpHeaders: const {
+                        'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+                      },
                       placeholder: (context, url) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),

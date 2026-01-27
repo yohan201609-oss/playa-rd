@@ -41,6 +41,11 @@
 	<string>360714035813-j1q7j0elbuep49uurma34kkofh9v27i5.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>MBXAccessToken</key>
 	<string>pk.eyJ1Ijoiam9oYW4yNCIsImEiOiJjbWc0Znl6bnQxaGpjMndwdnlrdnBvbWFnIn0.E9INeyqu0C6gboE0V1ubpQ</string>
 	<key>NSCameraUsageDescription</key>

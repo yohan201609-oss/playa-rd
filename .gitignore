@@ -84,3 +84,14 @@ app.*.map.json
 # Node modules (for Firebase Functions)
 /functions/node_modules/
 functions/node_modules/
+
+# Java heap dumps
+*.hprof
+
+# Backup and temporary transfer files
+*.zip
+*.tar
+*.gz
+*.p12
+*.certSigningRequest
+*.cert

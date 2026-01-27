@@ -104,6 +104,9 @@ class BeachCard extends StatelessWidget {
                   height: imageHeight,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  httpHeaders: const {
+                    'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+                  },
                   placeholder: (context, url) {
                     final theme = Theme.of(context);
                     final isDark = theme.brightness == Brightness.dark;
