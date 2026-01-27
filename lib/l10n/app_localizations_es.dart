@@ -507,19 +507,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsAdvanced => 'Avanzado';
 
   @override
-  String get settingsClearCache => 'Limpiar caché';
-
-  @override
-  String get settingsClearCacheDesc => 'Liberar espacio de almacenamiento';
-
-  @override
-  String get settingsClearCacheConfirm =>
-      '¿Estás seguro que deseas limpiar el caché? Esto eliminará las imágenes y datos temporales para liberar espacio.';
-
-  @override
-  String get settingsClearCacheSuccess => 'Caché limpiado correctamente';
-
-  @override
   String get settingsResetSettings => 'Restablecer configuración';
 
   @override

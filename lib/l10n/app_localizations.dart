@@ -1076,30 +1076,6 @@ abstract class AppLocalizations {
   /// **'Avanzado'**
   String get settingsAdvanced;
 
-  /// No description provided for @settingsClearCache.
-  ///
-  /// In es, this message translates to:
-  /// **'Limpiar caché'**
-  String get settingsClearCache;
-
-  /// No description provided for @settingsClearCacheDesc.
-  ///
-  /// In es, this message translates to:
-  /// **'Liberar espacio de almacenamiento'**
-  String get settingsClearCacheDesc;
-
-  /// No description provided for @settingsClearCacheConfirm.
-  ///
-  /// In es, this message translates to:
-  /// **'¿Estás seguro que deseas limpiar el caché? Esto eliminará las imágenes y datos temporales para liberar espacio.'**
-  String get settingsClearCacheConfirm;
-
-  /// No description provided for @settingsClearCacheSuccess.
-  ///
-  /// In es, this message translates to:
-  /// **'Caché limpiado correctamente'**
-  String get settingsClearCacheSuccess;
-
   /// No description provided for @settingsResetSettings.
   ///
   /// In es, this message translates to:

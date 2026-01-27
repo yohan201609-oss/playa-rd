@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/settings_provider.dart';
-import '../providers/beach_provider.dart';
 import '../utils/constants.dart';
-import '../widgets/migration_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -88,31 +86,11 @@ class SettingsScreen extends StatelessWidget {
           // Sección: Avanzado
           _buildSectionHeader(l10n.settingsAdvanced),
           _buildActionTile(
-            icon: Icons.delete_sweep_rounded,
-            title: l10n.settingsClearCache,
-            subtitle: l10n.settingsClearCacheDesc,
-            iconColor: AppColors.secondary,
-            onTap: () => _showClearCacheDialog(context, l10n, settingsProvider),
-          ),
-          _buildActionTile(
             icon: Icons.restore_rounded,
             title: l10n.settingsResetSettings,
             subtitle: l10n.settingsResetSettingsDesc,
             iconColor: Colors.orange,
             onTap: () => _showResetDialog(context, settingsProvider, l10n),
-          ),
-          // 🚀 Botón de migración de imágenes
-          _buildActionTile(
-            icon: Icons.cloud_upload_rounded,
-            title: '🚀 Migrar Imágenes a Firebase',
-            subtitle: 'Evitar imágenes rotas en iOS y reducir costos de Google',
-            iconColor: Colors.red,
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => const MigrationDialog(),
-              );
-            },
           ),
           const SizedBox(height: 40),
         ],
@@ -643,91 +621,6 @@ class SettingsScreen extends StatelessWidget {
       default:
         return 'Según el sistema';
     }
-  }
-
-  void _showClearCacheDialog(BuildContext context, AppLocalizations l10n, SettingsProvider settingsProvider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.delete_sweep_rounded, color: AppColors.secondary),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Limpiar caché',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
-        ),
-        content: const Text(
-          '¿Estás seguro que deseas limpiar el caché? Esto eliminará las imágenes y datos temporales para liberar espacio.',
-          style: TextStyle(fontSize: 15, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Cancelar',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              // Limpiar caché de playas
-              await context.read<BeachProvider>().clearCache();
-              
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 12),
-                        Text('Caché limpiado correctamente'),
-                      ],
-                    ),
-                    backgroundColor: AppColors.excellent,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              }
-            },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              backgroundColor: AppColors.secondary.withOpacity(0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Limpiar',
-              style: TextStyle(
-                color: AppColors.secondary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showResetDialog(BuildContext context, SettingsProvider settings, AppLocalizations l10n) {
