@@ -97,21 +97,23 @@ class BeachConditions {
   }
 }
 
-// Provincias de República Dominicana con playas
+// Provincias de República Dominicana con playas registradas en la app
 class DominicanProvinces {
   static const List<String> provinces = [
-    'La Altagracia',
-    'Puerto Plata',
-    'Samaná',
-    'María Trinidad Sánchez',
-    'La Romana',
-    'San Pedro de Macorís',
-    'Santo Domingo',
-    'Peravia',
     'Azua',
     'Barahona',
+    'La Altagracia',
+    'La Romana',
+    'María Trinidad Sánchez',
+    'Monseñor Nouel',
+    'Monte Cristi',
     'Pedernales',
-    'Montecristi',
+    'Peravia',
+    'Puerto Plata',
+    'Samaná',
+    'San Cristobal',
+    'San Pedro de Macorís',
+    'Santo Domingo',
   ];
 }
 

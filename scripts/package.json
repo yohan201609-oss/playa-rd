@@ -1,0 +1,17 @@
+{
+  "name": "playas-rd-scripts",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "fix-beaches-audit": "ts-node fix-beaches-audit.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "google-auth-library": "^9.15.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

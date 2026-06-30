@@ -19,6 +19,7 @@ class Beach {
   amenities; // baños, duchas, parking, restaurantes, etc
   final List<String> activities; // natación, surf, snorkel, etc
   final bool isFavorite;
+  final bool needsReview;
   final DateTime? lastUpdated;
 
   Beach({
@@ -39,6 +40,7 @@ class Beach {
     this.amenities = const {},
     this.activities = const [],
     this.isFavorite = false,
+    this.needsReview = false,
     this.lastUpdated,
   });
 
@@ -63,6 +65,7 @@ class Beach {
       amenities: Map<String, dynamic>.from(data['amenities'] ?? {}),
       activities: List<String>.from(data['activities'] ?? []),
       isFavorite: data['isFavorite'] ?? false,
+      needsReview: data['needsReview'] ?? false,
       lastUpdated: data['lastUpdated'] != null
           ? (data['lastUpdated'] as Timestamp).toDate()
           : null,
@@ -88,6 +91,7 @@ class Beach {
       'amenities': amenities,
       'activities': activities,
       'isFavorite': isFavorite,
+      'needsReview': needsReview,
       'lastUpdated': FieldValue.serverTimestamp(),
     };
   }
@@ -111,6 +115,7 @@ class Beach {
     Map<String, dynamic>? amenities,
     List<String>? activities,
     bool? isFavorite,
+    bool? needsReview,
     DateTime? lastUpdated,
   }) {
     return Beach(
@@ -131,6 +136,7 @@ class Beach {
       amenities: amenities ?? this.amenities,
       activities: activities ?? this.activities,
       isFavorite: isFavorite ?? this.isFavorite,
+      needsReview: needsReview ?? this.needsReview,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
