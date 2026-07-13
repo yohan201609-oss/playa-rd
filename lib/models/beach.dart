@@ -203,6 +203,73 @@ class BeachReport {
   }
 }
 
+// Modelo para Propuesta de Nueva Playa
+class BeachProposal {
+  final String id;
+  final String beachName;
+  final String province;
+  final String? municipality;
+  final String? description;
+  final double? latitude;
+  final double? longitude;
+  final List<String> imageUrls;
+  final String userId;
+  final String userName;
+  final DateTime timestamp;
+  final String status;
+
+  BeachProposal({
+    required this.id,
+    required this.beachName,
+    required this.province,
+    this.municipality,
+    this.description,
+    this.latitude,
+    this.longitude,
+    this.imageUrls = const [],
+    required this.userId,
+    required this.userName,
+    required this.timestamp,
+    this.status = 'pending',
+  });
+
+  factory BeachProposal.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return BeachProposal(
+      id: doc.id,
+      beachName: data['beachName'] ?? '',
+      province: data['province'] ?? '',
+      municipality: data['municipality'],
+      description: data['description'],
+      latitude: data['latitude'] != null ? (data['latitude'] as num).toDouble() : null,
+      longitude: data['longitude'] != null ? (data['longitude'] as num).toDouble() : null,
+      imageUrls: List<String>.from(data['imageUrls'] ?? []),
+      userId: data['userId'] ?? '',
+      userName: data['userName'] ?? 'Anónimo',
+      timestamp: data['timestamp'] != null
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.now(),
+      status: data['status'] ?? 'pending',
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'beachName': beachName,
+      'province': province,
+      'municipality': municipality,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'imageUrls': imageUrls,
+      'userId': userId,
+      'userName': userName,
+      'timestamp': FieldValue.serverTimestamp(),
+      'status': status,
+    };
+  }
+}
+
 // Modelo para Usuario
 class AppUser {
   final String id;

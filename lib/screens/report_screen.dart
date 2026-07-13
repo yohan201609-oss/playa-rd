@@ -10,52 +10,12 @@ import '../services/firebase_service.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
+import 'propose_beach_screen.dart';
 
-class ReportScreen extends StatefulWidget {
+class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key, this.initialBeach});
 
   final Beach? initialBeach;
-
-  @override
-  State<ReportScreen> createState() => _ReportScreenState();
-}
-
-class _ReportScreenState extends State<ReportScreen> {
-  Beach? _selectedBeach;
-  String _selectedCondition = BeachConditions.excellent;
-  final TextEditingController _commentController = TextEditingController();
-  final List<XFile> _selectedImages = [];
-  bool _isSubmitting = false;
-  final ImagePicker _picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedBeach = widget.initialBeach;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || widget.initialBeach == null) return;
-      final provider = context.read<BeachProvider>();
-      try {
-        final matchedBeach = provider.beaches.firstWhere(
-          (beach) => beach.id == widget.initialBeach!.id,
-        );
-        if (!identical(matchedBeach, _selectedBeach)) {
-          setState(() {
-            _selectedBeach = matchedBeach;
-          });
-        }
-      } catch (_) {
-        // Si la playa no existe en la lista, se mantiene la selección inicial.
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,25 +26,25 @@ class _ReportScreenState extends State<ReportScreen> {
       return _buildLoginRequired(l10n);
     }
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.reportTitle)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.reportTitle),
+          bottom: TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(icon: const Icon(Icons.waves), text: l10n.proposeTabCondition),
+              Tab(icon: const Icon(Icons.add_location_alt), text: l10n.proposeTabNewBeach),
+            ],
+          ),
+        ),
+        body: TabBarView(
           children: [
-            _buildHeader(l10n),
-            const SizedBox(height: 24),
-            _buildBeachSelector(l10n),
-            const SizedBox(height: 24),
-            _buildConditionSelector(l10n),
-            const SizedBox(height: 24),
-            _buildCommentField(l10n),
-            const SizedBox(height: 24),
-            _buildImagePicker(l10n),
-            const SizedBox(height: 32),
-            _buildSubmitButton(authProvider),
-            const SizedBox(height: 40),
+            _ConditionForm(initialBeach: initialBeach),
+            const ProposeBeachForm(),
           ],
         ),
       ),
@@ -112,15 +72,10 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                // Navegar a pantalla de login
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
               child: Text(
                 l10n.profileLogin,
@@ -129,6 +84,78 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ConditionForm extends StatefulWidget {
+  const _ConditionForm({this.initialBeach});
+
+  final Beach? initialBeach;
+
+  @override
+  State<_ConditionForm> createState() => _ConditionFormState();
+}
+
+class _ConditionFormState extends State<_ConditionForm> {
+  Beach? _selectedBeach;
+  String _selectedCondition = BeachConditions.excellent;
+  final TextEditingController _commentController = TextEditingController();
+  final List<XFile> _selectedImages = [];
+  bool _isSubmitting = false;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedBeach = widget.initialBeach;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.initialBeach == null) return;
+      final provider = context.read<BeachProvider>();
+      try {
+        final matchedBeach = provider.beaches.firstWhere(
+          (beach) => beach.id == widget.initialBeach!.id,
+        );
+        if (!identical(matchedBeach, _selectedBeach)) {
+          setState(() {
+            _selectedBeach = matchedBeach;
+          });
+        }
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final l10n = AppLocalizations.of(context)!;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(l10n),
+          const SizedBox(height: 24),
+          _buildBeachSelector(l10n),
+          const SizedBox(height: 24),
+          _buildConditionSelector(l10n),
+          const SizedBox(height: 24),
+          _buildCommentField(l10n),
+          const SizedBox(height: 24),
+          _buildImagePicker(l10n),
+          const SizedBox(height: 32),
+          _buildSubmitButton(authProvider),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }

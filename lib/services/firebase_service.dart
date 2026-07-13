@@ -1217,6 +1217,20 @@ class FirebaseService {
   }
 
   // =======================
+  // PROPUESTAS DE NUEVAS PLAYAS
+
+  static Future<String?> createBeachProposal(BeachProposal proposal) async {
+    try {
+      final doc = await _firestore
+          .collection('beach_proposals')
+          .add(proposal.toFirestore());
+      return doc.id;
+    } catch (e) {
+      print('Error creando propuesta de playa: $e');
+      return null;
+    }
+  }
+
   // REPORTES
   // =======================
 

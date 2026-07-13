@@ -776,6 +776,30 @@ abstract class AppLocalizations {
   /// **'Por favor selecciona una condición'**
   String get reportSelectCondition;
 
+  String get proposeTabCondition;
+  String get proposeTabNewBeach;
+  String get proposeTitle;
+  String get proposeHelpCommunity;
+  String get proposeHelpDescription;
+  String get proposeBeachName;
+  String get proposeBeachNameHint;
+  String get proposeProvince;
+  String get proposeSelectProvince;
+  String get proposeMunicipality;
+  String get proposeMunicipalityHint;
+  String get proposeDescription;
+  String get proposeDescriptionHint;
+  String get proposeLocation;
+  String get proposeLatHint;
+  String get proposeLonHint;
+  String get proposeAddPhotos;
+  String get proposeSubmit;
+  String get proposeSuccess;
+  String get proposeError;
+  String get proposeNameRequired;
+  String get proposeProvinceRequired;
+  String get proposePendingBadge;
+
   /// No description provided for @profileTitle.
   ///
   /// In es, this message translates to:
