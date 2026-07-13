@@ -1231,6 +1231,59 @@ class FirebaseService {
     }
   }
 
+  static Stream<List<BeachProposal>> getPendingBeachProposals() {
+    return _firestore
+        .collection('beach_proposals')
+        .where('status', isEqualTo: 'pending')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((doc) => BeachProposal.fromFirestore(doc)).toList());
+  }
+
+  static Future<String?> approveBeachProposal(BeachProposal proposal) async {
+    try {
+      final beach = Beach(
+        id: '',
+        name: proposal.beachName,
+        province: proposal.province,
+        municipality: proposal.municipality ?? '',
+        description: proposal.description ?? '',
+        latitude: proposal.latitude ?? 0.0,
+        longitude: proposal.longitude ?? 0.0,
+        imageUrls: proposal.imageUrls,
+        currentCondition: 'Desconocido',
+      );
+
+      final beachDoc = await _firestore.collection('beaches').add(beach.toFirestore());
+
+      await _firestore.collection('beach_proposals').doc(proposal.id).update({
+        'status': 'approved',
+        'approvedBeachId': beachDoc.id,
+        'approvedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('✅ Propuesta aprobada, playa creada con id: ${beachDoc.id}');
+      return beachDoc.id;
+    } catch (e) {
+      print('Error aprobando propuesta: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> rejectBeachProposal(String proposalId) async {
+    try {
+      await _firestore.collection('beach_proposals').doc(proposalId).update({
+        'status': 'rejected',
+        'rejectedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      print('Error rechazando propuesta: $e');
+      return false;
+    }
+  }
+
   // REPORTES
   // =======================
 

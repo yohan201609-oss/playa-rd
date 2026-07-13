@@ -16,6 +16,7 @@ import 'visited_beaches_screen.dart';
 import 'my_reports_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
+import 'admin_proposals_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -431,6 +432,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 20),
+
+          // Panel de administración (solo visible para admins)
+          if (AdminConfig.isAdmin(authProvider.user?.email))
+            _buildMenuSection(
+              title: 'Administración',
+              items: [
+                _MenuItemData(
+                  icon: Icons.admin_panel_settings,
+                  title: 'Propuestas de Playas',
+                  subtitle: 'Revisar y aprobar nuevas playas',
+                  iconColor: Colors.deepPurple,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminProposalsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          if (AdminConfig.isAdmin(authProvider.user?.email))
+            const SizedBox(height: 20),
 
           // Botón de eliminar cuenta
           _buildDeleteAccountButton(context, authProvider, l10n),
