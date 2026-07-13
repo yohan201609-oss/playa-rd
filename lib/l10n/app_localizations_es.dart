@@ -368,7 +368,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get proposeHelpCommunity => '¿Descubriste una playa?';
 
   @override
-  String get proposeHelpDescription => 'Ayúdanos a añadirla al mapa de la comunidad';
+  String get proposeHelpDescription =>
+      'Ayúdanos a añadirla al mapa de la comunidad';
 
   @override
   String get proposeBeachName => 'Nombre de la playa *';
@@ -411,7 +412,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get proposeSubmit => 'Enviar propuesta';
 
   @override
-  String get proposeSuccess => 'Propuesta enviada. La revisaremos pronto, ¡gracias!';
+  String get proposeSuccess =>
+      'Propuesta enviada. La revisaremos pronto, ¡gracias!';
 
   @override
   String get proposeError => 'Error al enviar la propuesta';

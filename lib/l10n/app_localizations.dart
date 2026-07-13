@@ -776,28 +776,142 @@ abstract class AppLocalizations {
   /// **'Por favor selecciona una condición'**
   String get reportSelectCondition;
 
+  /// No description provided for @proposeTabCondition.
+  ///
+  /// In es, this message translates to:
+  /// **'Condición'**
   String get proposeTabCondition;
+
+  /// No description provided for @proposeTabNewBeach.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva Playa'**
   String get proposeTabNewBeach;
+
+  /// No description provided for @proposeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva Playa'**
   String get proposeTitle;
+
+  /// No description provided for @proposeHelpCommunity.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Descubriste una playa?'**
   String get proposeHelpCommunity;
+
+  /// No description provided for @proposeHelpDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayúdanos a añadirla al mapa de la comunidad'**
   String get proposeHelpDescription;
+
+  /// No description provided for @proposeBeachName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la playa *'**
   String get proposeBeachName;
+
+  /// No description provided for @proposeBeachNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Playa Ermitaño'**
   String get proposeBeachNameHint;
+
+  /// No description provided for @proposeProvince.
+  ///
+  /// In es, this message translates to:
+  /// **'Provincia *'**
   String get proposeProvince;
+
+  /// No description provided for @proposeSelectProvince.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona una provincia'**
   String get proposeSelectProvince;
+
+  /// No description provided for @proposeMunicipality.
+  ///
+  /// In es, this message translates to:
+  /// **'Municipio / Sector (opcional)'**
   String get proposeMunicipality;
+
+  /// No description provided for @proposeMunicipalityHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Higüey'**
   String get proposeMunicipalityHint;
+
+  /// No description provided for @proposeDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
   String get proposeDescription;
+
+  /// No description provided for @proposeDescriptionHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Describe la playa, cómo llegar, características especiales...'**
   String get proposeDescriptionHint;
+
+  /// No description provided for @proposeLocation.
+  ///
+  /// In es, this message translates to:
+  /// **'Coordenadas GPS (opcional)'**
   String get proposeLocation;
+
+  /// No description provided for @proposeLatHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Latitud (ej: 18.4769)'**
   String get proposeLatHint;
+
+  /// No description provided for @proposeLonHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Longitud (ej: -68.9307)'**
   String get proposeLonHint;
+
+  /// No description provided for @proposeAddPhotos.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotos de la playa (opcional)'**
   String get proposeAddPhotos;
+
+  /// No description provided for @proposeSubmit.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviar propuesta'**
   String get proposeSubmit;
+
+  /// No description provided for @proposeSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Propuesta enviada. La revisaremos pronto, ¡gracias!'**
   String get proposeSuccess;
+
+  /// No description provided for @proposeError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al enviar la propuesta'**
   String get proposeError;
+
+  /// No description provided for @proposeNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Por favor ingresa el nombre de la playa'**
   String get proposeNameRequired;
+
+  /// No description provided for @proposeProvinceRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Por favor selecciona una provincia'**
   String get proposeProvinceRequired;
+
+  /// No description provided for @proposePendingBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente de revisión'**
   String get proposePendingBadge;
 
   /// No description provided for @profileTitle.

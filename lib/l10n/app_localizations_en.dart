@@ -410,7 +410,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proposeSubmit => 'Submit proposal';
 
   @override
-  String get proposeSuccess => "Proposal submitted. We'll review it soon, thank you!";
+  String get proposeSuccess =>
+      'Proposal submitted. We\'ll review it soon, thank you!';
 
   @override
   String get proposeError => 'Error submitting the proposal';
