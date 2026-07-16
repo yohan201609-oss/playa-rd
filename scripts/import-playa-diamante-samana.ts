@@ -212,6 +212,7 @@ async function writeDoc(data: Record<string, unknown>): Promise<void> {
     return;
   }
   const toVal = (v: unknown): Record<string, unknown> => {
+    if (v instanceof Date) return { timestampValue: v.toISOString() };
     if (typeof v === "string") return { stringValue: v };
     if (typeof v === "number") return { doubleValue: v };
     if (typeof v === "boolean") return { booleanValue: v };
@@ -229,7 +230,7 @@ async function writeDoc(data: Record<string, unknown>): Promise<void> {
   };
   const body = {
     fields: Object.fromEntries(
-      Object.entries({ ...data, lastUpdated: new Date().toISOString() }).map(
+      Object.entries({ ...data, lastUpdated: new Date() }).map(
         ([k, v]) => [k, toVal(v)],
       ),
     ),

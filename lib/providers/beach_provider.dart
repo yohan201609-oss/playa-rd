@@ -8,6 +8,7 @@ import '../services/preferences_service.dart';
 import '../services/beach_coordinates_updater.dart';
 import '../services/google_places_service.dart';
 import '../utils/notification_helper.dart';
+import '../utils/beach_image_utils.dart';
 
 class BeachProvider with ChangeNotifier {
   List<Beach> _beaches = [];
@@ -67,6 +68,8 @@ class BeachProvider with ChangeNotifier {
 
           // Sincronizar favoritos después de cargar desde Firestore
           await _syncUserFavorites();
+          // Rellenar imageUrls desde Storage en segundo plano (cards + detalle)
+          _hydrateImagesFromStorageInBackground();
           return;
         }
       } catch (e) {
@@ -85,6 +88,7 @@ class BeachProvider with ChangeNotifier {
 
         // Sincronizar favoritos después de cargar desde caché
         await _syncUserFavorites();
+        _hydrateImagesFromStorageInBackground();
         return;
       }
 
@@ -681,6 +685,126 @@ class BeachProvider with ChangeNotifier {
 
   double _toRadians(double degrees) {
     return degrees * (math.pi / 180);
+  }
+
+  /// Actualiza imageUrls de una playa en memoria/caché/Firestore (p. ej. tras listar Storage).
+  Future<void> setBeachImageUrls(String beachId, List<String> urls) async {
+    if (urls.isEmpty) return;
+    final index = _beaches.indexWhere((b) => b.id == beachId);
+    if (index == -1) return;
+
+    final existing = _beaches[index].imageUrls;
+    final merged = <String>[
+      ...urls.map(BeachImageUtils.resolveImageUrl),
+      ...existing.where(
+        (u) => !urls.contains(u) && !urls.contains(BeachImageUtils.resolveImageUrl(u)),
+      ),
+    ];
+
+    _beaches[index] = _beaches[index].copyWith(imageUrls: merged);
+    if (_selectedBeach?.id == beachId) {
+      _selectedBeach = _beaches[index];
+    }
+    _applyFilters();
+    notifyListeners();
+    await _saveToCache(_beaches);
+    try {
+      await FirebaseService.updateBeach(_beaches[index]);
+    } catch (e) {
+      print('⚠️ No se pudo guardar imageUrls de $beachId: $e');
+    }
+  }
+
+  bool _isHydratingStorageImages = false;
+
+  /// Rellena `imageUrls` vacíos desde Firebase Storage en background.
+  /// Así las cards muestran fotos sin entrar al detalle.
+  void _hydrateImagesFromStorageInBackground() {
+    if (_isHydratingStorageImages) return;
+    Future(() async {
+      await hydrateImagesFromStorage();
+    });
+  }
+
+  /// Lista Storage para playas sin fotos Firebase y actualiza memoria + Firestore.
+  Future<int> hydrateImagesFromStorage({
+    int concurrency = 4,
+  }) async {
+    if (_isHydratingStorageImages) return 0;
+    _isHydratingStorageImages = true;
+
+    try {
+      final needingPhotos = _beaches
+          .where((b) => !BeachImageUtils.beachHasFirebasePhotos(b.imageUrls))
+          .toList();
+
+      if (needingPhotos.isEmpty) {
+        print('📸 Todas las playas ya tienen fotos de Storage en imageUrls');
+        return 0;
+      }
+
+      print(
+        '📸 Hidratando fotos desde Storage para ${needingPhotos.length} playa(s)...',
+      );
+
+      var updated = 0;
+      for (var i = 0; i < needingPhotos.length; i += concurrency) {
+        final chunk = needingPhotos.skip(i).take(concurrency).toList();
+        final results = await Future.wait(
+          chunk.map((beach) async {
+            final urls =
+                await FirebaseService.listBeachStorageImageUrls(beach.id);
+            return MapEntry(beach.id, urls);
+          }),
+        );
+
+        var chunkChanged = false;
+        for (final entry in results) {
+          final beachId = entry.key;
+          final urls = entry.value;
+          if (urls.isEmpty) continue;
+
+          final index = _beaches.indexWhere((b) => b.id == beachId);
+          if (index == -1) continue;
+
+          final existing = _beaches[index].imageUrls;
+          final merged = <String>[
+            ...urls,
+            ...existing.where((u) => !urls.contains(u)),
+          ];
+
+          _beaches[index] = _beaches[index].copyWith(imageUrls: merged);
+          updated++;
+          chunkChanged = true;
+
+          // Persistir para la próxima apertura (sin bloquear UI)
+          FirebaseService.updateBeach(_beaches[index]).catchError((e) {
+            print('⚠️ No se pudo guardar imageUrls de $beachId: $e');
+          });
+        }
+
+        if (chunkChanged) {
+          if (_selectedBeach != null) {
+            final sel = _beaches.indexWhere((b) => b.id == _selectedBeach!.id);
+            if (sel != -1) _selectedBeach = _beaches[sel];
+          }
+          _applyFilters();
+          notifyListeners();
+        }
+      }
+
+      if (updated > 0) {
+        await _saveToCache(_beaches);
+      }
+
+      print('✅ Hidratación Storage: $updated playa(s) con fotos');
+      return updated;
+    } catch (e) {
+      print('❌ Error hidratando fotos desde Storage: $e');
+      return 0;
+    } finally {
+      _isHydratingStorageImages = false;
+    }
   }
 
   // Actualizar fotos de todas las playas desde Google Places API

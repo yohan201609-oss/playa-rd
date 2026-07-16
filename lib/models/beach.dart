@@ -42,6 +42,15 @@ class Beach {
     this.lastUpdated,
   });
 
+  /// Acepta Timestamp, DateTime o ISO string (scripts REST a veces escriben string).
+  static DateTime? parseFirestoreDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
   // Crear Beach desde Firestore
   factory Beach.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -63,9 +72,7 @@ class Beach {
       amenities: Map<String, dynamic>.from(data['amenities'] ?? {}),
       activities: List<String>.from(data['activities'] ?? []),
       isFavorite: data['isFavorite'] ?? false,
-      lastUpdated: data['lastUpdated'] != null
-          ? (data['lastUpdated'] as Timestamp).toDate()
-          : null,
+      lastUpdated: parseFirestoreDate(data['lastUpdated']),
     );
   }
 
@@ -181,9 +188,7 @@ class BeachReport {
       rating: data['rating'] != null ? (data['rating'] as num).toDouble() : null,
       comment: data['comment'],
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
-      timestamp: data['timestamp'] != null
-          ? (data['timestamp'] as Timestamp).toDate()
-          : DateTime.now(),
+      timestamp: Beach.parseFirestoreDate(data['timestamp']) ?? DateTime.now(),
       helpfulCount: data['helpfulCount'] ?? 0,
     );
   }
@@ -246,9 +251,7 @@ class BeachProposal {
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? 'Anónimo',
-      timestamp: data['timestamp'] != null
-          ? (data['timestamp'] as Timestamp).toDate()
-          : DateTime.now(),
+      timestamp: Beach.parseFirestoreDate(data['timestamp']) ?? DateTime.now(),
       status: data['status'] ?? 'pending',
     );
   }
@@ -305,9 +308,7 @@ class AppUser {
       favoriteBeaches: List<String>.from(data['favoriteBeaches'] ?? []),
       visitedBeaches: List<String>.from(data['visitedBeaches'] ?? []),
       reportsCount: data['reportsCount'] ?? 0,
-      createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt: Beach.parseFirestoreDate(data['createdAt']) ?? DateTime.now(),
     );
   }
 

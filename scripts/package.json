@@ -7,7 +7,10 @@
     "add-new-beaches": "ts-node add-new-beaches.ts",
     "enrich-manual-beaches": "ts-node enrich-manual-beaches.ts",
     "migrate-places-to-storage": "ts-node migrate-places-to-storage.ts",
+    "fill-empty-beach-photos": "ts-node fill-empty-beach-photos.ts",
     "fix-broken-places-photos": "ts-node fix-broken-places-photos.ts",
+    "fix-lastupdated-types": "ts-node fix-lastupdated-types.ts",
+    "audit-firestore-images": "ts-node audit-firestore-images.ts",
     "fix-enriched-beaches": "ts-node fix-enriched-beaches.ts",
     "post-import-cleanup": "ts-node post-import-cleanup.ts"
   },

@@ -212,7 +212,10 @@ class GooglePlacesService {
         if (data['status'] == 'OK' && data['result'] != null) {
           return data['result'] as Map<String, dynamic>;
         } else {
-          print('⚠️ Error obteniendo detalles: ${data['status']}');
+          print(
+            '⚠️ Error obteniendo detalles: ${data['status']}'
+            '${data['error_message'] != null ? ' — ${data['error_message']}' : ''}',
+          );
           return null;
         }
       } else {
@@ -481,13 +484,36 @@ class GooglePlacesService {
     double? latitude,
     double? longitude,
   }) async {
+    final place = await _findBestBeachPlace(
+      beachName,
+      province: province,
+      municipality: municipality,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final placeId = place?['place_id'] as String?;
+    if (placeId != null) {
+      print('✅ Place ID encontrado para: $beachName');
+    } else {
+      print('⚠️ No se encontró Place ID para: $beachName');
+    }
+    return placeId;
+  }
+
+  /// Busca el mejor resultado de Places priorizando los que tengan fotos.
+  static Future<Map<String, dynamic>?> _findBestBeachPlace(
+    String beachName, {
+    String? province,
+    String? municipality,
+    double? latitude,
+    double? longitude,
+  }) async {
     try {
       final apiKey = _apiKey;
       if (apiKey == null || apiKey.isEmpty) {
         return null;
       }
 
-      // Construir query de búsqueda
       String query = beachName;
       if (municipality != null && municipality.isNotEmpty) {
         query += ' $municipality';
@@ -497,63 +523,102 @@ class GooglePlacesService {
       }
       query += ' República Dominicana beach playa';
 
-      // Usar Text Search API
       final encodedQuery = Uri.encodeComponent(query);
-      String url = 
+      var url =
           'https://maps.googleapis.com/maps/api/place/textsearch/json?query=$encodedQuery&key=$apiKey&region=do&language=es';
 
-      // Si tenemos coordenadas, agregar bias para mejorar resultados
       if (latitude != null && longitude != null) {
-        url += '&location=$latitude,$longitude&radius=10000'; // 10km radius
+        url += '&location=$latitude,$longitude&radius=10000';
       }
 
       print('🔍 Buscando: $beachName');
-      
+
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          ...BeachImageUtils.googleMapsRequestHeaders(),
-        },
+        headers: {...BeachImageUtils.googleMapsRequestHeaders()},
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        if (data['status'] == 'OK' && data['results'] != null) {
-          final results = data['results'] as List;
-          
-          // Filtrar solo playas (beach) o lugares relacionados
-          final beachResults = results.where((place) {
-            final types = place['types'] as List<dynamic>?;
-            if (types == null) return false;
-            
-            return types.any((type) => 
-              type.toString().contains('beach') ||
-              type.toString().contains('natural_feature') ||
-              type.toString().contains('tourist_attraction')
-            );
-          }).toList();
-
-          if (beachResults.isNotEmpty) {
-            // Tomar el primer resultado (el más relevante)
-            final placeId = beachResults[0]['place_id'] as String?;
-            if (placeId != null) {
-              print('✅ Place ID encontrado para: $beachName');
-              return placeId;
-            }
-          }
-        }
-        
-        print('⚠️ No se encontró Place ID para: $beachName');
-        return null;
-      } else {
-        print('❌ Error HTTP: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('❌ Error HTTP Text Search: ${response.statusCode}');
         return null;
       }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      if (data['status'] != 'OK' || data['results'] == null) {
+        print(
+          '⚠️ Text Search status: ${data['status']}'
+          '${data['error_message'] != null ? ' — ${data['error_message']}' : ''}',
+        );
+        return null;
+      }
+
+      final results = (data['results'] as List)
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      if (results.isEmpty) return null;
+
+      bool isBeachLike(Map<String, dynamic> place) {
+        final types = place['types'] as List<dynamic>?;
+        if (types == null) return false;
+        return types.any(
+          (type) =>
+              type.toString().contains('beach') ||
+              type.toString().contains('natural_feature') ||
+              type.toString().contains('tourist_attraction'),
+        );
+      }
+
+      bool hasPhotos(Map<String, dynamic> place) {
+        final photos = place['photos'] as List<dynamic>?;
+        return photos != null && photos.isNotEmpty;
+      }
+
+      // 1) Playa/atracción con fotos
+      // 2) Cualquier resultado con fotos
+      // 3) Playa/atracción sin fotos
+      // 4) Primer resultado
+      final ranked = [
+        ...results.where((p) => isBeachLike(p) && hasPhotos(p)),
+        ...results.where((p) => !isBeachLike(p) && hasPhotos(p)),
+        ...results.where((p) => isBeachLike(p) && !hasPhotos(p)),
+        ...results.where((p) => !isBeachLike(p) && !hasPhotos(p)),
+      ];
+
+      final best = ranked.first;
+      final photoCount = (best['photos'] as List<dynamic>?)?.length ?? 0;
+      print(
+        '📍 Mejor match: ${best['name']} '
+        '(photos en Text Search: $photoCount)',
+      );
+      return best;
     } catch (e) {
-      print('❌ Error buscando Place ID: $e');
+      print('❌ Error buscando lugar: $e');
       return null;
     }
+  }
+
+  static List<String> _photoUrlsFromPlacesPhotos(
+    List<dynamic>? photos,
+    String apiKey, {
+    int maxPhotos = 5,
+    int maxWidth = 1200,
+  }) {
+    if (photos == null || photos.isEmpty) return [];
+    final imageUrls = <String>[];
+    final photoCount = photos.length > maxPhotos ? maxPhotos : photos.length;
+    for (var i = 0; i < photoCount; i++) {
+      final photo = photos[i];
+      if (photo is! Map) continue;
+      final photoReference = photo['photo_reference'] as String?;
+      if (photoReference == null || photoReference.isEmpty) continue;
+      imageUrls.add(
+        'https://maps.googleapis.com/maps/api/place/photo'
+        '?maxwidth=$maxWidth&photo_reference=$photoReference&key=$apiKey',
+      );
+    }
+    return imageUrls;
   }
 
   /// Obtener fotos de una playa usando su nombre y ubicación
@@ -572,8 +637,7 @@ class GooglePlacesService {
         return [];
       }
 
-      // Buscar Place ID
-      final placeId = await findBeachPlaceId(
+      final place = await _findBestBeachPlace(
         beachName,
         province: province,
         municipality: municipality,
@@ -581,32 +645,33 @@ class GooglePlacesService {
         longitude: longitude,
       );
 
-      if (placeId == null) {
-        print('⚠️ No se encontró Place ID para: $beachName');
+      if (place == null) {
+        print('⚠️ No se encontró lugar para: $beachName');
         return [];
       }
 
-      // Obtener detalles del lugar (solo fotos)
-      final details = await getPlaceDetails(placeId);
-      if (details == null) {
-        return [];
-      }
+      // Text Search suele traer photos; usarlas primero (evita Details vacío)
+      var imageUrls = _photoUrlsFromPlacesPhotos(
+        place['photos'] as List<dynamic>?,
+        apiKey,
+        maxPhotos: maxPhotos,
+      );
 
-      // Extraer fotos
-      final photos = details['photos'] as List<dynamic>?;
-      final imageUrls = <String>[];
-
-      if (photos != null && photos.isNotEmpty) {
-        // Obtener hasta maxPhotos fotos
-        final photoCount = photos.length > maxPhotos ? maxPhotos : photos.length;
-        for (int i = 0; i < photoCount; i++) {
-          final photo = photos[i] as Map<String, dynamic>;
-          final photoReference = photo['photo_reference'] as String?;
-          if (photoReference != null) {
-            // Construir URL de la foto
-            final photoUrl = 
-                'https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=$photoReference&key=$apiKey';
-            imageUrls.add(photoUrl);
+      // Si Text Search no trae fotos, pedir Place Details
+      if (imageUrls.isEmpty) {
+        final placeId = place['place_id'] as String?;
+        if (placeId != null) {
+          final details = await getPlaceDetails(placeId);
+          if (details != null) {
+            print(
+              '📸 Details "${details['name']}": '
+              '${(details['photos'] as List?)?.length ?? 0} foto(s)',
+            );
+            imageUrls = _photoUrlsFromPlacesPhotos(
+              details['photos'] as List<dynamic>?,
+              apiKey,
+              maxPhotos: maxPhotos,
+            );
           }
         }
       }

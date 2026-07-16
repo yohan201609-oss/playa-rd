@@ -79,37 +79,51 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
     try {
       print('📸 Cargando fotos para playa: ${beach.name} (ID: ${beach.id})');
 
-      // Obtener fotos de usuarios desde Firestore
-      final userPhotos = await _fetchAllBeachPhotos(beach.id);
-      print('📸 Fotos de usuarios encontradas: ${userPhotos.length}');
-
-      // Combinar fotos de beach.imageUrls con fotos de usuarios
       final allPhotos = <String>[];
 
-      // Primero agregar las fotos de la playa (si existen y son válidas)
-      for (final photoUrl in beach.imageUrls) {
-        if (_isValidImageUrl(photoUrl)) {
-          allPhotos.add(photoUrl);
-        } else {
-          print('⚠️ Foto original filtrada (no es imagen válida): $photoUrl');
+      void addPhoto(String rawUrl) {
+        final url = BeachImageUtils.resolveImageUrl(rawUrl);
+        if (_isValidImageUrl(url) && !allPhotos.contains(url)) {
+          allPhotos.add(url);
         }
+      }
+
+      // 1) Ya en el modelo (hidratado al cargar la lista) — instantáneo
+      for (final photoUrl in beach.imageUrls) {
+        addPhoto(photoUrl);
       }
       print(
-        '📸 Fotos originales de la playa válidas: ${allPhotos.length} de ${beach.imageUrls.length}',
+        '📸 imageUrls en modelo: ${allPhotos.length} de ${beach.imageUrls.length}',
       );
 
-      // Luego agregar las fotos de usuarios (evitando duplicados y validando URLs)
-      for (final photoUrl in userPhotos) {
-        if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
-          allPhotos.add(photoUrl);
+      // 2) Listar Storage solo si aún no hay fotos Firebase (usa caché en memoria)
+      if (!BeachImageUtils.beachHasFirebasePhotos(allPhotos)) {
+        final storagePhotos = await FirebaseService.listBeachStorageImageUrls(
+          beach.id,
+        );
+        for (final photoUrl in storagePhotos) {
+          addPhoto(photoUrl);
         }
+        if (storagePhotos.isNotEmpty && mounted) {
+          Provider.of<BeachProvider>(
+            context,
+            listen: false,
+          ).setBeachImageUrls(beach.id, storagePhotos);
+        }
+        print('📸 Tras Storage: ${allPhotos.length} foto(s)');
       }
 
-      // Si no hay suficientes fotos, intentar obtener de Google Maps
-      if (allPhotos.isEmpty || allPhotos.length < 3) {
-        print('📸 Pocas fotos encontradas, buscando en Google Maps...');
+      // 3) Fotos de usuarios
+      final userPhotos = await _fetchAllBeachPhotos(beach.id);
+      print('📸 Fotos de usuarios encontradas: ${userPhotos.length}');
+      for (final photoUrl in userPhotos) {
+        addPhoto(photoUrl);
+      }
+
+      // 4) Google Places solo si sigue vacío
+      if (allPhotos.isEmpty) {
+        print('📸 Sin fotos locales; buscando en Google Places...');
         try {
-          // Primero intentar obtener fotos reales de Places API
           final googlePhotos = await GooglePlacesService.getBeachPhotos(
             beach.name,
             province: beach.province,
@@ -118,24 +132,8 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             longitude: beach.longitude,
             maxPhotos: 5,
           );
-
-          print(
-            '📸 Fotos de Google Places encontradas: ${googlePhotos.length}',
-          );
-
-          // Agregar fotos de Google Places (evitando duplicados)
           for (final photoUrl in googlePhotos) {
-            if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
-              allPhotos.add(photoUrl);
-            }
-          }
-
-          // Si aún no hay fotos, no usar Static Maps (403 con key restringida).
-          // El UI muestra placeholder de playa.
-          if (allPhotos.isEmpty) {
-            print(
-              '📸 Sin fotos de Places; se mostrará placeholder (Static Maps omitido)',
-            );
+            addPhoto(photoUrl);
           }
         } catch (e) {
           print('⚠️ Error al obtener fotos de Google Maps: $e');
@@ -149,7 +147,6 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
           _allPhotos = allPhotos;
           _currentPage = 0;
         });
-        // jumpToPage solo cuando el PageView ya está montado
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted || _pageController == null) return;
           if (_pageController!.hasClients && allPhotos.isNotEmpty) {
@@ -159,10 +156,12 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       }
     } catch (e) {
       print('❌ Error al cargar fotos para ${beach.name}: $e');
-      // Solo fallback a imageUrls si aún no hay fotos cargadas
       if (mounted && _currentBeachId == beach.id && _allPhotos.isEmpty) {
         setState(() {
-          _allPhotos = beach.imageUrls.where(_isValidImageUrl).toList();
+          _allPhotos = beach.imageUrls
+              .map(BeachImageUtils.resolveImageUrl)
+              .where(_isValidImageUrl)
+              .toList();
         });
       }
     } finally {
