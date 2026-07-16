@@ -7,6 +7,7 @@ import '../utils/constants.dart';
 import '../providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beach_provider.dart';
+import '../utils/beach_image_utils.dart';
 import 'weather_card.dart';
 
 class BeachCard extends StatelessWidget {
@@ -100,13 +101,15 @@ class BeachCard extends StatelessWidget {
           ),
           child: beach.imageUrls.isNotEmpty
               ? CachedNetworkImage(
-                  imageUrl: beach.imageUrls.first,
+                  imageUrl: BeachImageUtils.resolveImageUrl(
+                    beach.imageUrls.first,
+                  ),
                   height: imageHeight,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  httpHeaders: const {
-                    'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                  },
+                  httpHeaders: BeachImageUtils.httpHeadersForUrl(
+                    beach.imageUrls.first,
+                  ),
                   placeholder: (context, url) {
                     final theme = Theme.of(context);
                     final isDark = theme.brightness == Brightness.dark;
@@ -118,9 +121,7 @@ class BeachCard extends StatelessWidget {
                   },
                   errorWidget: (context, url, error) {
                     // Si la URL es de Google Places y falló, intentar regenerarla
-                    if (url.contains(
-                      'maps.googleapis.com/maps/api/place/photo',
-                    )) {
+                    if (BeachImageUtils.isGooglePlacesPhotoUrl(url)) {
                       print('⚠️ URL de imagen expirada o inválida: $url');
                       // Notificar al provider para regenerar las imágenes
                       WidgetsBinding.instance.addPostFrameCallback((_) {

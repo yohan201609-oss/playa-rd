@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/beach.dart';
+import '../utils/beach_image_utils.dart';
 
 /// Servicio para buscar y obtener playas usando Google Places API
 class GooglePlacesService {
@@ -134,7 +135,7 @@ class GooglePlacesService {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+          ...BeachImageUtils.googleMapsRequestHeaders(),
         },
       );
       
@@ -201,7 +202,7 @@ class GooglePlacesService {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+          ...BeachImageUtils.googleMapsRequestHeaders(),
         },
       );
 
@@ -511,7 +512,7 @@ class GooglePlacesService {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+          ...BeachImageUtils.googleMapsRequestHeaders(),
         },
       );
 
@@ -667,7 +668,7 @@ class GooglePlacesService {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
+          ...BeachImageUtils.googleMapsRequestHeaders(),
         },
       );
 

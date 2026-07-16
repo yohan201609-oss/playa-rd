@@ -22,6 +22,7 @@ import 'package:uuid/uuid.dart';
 import 'report_screen.dart';
 import '../services/admob_service.dart';
 import '../services/navigation_service.dart';
+import '../utils/beach_image_utils.dart';
 
 class BeachDetailScreen extends StatefulWidget {
   const BeachDetailScreen({super.key});
@@ -68,10 +69,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   }
 
   Future<void> _loadAllPhotos(Beach beach) async {
-    // Evitar cargar si ya estamos cargando o si es la misma playa
-    if (_isLoadingPhotos || _currentBeachId == beach.id) {
-      return;
-    }
+    // Evitar recargas innecesarias; permitir reintento si falló y quedó vacío
+    if (_isLoadingPhotos) return;
+    if (_currentBeachId == beach.id && _allPhotos.isNotEmpty) return;
 
     _isLoadingPhotos = true;
     _currentBeachId = beach.id;
@@ -130,50 +130,15 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             }
           }
 
-          // Si aún no hay fotos, generar imagen estática del mapa
+          // Si aún no hay fotos, no usar Static Maps (403 con key restringida).
+          // El UI muestra placeholder de playa.
           if (allPhotos.isEmpty) {
-            print('📸 Generando imagen estática del mapa...');
-            final staticMapUrl = GooglePlacesService.generateStaticMapImageUrl(
-              latitude: beach.latitude,
-              longitude: beach.longitude,
-              beachName: beach.name,
-              width: 800,
-              height: 600,
-              zoom: 15,
-              mapType:
-                  'satellite', // Usar vista satelital para mostrar la playa
+            print(
+              '📸 Sin fotos de Places; se mostrará placeholder (Static Maps omitido)',
             );
-
-            if (staticMapUrl.isNotEmpty) {
-              allPhotos.add(staticMapUrl);
-              print('✅ Imagen estática del mapa generada');
-            }
           }
         } catch (e) {
           print('⚠️ Error al obtener fotos de Google Maps: $e');
-
-          // En caso de error, intentar generar imagen estática del mapa como fallback
-          if (allPhotos.isEmpty) {
-            try {
-              final staticMapUrl =
-                  GooglePlacesService.generateStaticMapImageUrl(
-                    latitude: beach.latitude,
-                    longitude: beach.longitude,
-                    beachName: beach.name,
-                    width: 800,
-                    height: 600,
-                    zoom: 15,
-                    mapType: 'satellite',
-                  );
-
-              if (staticMapUrl.isNotEmpty) {
-                allPhotos.add(staticMapUrl);
-                print('✅ Imagen estática del mapa generada (fallback)');
-              }
-            } catch (e2) {
-              print('❌ Error al generar imagen estática: $e2');
-            }
-          }
         }
       }
 
@@ -182,18 +147,22 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       if (mounted && _currentBeachId == beach.id) {
         setState(() {
           _allPhotos = allPhotos;
-          _currentPage = 0; // Resetear a la primera página
-          if (_pageController != null && allPhotos.isNotEmpty) {
+          _currentPage = 0;
+        });
+        // jumpToPage solo cuando el PageView ya está montado
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _pageController == null) return;
+          if (_pageController!.hasClients && allPhotos.isNotEmpty) {
             _pageController!.jumpToPage(0);
           }
         });
       }
     } catch (e) {
       print('❌ Error al cargar fotos para ${beach.name}: $e');
-      // En caso de error, al menos mostrar las fotos originales de la playa
-      if (mounted && _currentBeachId == beach.id) {
+      // Solo fallback a imageUrls si aún no hay fotos cargadas
+      if (mounted && _currentBeachId == beach.id && _allPhotos.isEmpty) {
         setState(() {
-          _allPhotos = beach.imageUrls;
+          _allPhotos = beach.imageUrls.where(_isValidImageUrl).toList();
         });
       }
     } finally {
@@ -331,11 +300,13 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                       itemCount: photosToShow.length,
                       itemBuilder: (context, index) {
                         return CachedNetworkImage(
-                          imageUrl: photosToShow[index],
+                          imageUrl: BeachImageUtils.resolveImageUrl(
+                            photosToShow[index],
+                          ),
                           fit: BoxFit.cover,
-                          httpHeaders: const {
-                            'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                          },
+                          httpHeaders: BeachImageUtils.httpHeadersForUrl(
+                            photosToShow[index],
+                          ),
                           placeholder: (context, url) => Container(
                             color: Colors.grey[300],
                             child: const Center(
@@ -345,9 +316,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                           errorWidget: (context, url, error) {
                             print('❌ Error al cargar imagen: $url - $error');
                             // Si la URL es de Google Places y falló, intentar regenerarla
-                            if (url.contains(
-                              'maps.googleapis.com/maps/api/place/photo',
-                            )) {
+                            if (BeachImageUtils.isGooglePlacesPhotoUrl(url)) {
                               print(
                                 '⚠️ URL de imagen expirada o inválida: $url',
                               );
@@ -2324,11 +2293,13 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                   maxScale: 4.0,
                   child: Center(
                     child: CachedNetworkImage(
-                      imageUrl: widget.photos[index],
+                      imageUrl: BeachImageUtils.resolveImageUrl(
+                        widget.photos[index],
+                      ),
                       fit: BoxFit.contain,
-                      httpHeaders: const {
-                        'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                      },
+                      httpHeaders: BeachImageUtils.httpHeadersForUrl(
+                        widget.photos[index],
+                      ),
                       placeholder: (context, url) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),
@@ -2337,9 +2308,7 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                           '❌ Error al cargar imagen en visor: $url - $error',
                         );
                         // Si la URL es de Google Places y falló, intentar regenerarla
-                        if (url.contains(
-                          'maps.googleapis.com/maps/api/place/photo',
-                        )) {
+                        if (BeachImageUtils.isGooglePlacesPhotoUrl(url)) {
                           print(
                             '⚠️ URL de imagen expirada o inválida en visor: $url',
                           );

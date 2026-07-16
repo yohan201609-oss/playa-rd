@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/beach.dart';
 import '../utils/constants.dart';
+import '../utils/beach_image_utils.dart';
 import '../l10n/app_localizations.dart';
 import 'beach_detail_screen.dart';
 
@@ -418,10 +419,13 @@ class _MapScreenState extends State<MapScreen> {
                 image: beach.imageUrls.isNotEmpty
                     ? DecorationImage(
                         image: NetworkImage(
-                          beach.imageUrls.first,
-                          headers: const {
-                            'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                          },
+                          BeachImageUtils.resolveImageUrl(
+                            beach.imageUrls.first,
+                          ),
+                          headers: BeachImageUtils.httpHeadersForUrl(
+                                beach.imageUrls.first,
+                              ) ??
+                              const {},
                         ),
                         fit: BoxFit.cover,
                       )
