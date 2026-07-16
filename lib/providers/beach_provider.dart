@@ -902,6 +902,12 @@ class BeachProvider with ChangeNotifier {
     }
 
     try {
+      // Sin API key no tiene sentido intentar regenerar: evita reintentos
+      // inútiles y logs repetidos cuando el .env no está en el build.
+      if (!GooglePlacesService.hasApiKey) {
+        return;
+      }
+
       // Verificar si la playa tiene URLs de Google Places que pueden haber expirado
       final hasExpiredUrls = beach.imageUrls.any(
         (url) => url.contains('maps.googleapis.com/maps/api/place/photo'),

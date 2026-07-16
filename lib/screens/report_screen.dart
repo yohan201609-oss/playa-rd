@@ -565,11 +565,14 @@ class _ConditionFormState extends State<_ConditionForm> {
     });
 
     try {
-      // Por ahora, las URLs de imÃ¡genes serÃ¡n placeholders
-      // En producciÃ³n, subirÃ­as las imÃ¡genes a Firebase Storage
-      final List<String> imageUrls = _selectedImages
-          .map((img) => 'https://placeholder.com/image.jpg')
-          .toList();
+      // Subir las imágenes seleccionadas a Firebase Storage (reports/{userId}/...)
+      final List<String> imageUrls = _selectedImages.isEmpty
+          ? const []
+          : await FirebaseService.uploadImages(
+              images: _selectedImages.map((img) => File(img.path)).toList(),
+              folder: 'reports',
+              userId: authProvider.user!.uid,
+            );
 
       final report = BeachReport(
         id: const Uuid().v4(),

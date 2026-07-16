@@ -29,6 +29,14 @@ class GooglePlacesService {
     return null;
   }
 
+  /// Indica si hay una API key válida disponible. Útil para evitar
+  /// intentos de red inútiles (p. ej. regenerar URLs) cuando el .env
+  /// no está presente en el build.
+  static bool get hasApiKey {
+    final key = _apiKey;
+    return key != null && key.isNotEmpty;
+  }
+
   /// Buscar playas en República Dominicana usando Places API
   /// 
   /// Retorna una lista de playas encontradas con sus detalles

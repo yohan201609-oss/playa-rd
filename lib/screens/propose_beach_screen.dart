@@ -487,6 +487,15 @@ class _ProposeBeachFormState extends State<ProposeBeachForm> {
         lon = double.tryParse(_lonController.text.trim());
       }
 
+      // Subir las fotos a Firebase Storage (beach_proposals/{userId}/...)
+      final List<String> imageUrls = _selectedImages.isEmpty
+          ? const []
+          : await FirebaseService.uploadImages(
+              images: _selectedImages.map((img) => File(img.path)).toList(),
+              folder: 'beach_proposals',
+              userId: authProvider.user!.uid,
+            );
+
       final proposal = BeachProposal(
         id: const Uuid().v4(),
         beachName: name,
@@ -499,7 +508,7 @@ class _ProposeBeachFormState extends State<ProposeBeachForm> {
             : _descriptionController.text.trim(),
         latitude: lat,
         longitude: lon,
-        imageUrls: const [],
+        imageUrls: imageUrls,
         userId: authProvider.user!.uid,
         userName: authProvider.user!.displayName ?? 'Usuario',
         timestamp: DateTime.now(),

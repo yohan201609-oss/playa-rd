@@ -58,7 +58,17 @@ service firebase.storage {
     // Máximo 5MB por imagen
     match /beach_photos/{beachId}/{fileName} {
       allow read: if true;
-      allow write: if isSignedIn() && 
+      allow write: if isSignedIn() &&
+        isImage() &&
+        request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // FOTOS DE PROPUESTAS DE NUEVAS PLAYAS
+    // Máximo 5MB por imagen
+    match /beach_proposals/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() &&
+        isOwner(userId) &&
         isImage() &&
         request.resource.size < 5 * 1024 * 1024;
     }

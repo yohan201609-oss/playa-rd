@@ -1217,6 +1217,36 @@ class FirebaseService {
   }
 
   // =======================
+  // SUBIDA DE IMÁGENES A STORAGE
+  // =======================
+
+  /// Sube una lista de imágenes a Firebase Storage bajo [folder]/{userId}/{archivo}
+  /// y devuelve las URLs de descarga. Las imágenes que fallen se omiten en lugar
+  /// de abortar toda la operación.
+  static Future<List<String>> uploadImages({
+    required List<File> images,
+    required String folder,
+    required String userId,
+  }) async {
+    final List<String> urls = [];
+    for (int i = 0; i < images.length; i++) {
+      try {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = '${timestamp}_$i.jpg';
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('$folder/$userId/$fileName');
+        final uploadTask = await ref.putFile(images[i]);
+        final url = await uploadTask.ref.getDownloadURL();
+        urls.add(url);
+      } catch (e) {
+        print('⚠️ Error subiendo imagen $i a $folder: $e');
+      }
+    }
+    return urls;
+  }
+
+  // =======================
   // PROPUESTAS DE NUEVAS PLAYAS
 
   static Future<String?> createBeachProposal(BeachProposal proposal) async {
