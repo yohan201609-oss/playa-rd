@@ -64,6 +64,25 @@ service cloud.firestore {
       allow create: if true; // Cualquiera puede crear solicitudes de soporte
       allow update, delete: if false; // Solo las Cloud Functions pueden actualizar
     }
+
+    // PROPUESTAS DE NUEVAS PLAYAS
+    // Usuarios autenticados crean; admins leen pendientes y aprueban/rechazan
+    function isAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email in [
+          'yohan201609@gmail.com'
+        ];
+    }
+
+    match /beach_proposals/{proposalId} {
+      allow read: if isSignedIn() &&
+        (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
   }
 }
 

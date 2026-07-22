@@ -11,6 +11,7 @@ import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 import 'propose_beach_screen.dart';
+import '../utils/auth_navigation.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key, this.initialBeach});
@@ -23,7 +24,7 @@ class ReportScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     if (!authProvider.isAuthenticated) {
-      return _buildLoginRequired(l10n);
+      return _buildLoginRequired(context, l10n);
     }
 
     return DefaultTabController(
@@ -51,39 +52,13 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginRequired(AppLocalizations l10n) {
+  Widget _buildLoginRequired(BuildContext context, AppLocalizations l10n) {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.reportTitle)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 100, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.profileLoginPrompt,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.profileLoginDescription,
-              style: TextStyle(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
-              child: Text(
-                l10n.profileLogin,
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+      body: buildLoginRequiredView(
+        context: context,
+        l10n: l10n,
+        description: l10n.profileLoginDescription,
       ),
     );
   }

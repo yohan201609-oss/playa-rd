@@ -5,6 +5,7 @@ import '../providers/beach_provider.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/beach_card.dart';
+import '../utils/auth_navigation.dart';
 import 'beach_detail_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -66,7 +67,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     AppLocalizations l10n,
   ) {
     if (!authProvider.isAuthenticated) {
-      return _buildLoginRequired(l10n);
+      return _buildLoginRequired(context, l10n);
     }
 
     final appUser = authProvider.appUser;
@@ -238,8 +239,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                // Cambiar a tab de inicio
+                // true → Perfil abre la pestaña Inicio
+                Navigator.pop(context, true);
               },
               icon: const Icon(Icons.explore, color: Colors.white),
               label: const Text(
@@ -265,29 +266,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildLoginRequired(AppLocalizations l10n) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 100, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.profileLoginPrompt,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Inicia sesión para ver tus playas favoritas',
-              style: TextStyle(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+  Widget _buildLoginRequired(BuildContext context, AppLocalizations l10n) {
+    return buildLoginRequiredView(
+      context: context,
+      l10n: l10n,
+      description: 'Inicia sesión para ver tus playas favoritas',
     );
   }
 

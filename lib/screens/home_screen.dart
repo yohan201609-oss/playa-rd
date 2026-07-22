@@ -11,6 +11,7 @@ import '../l10n/app_localizations.dart';
 import '../services/admob_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'beach_detail_screen.dart';
+import '../utils/auth_navigation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -601,15 +602,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showLoginPrompt(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l10n.homeLoginToSaveFavorites),
         action: SnackBarAction(
           label: l10n.profileLogin,
-          onPressed: () {
-            // TODO: Navegar a pantalla de login
-          },
+          onPressed: () => openLoginScreen(context),
         ),
       ),
     );

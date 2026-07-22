@@ -23,6 +23,7 @@ import 'report_screen.dart';
 import '../services/admob_service.dart';
 import '../services/navigation_service.dart';
 import '../utils/beach_image_utils.dart';
+import '../utils/auth_navigation.dart';
 
 class BeachDetailScreen extends StatefulWidget {
   const BeachDetailScreen({super.key});
@@ -444,8 +445,14 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   await authProvider.reloadUserData();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Inicia sesión para guardar favoritos'),
+                    SnackBar(
+                      content: const Text(
+                        'Inicia sesión para guardar favoritos',
+                      ),
+                      action: SnackBarAction(
+                        label: AppLocalizations.of(context)!.profileLogin,
+                        onPressed: () => openLoginScreen(context),
+                      ),
                     ),
                   );
                 }
@@ -720,6 +727,21 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   ).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => openLoginScreen(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.profileLogin,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -1753,9 +1775,13 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: authProvider.isAuthenticated
-                      ? () => _showRatingDialog(context, beach, authProvider)
-                      : null,
+                  onPressed: () {
+                    if (authProvider.isAuthenticated) {
+                      _showRatingDialog(context, beach, authProvider);
+                    } else {
+                      openLoginScreen(context);
+                    }
+                  },
                   icon: const Icon(Icons.star, color: Colors.white),
                   label: Text(
                     'Calificar',
@@ -1767,7 +1793,6 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    disabledBackgroundColor: Colors.grey[300],
                   ),
                 ),
               ),
@@ -1775,6 +1800,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
+                    if (!authProvider.isAuthenticated) {
+                      openLoginScreen(context);
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(

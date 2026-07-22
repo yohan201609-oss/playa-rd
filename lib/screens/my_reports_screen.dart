@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/beach_provider.dart';
 import '../models/beach.dart';
 import '../utils/constants.dart';
+import '../utils/auth_navigation.dart';
 import '../l10n/app_localizations.dart';
 
 class MyReportsScreen extends StatelessWidget {
@@ -39,7 +40,7 @@ class MyReportsScreen extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, AuthProvider authProvider, AppLocalizations l10n) {
     if (!authProvider.isAuthenticated) {
-      return _buildLoginRequired(l10n);
+      return _buildLoginRequired(context, l10n);
     }
 
     final userId = authProvider.user?.uid;
@@ -418,8 +419,8 @@ class MyReportsScreen extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                // Cambiar a tab de reportar
+                // true → Perfil abre la pestaña Reportar del bottom nav
+                Navigator.pop(context, true);
               },
               icon: const Icon(Icons.add_circle_outline, color: Colors.white),
               label: const Text(
@@ -445,29 +446,11 @@ class MyReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginRequired(AppLocalizations l10n) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 100, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.profileLoginPrompt,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Inicia sesión para ver tus reportes',
-              style: TextStyle(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+  Widget _buildLoginRequired(BuildContext context, AppLocalizations l10n) {
+    return buildLoginRequiredView(
+      context: context,
+      l10n: l10n,
+      description: 'Inicia sesión para ver tus reportes',
     );
   }
 
