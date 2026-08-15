@@ -95,3 +95,21 @@ functions/node_modules/
 *.p12
 *.certSigningRequest
 *.cert
+
+# Artefactos de build de Android / Gradle (locales)
+/android/build/
+/android/.gradle_home/
+/.gradle_home/
+/android/local-maven-repo/
+
+# Artefactos de release (AAB/APK firmados, no se versionan)
+/releases/
+*.aab
+*.apk
+
+# Logs de build
+build_aab_log.txt
+
+# Certificados y truststore del workaround SSL de Gradle (específicos de cada máquina)
+*.cer
+/android/playas-gradle-truststore
