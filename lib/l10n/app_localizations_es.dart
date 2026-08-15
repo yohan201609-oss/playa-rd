@@ -356,6 +356,78 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reportSelectCondition => 'Por favor selecciona una condición';
 
   @override
+  String get proposeTabCondition => 'Condición';
+
+  @override
+  String get proposeTabNewBeach => 'Nueva Playa';
+
+  @override
+  String get proposeTitle => 'Nueva Playa';
+
+  @override
+  String get proposeHelpCommunity => '¿Descubriste una playa?';
+
+  @override
+  String get proposeHelpDescription =>
+      'Ayúdanos a añadirla al mapa de la comunidad';
+
+  @override
+  String get proposeBeachName => 'Nombre de la playa *';
+
+  @override
+  String get proposeBeachNameHint => 'Ej: Playa Ermitaño';
+
+  @override
+  String get proposeProvince => 'Provincia *';
+
+  @override
+  String get proposeSelectProvince => 'Selecciona una provincia';
+
+  @override
+  String get proposeMunicipality => 'Municipio / Sector (opcional)';
+
+  @override
+  String get proposeMunicipalityHint => 'Ej: Higüey';
+
+  @override
+  String get proposeDescription => 'Descripción (opcional)';
+
+  @override
+  String get proposeDescriptionHint =>
+      'Describe la playa, cómo llegar, características especiales...';
+
+  @override
+  String get proposeLocation => 'Coordenadas GPS (opcional)';
+
+  @override
+  String get proposeLatHint => 'Latitud (ej: 18.4769)';
+
+  @override
+  String get proposeLonHint => 'Longitud (ej: -68.9307)';
+
+  @override
+  String get proposeAddPhotos => 'Fotos de la playa (opcional)';
+
+  @override
+  String get proposeSubmit => 'Enviar propuesta';
+
+  @override
+  String get proposeSuccess =>
+      'Propuesta enviada. La revisaremos pronto, ¡gracias!';
+
+  @override
+  String get proposeError => 'Error al enviar la propuesta';
+
+  @override
+  String get proposeNameRequired => 'Por favor ingresa el nombre de la playa';
+
+  @override
+  String get proposeProvinceRequired => 'Por favor selecciona una provincia';
+
+  @override
+  String get proposePendingBadge => 'Pendiente de revisión';
+
+  @override
   String get profileTitle => 'Mi Perfil';
 
   @override

@@ -12,6 +12,7 @@ import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/app_initializer.dart';
 import 'utils/constants.dart';
+import 'utils/main_tab_controller.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
@@ -223,10 +224,15 @@ class _MainScreenState extends State<MainScreen> {
     ];
   }
 
-  void _onItemTapped(int index) {
+  void goToTab(int index) {
+    if (index < 0 || index > 3) return;
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  void _onItemTapped(int index) {
+    goToTab(index);
   }
 
   @override
@@ -235,38 +241,41 @@ class _MainScreenState extends State<MainScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     final screens = _buildScreens(settings.language);
 
-    return Scaffold(
-      body: screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        onTap: _onItemTapped,
-        elevation: 8,
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_outlined),
-            activeIcon: const Icon(Icons.home),
-            label: l10n.navHome,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.map_outlined),
-            activeIcon: const Icon(Icons.map),
-            label: l10n.navMap,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.add_circle_outline),
-            activeIcon: const Icon(Icons.add_circle),
-            label: l10n.navReport,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline),
-            activeIcon: const Icon(Icons.person),
-            label: l10n.navProfile,
-          ),
-        ],
+    return MainTabController(
+      goToTab: goToTab,
+      child: Scaffold(
+        body: screens[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: Colors.grey,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          onTap: _onItemTapped,
+          elevation: 8,
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: l10n.navHome,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.map_outlined),
+              activeIcon: const Icon(Icons.map),
+              label: l10n.navMap,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.add_circle_outline),
+              activeIcon: const Icon(Icons.add_circle),
+              label: l10n.navReport,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: l10n.navProfile,
+            ),
+          ],
+        ),
       ),
     );
   }

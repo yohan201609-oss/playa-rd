@@ -22,6 +22,8 @@ import 'package:uuid/uuid.dart';
 import 'report_screen.dart';
 import '../services/admob_service.dart';
 import '../services/navigation_service.dart';
+import '../utils/beach_image_utils.dart';
+import '../utils/auth_navigation.dart';
 
 class BeachDetailScreen extends StatefulWidget {
   const BeachDetailScreen({super.key});
@@ -68,10 +70,9 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
   }
 
   Future<void> _loadAllPhotos(Beach beach) async {
-    // Evitar cargar si ya estamos cargando o si es la misma playa
-    if (_isLoadingPhotos || _currentBeachId == beach.id) {
-      return;
-    }
+    // Evitar recargas innecesarias; permitir reintento si falló y quedó vacío
+    if (_isLoadingPhotos) return;
+    if (_currentBeachId == beach.id && _allPhotos.isNotEmpty) return;
 
     _isLoadingPhotos = true;
     _currentBeachId = beach.id;
@@ -79,37 +80,51 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
     try {
       print('📸 Cargando fotos para playa: ${beach.name} (ID: ${beach.id})');
 
-      // Obtener fotos de usuarios desde Firestore
-      final userPhotos = await _fetchAllBeachPhotos(beach.id);
-      print('📸 Fotos de usuarios encontradas: ${userPhotos.length}');
-
-      // Combinar fotos de beach.imageUrls con fotos de usuarios
       final allPhotos = <String>[];
 
-      // Primero agregar las fotos de la playa (si existen y son válidas)
-      for (final photoUrl in beach.imageUrls) {
-        if (_isValidImageUrl(photoUrl)) {
-          allPhotos.add(photoUrl);
-        } else {
-          print('⚠️ Foto original filtrada (no es imagen válida): $photoUrl');
+      void addPhoto(String rawUrl) {
+        final url = BeachImageUtils.resolveImageUrl(rawUrl);
+        if (_isValidImageUrl(url) && !allPhotos.contains(url)) {
+          allPhotos.add(url);
         }
+      }
+
+      // 1) Ya en el modelo (hidratado al cargar la lista) — instantáneo
+      for (final photoUrl in beach.imageUrls) {
+        addPhoto(photoUrl);
       }
       print(
-        '📸 Fotos originales de la playa válidas: ${allPhotos.length} de ${beach.imageUrls.length}',
+        '📸 imageUrls en modelo: ${allPhotos.length} de ${beach.imageUrls.length}',
       );
 
-      // Luego agregar las fotos de usuarios (evitando duplicados y validando URLs)
-      for (final photoUrl in userPhotos) {
-        if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
-          allPhotos.add(photoUrl);
+      // 2) Listar Storage solo si aún no hay fotos Firebase (usa caché en memoria)
+      if (!BeachImageUtils.beachHasFirebasePhotos(allPhotos)) {
+        final storagePhotos = await FirebaseService.listBeachStorageImageUrls(
+          beach.id,
+        );
+        for (final photoUrl in storagePhotos) {
+          addPhoto(photoUrl);
         }
+        if (storagePhotos.isNotEmpty && mounted) {
+          Provider.of<BeachProvider>(
+            context,
+            listen: false,
+          ).setBeachImageUrls(beach.id, storagePhotos);
+        }
+        print('📸 Tras Storage: ${allPhotos.length} foto(s)');
       }
 
-      // Si no hay suficientes fotos, intentar obtener de Google Maps
-      if (allPhotos.isEmpty || allPhotos.length < 3) {
-        print('📸 Pocas fotos encontradas, buscando en Google Maps...');
+      // 3) Fotos de usuarios
+      final userPhotos = await _fetchAllBeachPhotos(beach.id);
+      print('📸 Fotos de usuarios encontradas: ${userPhotos.length}');
+      for (final photoUrl in userPhotos) {
+        addPhoto(photoUrl);
+      }
+
+      // 4) Google Places solo si sigue vacío
+      if (allPhotos.isEmpty) {
+        print('📸 Sin fotos locales; buscando en Google Places...');
         try {
-          // Primero intentar obtener fotos reales de Places API
           final googlePhotos = await GooglePlacesService.getBeachPhotos(
             beach.name,
             province: beach.province,
@@ -118,62 +133,11 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             longitude: beach.longitude,
             maxPhotos: 5,
           );
-
-          print(
-            '📸 Fotos de Google Places encontradas: ${googlePhotos.length}',
-          );
-
-          // Agregar fotos de Google Places (evitando duplicados)
           for (final photoUrl in googlePhotos) {
-            if (!allPhotos.contains(photoUrl) && _isValidImageUrl(photoUrl)) {
-              allPhotos.add(photoUrl);
-            }
-          }
-
-          // Si aún no hay fotos, generar imagen estática del mapa
-          if (allPhotos.isEmpty) {
-            print('📸 Generando imagen estática del mapa...');
-            final staticMapUrl = GooglePlacesService.generateStaticMapImageUrl(
-              latitude: beach.latitude,
-              longitude: beach.longitude,
-              beachName: beach.name,
-              width: 800,
-              height: 600,
-              zoom: 15,
-              mapType:
-                  'satellite', // Usar vista satelital para mostrar la playa
-            );
-
-            if (staticMapUrl.isNotEmpty) {
-              allPhotos.add(staticMapUrl);
-              print('✅ Imagen estática del mapa generada');
-            }
+            addPhoto(photoUrl);
           }
         } catch (e) {
           print('⚠️ Error al obtener fotos de Google Maps: $e');
-
-          // En caso de error, intentar generar imagen estática del mapa como fallback
-          if (allPhotos.isEmpty) {
-            try {
-              final staticMapUrl =
-                  GooglePlacesService.generateStaticMapImageUrl(
-                    latitude: beach.latitude,
-                    longitude: beach.longitude,
-                    beachName: beach.name,
-                    width: 800,
-                    height: 600,
-                    zoom: 15,
-                    mapType: 'satellite',
-                  );
-
-              if (staticMapUrl.isNotEmpty) {
-                allPhotos.add(staticMapUrl);
-                print('✅ Imagen estática del mapa generada (fallback)');
-              }
-            } catch (e2) {
-              print('❌ Error al generar imagen estática: $e2');
-            }
-          }
         }
       }
 
@@ -182,18 +146,23 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
       if (mounted && _currentBeachId == beach.id) {
         setState(() {
           _allPhotos = allPhotos;
-          _currentPage = 0; // Resetear a la primera página
-          if (_pageController != null && allPhotos.isNotEmpty) {
+          _currentPage = 0;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _pageController == null) return;
+          if (_pageController!.hasClients && allPhotos.isNotEmpty) {
             _pageController!.jumpToPage(0);
           }
         });
       }
     } catch (e) {
       print('❌ Error al cargar fotos para ${beach.name}: $e');
-      // En caso de error, al menos mostrar las fotos originales de la playa
-      if (mounted && _currentBeachId == beach.id) {
+      if (mounted && _currentBeachId == beach.id && _allPhotos.isEmpty) {
         setState(() {
-          _allPhotos = beach.imageUrls;
+          _allPhotos = beach.imageUrls
+              .map(BeachImageUtils.resolveImageUrl)
+              .where(_isValidImageUrl)
+              .toList();
         });
       }
     } finally {
@@ -331,11 +300,13 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                       itemCount: photosToShow.length,
                       itemBuilder: (context, index) {
                         return CachedNetworkImage(
-                          imageUrl: photosToShow[index],
+                          imageUrl: BeachImageUtils.resolveImageUrl(
+                            photosToShow[index],
+                          ),
                           fit: BoxFit.cover,
-                          httpHeaders: const {
-                            'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                          },
+                          httpHeaders: BeachImageUtils.httpHeadersForUrl(
+                            photosToShow[index],
+                          ),
                           placeholder: (context, url) => Container(
                             color: Colors.grey[300],
                             child: const Center(
@@ -345,9 +316,7 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                           errorWidget: (context, url, error) {
                             print('❌ Error al cargar imagen: $url - $error');
                             // Si la URL es de Google Places y falló, intentar regenerarla
-                            if (url.contains(
-                              'maps.googleapis.com/maps/api/place/photo',
-                            )) {
+                            if (BeachImageUtils.isGooglePlacesPhotoUrl(url)) {
                               print(
                                 '⚠️ URL de imagen expirada o inválida: $url',
                               );
@@ -476,8 +445,14 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   await authProvider.reloadUserData();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Inicia sesión para guardar favoritos'),
+                    SnackBar(
+                      content: const Text(
+                        'Inicia sesión para guardar favoritos',
+                      ),
+                      action: SnackBarAction(
+                        label: AppLocalizations.of(context)!.profileLogin,
+                        onPressed: () => openLoginScreen(context),
+                      ),
                     ),
                   );
                 }
@@ -752,6 +727,21 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                   ).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => openLoginScreen(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.profileLogin,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -1785,9 +1775,13 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: authProvider.isAuthenticated
-                      ? () => _showRatingDialog(context, beach, authProvider)
-                      : null,
+                  onPressed: () {
+                    if (authProvider.isAuthenticated) {
+                      _showRatingDialog(context, beach, authProvider);
+                    } else {
+                      openLoginScreen(context);
+                    }
+                  },
                   icon: const Icon(Icons.star, color: Colors.white),
                   label: Text(
                     'Calificar',
@@ -1799,7 +1793,6 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    disabledBackgroundColor: Colors.grey[300],
                   ),
                 ),
               ),
@@ -1807,6 +1800,10 @@ class _BeachDetailScreenState extends State<BeachDetailScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
+                    if (!authProvider.isAuthenticated) {
+                      openLoginScreen(context);
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -2324,11 +2321,13 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                   maxScale: 4.0,
                   child: Center(
                     child: CachedNetworkImage(
-                      imageUrl: widget.photos[index],
+                      imageUrl: BeachImageUtils.resolveImageUrl(
+                        widget.photos[index],
+                      ),
                       fit: BoxFit.contain,
-                      httpHeaders: const {
-                        'X-Ios-Bundle-Identifier': 'com.playasrd.playasrd',
-                      },
+                      httpHeaders: BeachImageUtils.httpHeadersForUrl(
+                        widget.photos[index],
+                      ),
                       placeholder: (context, url) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),
@@ -2337,9 +2336,7 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
                           '❌ Error al cargar imagen en visor: $url - $error',
                         );
                         // Si la URL es de Google Places y falló, intentar regenerarla
-                        if (url.contains(
-                          'maps.googleapis.com/maps/api/place/photo',
-                        )) {
+                        if (BeachImageUtils.isGooglePlacesPhotoUrl(url)) {
                           print(
                             '⚠️ URL de imagen expirada o inválida en visor: $url',
                           );

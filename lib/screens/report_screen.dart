@@ -10,17 +10,70 @@ import '../services/firebase_service.dart';
 import '../utils/constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
+import 'propose_beach_screen.dart';
+import '../utils/auth_navigation.dart';
 
-class ReportScreen extends StatefulWidget {
+class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key, this.initialBeach});
 
   final Beach? initialBeach;
 
   @override
-  State<ReportScreen> createState() => _ReportScreenState();
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final l10n = AppLocalizations.of(context)!;
+
+    if (!authProvider.isAuthenticated) {
+      return _buildLoginRequired(context, l10n);
+    }
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.reportTitle),
+          bottom: TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(icon: const Icon(Icons.waves), text: l10n.proposeTabCondition),
+              Tab(icon: const Icon(Icons.add_location_alt), text: l10n.proposeTabNewBeach),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _ConditionForm(initialBeach: initialBeach),
+            const ProposeBeachForm(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginRequired(BuildContext context, AppLocalizations l10n) {
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.reportTitle)),
+      body: buildLoginRequiredView(
+        context: context,
+        l10n: l10n,
+        description: l10n.profileLoginDescription,
+      ),
+    );
+  }
 }
 
-class _ReportScreenState extends State<ReportScreen> {
+class _ConditionForm extends StatefulWidget {
+  const _ConditionForm({this.initialBeach});
+
+  final Beach? initialBeach;
+
+  @override
+  State<_ConditionForm> createState() => _ConditionFormState();
+}
+
+class _ConditionFormState extends State<_ConditionForm> {
   Beach? _selectedBeach;
   String _selectedCondition = BeachConditions.excellent;
   final TextEditingController _commentController = TextEditingController();
@@ -45,9 +98,7 @@ class _ReportScreenState extends State<ReportScreen> {
             _selectedBeach = matchedBeach;
           });
         }
-      } catch (_) {
-        // Si la playa no existe en la lista, se mantiene la selección inicial.
-      }
+      } catch (_) {}
     });
   }
 
@@ -62,73 +113,24 @@ class _ReportScreenState extends State<ReportScreen> {
     final authProvider = context.watch<AuthProvider>();
     final l10n = AppLocalizations.of(context)!;
 
-    if (!authProvider.isAuthenticated) {
-      return _buildLoginRequired(l10n);
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.reportTitle)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(l10n),
-            const SizedBox(height: 24),
-            _buildBeachSelector(l10n),
-            const SizedBox(height: 24),
-            _buildConditionSelector(l10n),
-            const SizedBox(height: 24),
-            _buildCommentField(l10n),
-            const SizedBox(height: 24),
-            _buildImagePicker(l10n),
-            const SizedBox(height: 32),
-            _buildSubmitButton(authProvider),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginRequired(AppLocalizations l10n) {
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.reportTitle)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 100, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.profileLoginPrompt,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.profileLoginDescription,
-              style: TextStyle(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a pantalla de login
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
-              child: Text(
-                l10n.profileLogin,
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(l10n),
+          const SizedBox(height: 24),
+          _buildBeachSelector(l10n),
+          const SizedBox(height: 24),
+          _buildConditionSelector(l10n),
+          const SizedBox(height: 24),
+          _buildCommentField(l10n),
+          const SizedBox(height: 24),
+          _buildImagePicker(l10n),
+          const SizedBox(height: 32),
+          _buildSubmitButton(authProvider),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -538,11 +540,14 @@ class _ReportScreenState extends State<ReportScreen> {
     });
 
     try {
-      // Por ahora, las URLs de imÃ¡genes serÃ¡n placeholders
-      // En producciÃ³n, subirÃ­as las imÃ¡genes a Firebase Storage
-      final List<String> imageUrls = _selectedImages
-          .map((img) => 'https://placeholder.com/image.jpg')
-          .toList();
+      // Subir las imágenes seleccionadas a Firebase Storage (reports/{userId}/...)
+      final List<String> imageUrls = _selectedImages.isEmpty
+          ? const []
+          : await FirebaseService.uploadImages(
+              images: _selectedImages.map((img) => File(img.path)).toList(),
+              folder: 'reports',
+              userId: authProvider.user!.uid,
+            );
 
       final report = BeachReport(
         id: const Uuid().v4(),

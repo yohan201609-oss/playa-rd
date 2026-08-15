@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:async';
 import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../providers/beach_provider.dart';
@@ -16,6 +17,8 @@ import 'visited_beaches_screen.dart';
 import 'my_reports_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
+import 'admin_proposals_screen.dart';
+import '../utils/main_tab_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -44,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showInterstitialAdAndNavigate(
-    VoidCallback navigationCallback,
+    FutureOr<void> Function() navigationCallback,
   ) async {
     if (_interstitialAdHelper?.isAdReady == true) {
       // Mostrar el anuncio y esperar a que se cierre
@@ -58,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     // Ejecutar la navegación después del anuncio (o inmediatamente si no hay anuncio)
     if (mounted) {
-      navigationCallback();
+      await navigationCallback();
     }
   }
 
@@ -337,13 +340,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: l10n.profileFavoritesBeaches,
                 iconColor: const Color(0xFFFF4081),
                 onTap: () {
-                  _showInterstitialAdAndNavigate(() {
-                    Navigator.push(
+                  _showInterstitialAdAndNavigate(() async {
+                    final exploreHome = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const FavoritesScreen(),
                       ),
                     );
+                    if (exploreHome == true && context.mounted) {
+                      MainTabController.maybeOf(context)?.goToTab(0);
+                    }
                   });
                 },
               ),
@@ -353,13 +359,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'Playas que he visitado',
                 iconColor: AppColors.secondary,
                 onTap: () {
-                  _showInterstitialAdAndNavigate(() {
-                    Navigator.push(
+                  _showInterstitialAdAndNavigate(() async {
+                    final exploreHome = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const VisitedBeachesScreen(),
                       ),
                     );
+                    if (exploreHome == true && context.mounted) {
+                      MainTabController.maybeOf(context)?.goToTab(0);
+                    }
                   });
                 },
               ),
@@ -369,13 +378,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: l10n.profileReportsSent,
                 iconColor: Colors.orange,
                 onTap: () {
-                  _showInterstitialAdAndNavigate(() {
-                    Navigator.push(
+                  _showInterstitialAdAndNavigate(() async {
+                    final openReportTab = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const MyReportsScreen(),
                       ),
                     );
+                    if (openReportTab == true && context.mounted) {
+                      MainTabController.maybeOf(context)?.goToTab(2);
+                    }
                   });
                 },
               ),
@@ -431,6 +443,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 20),
+
+          // Panel de administración (solo visible para admins)
+          if (AdminConfig.isAdmin(authProvider.user?.email))
+            _buildMenuSection(
+              title: 'Administración',
+              items: [
+                _MenuItemData(
+                  icon: Icons.admin_panel_settings,
+                  title: 'Propuestas de Playas',
+                  subtitle: 'Revisar y aprobar nuevas playas',
+                  iconColor: Colors.deepPurple,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminProposalsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          if (AdminConfig.isAdmin(authProvider.user?.email))
+            const SizedBox(height: 20),
 
           // Botón de eliminar cuenta
           _buildDeleteAccountButton(context, authProvider, l10n),

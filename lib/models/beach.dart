@@ -44,6 +44,15 @@ class Beach {
     this.lastUpdated,
   });
 
+  /// Acepta Timestamp, DateTime o ISO string (scripts REST a veces escriben string).
+  static DateTime? parseFirestoreDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
   // Crear Beach desde Firestore
   factory Beach.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -66,9 +75,7 @@ class Beach {
       activities: List<String>.from(data['activities'] ?? []),
       isFavorite: data['isFavorite'] ?? false,
       needsReview: data['needsReview'] ?? false,
-      lastUpdated: data['lastUpdated'] != null
-          ? (data['lastUpdated'] as Timestamp).toDate()
-          : null,
+      lastUpdated: parseFirestoreDate(data['lastUpdated']),
     );
   }
 
@@ -187,9 +194,7 @@ class BeachReport {
       rating: data['rating'] != null ? (data['rating'] as num).toDouble() : null,
       comment: data['comment'],
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
-      timestamp: data['timestamp'] != null
-          ? (data['timestamp'] as Timestamp).toDate()
-          : DateTime.now(),
+      timestamp: Beach.parseFirestoreDate(data['timestamp']) ?? DateTime.now(),
       helpfulCount: data['helpfulCount'] ?? 0,
     );
   }
@@ -205,6 +210,71 @@ class BeachReport {
       'imageUrls': imageUrls,
       'timestamp': FieldValue.serverTimestamp(),
       'helpfulCount': helpfulCount,
+    };
+  }
+}
+
+// Modelo para Propuesta de Nueva Playa
+class BeachProposal {
+  final String id;
+  final String beachName;
+  final String province;
+  final String? municipality;
+  final String? description;
+  final double? latitude;
+  final double? longitude;
+  final List<String> imageUrls;
+  final String userId;
+  final String userName;
+  final DateTime timestamp;
+  final String status;
+
+  BeachProposal({
+    required this.id,
+    required this.beachName,
+    required this.province,
+    this.municipality,
+    this.description,
+    this.latitude,
+    this.longitude,
+    this.imageUrls = const [],
+    required this.userId,
+    required this.userName,
+    required this.timestamp,
+    this.status = 'pending',
+  });
+
+  factory BeachProposal.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return BeachProposal(
+      id: doc.id,
+      beachName: data['beachName'] ?? '',
+      province: data['province'] ?? '',
+      municipality: data['municipality'],
+      description: data['description'],
+      latitude: data['latitude'] != null ? (data['latitude'] as num).toDouble() : null,
+      longitude: data['longitude'] != null ? (data['longitude'] as num).toDouble() : null,
+      imageUrls: List<String>.from(data['imageUrls'] ?? []),
+      userId: data['userId'] ?? '',
+      userName: data['userName'] ?? 'Anónimo',
+      timestamp: Beach.parseFirestoreDate(data['timestamp']) ?? DateTime.now(),
+      status: data['status'] ?? 'pending',
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'beachName': beachName,
+      'province': province,
+      'municipality': municipality,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'imageUrls': imageUrls,
+      'userId': userId,
+      'userName': userName,
+      'timestamp': FieldValue.serverTimestamp(),
+      'status': status,
     };
   }
 }
@@ -244,9 +314,7 @@ class AppUser {
       favoriteBeaches: List<String>.from(data['favoriteBeaches'] ?? []),
       visitedBeaches: List<String>.from(data['visitedBeaches'] ?? []),
       reportsCount: data['reportsCount'] ?? 0,
-      createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt: Beach.parseFirestoreDate(data['createdAt']) ?? DateTime.now(),
     );
   }
 

@@ -355,6 +355,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportSelectCondition => 'Please select a condition';
 
   @override
+  String get proposeTabCondition => 'Condition';
+
+  @override
+  String get proposeTabNewBeach => 'New Beach';
+
+  @override
+  String get proposeTitle => 'New Beach';
+
+  @override
+  String get proposeHelpCommunity => 'Discovered a beach?';
+
+  @override
+  String get proposeHelpDescription => 'Help us add it to the community map';
+
+  @override
+  String get proposeBeachName => 'Beach name *';
+
+  @override
+  String get proposeBeachNameHint => 'E.g. Ermitaño Beach';
+
+  @override
+  String get proposeProvince => 'Province *';
+
+  @override
+  String get proposeSelectProvince => 'Select a province';
+
+  @override
+  String get proposeMunicipality => 'Municipality / Sector (optional)';
+
+  @override
+  String get proposeMunicipalityHint => 'E.g. Higüey';
+
+  @override
+  String get proposeDescription => 'Description (optional)';
+
+  @override
+  String get proposeDescriptionHint =>
+      'Describe the beach, how to get there, special features...';
+
+  @override
+  String get proposeLocation => 'GPS Coordinates (optional)';
+
+  @override
+  String get proposeLatHint => 'Latitude (e.g. 18.4769)';
+
+  @override
+  String get proposeLonHint => 'Longitude (e.g. -68.9307)';
+
+  @override
+  String get proposeAddPhotos => 'Beach photos (optional)';
+
+  @override
+  String get proposeSubmit => 'Submit proposal';
+
+  @override
+  String get proposeSuccess =>
+      'Proposal submitted. We\'ll review it soon, thank you!';
+
+  @override
+  String get proposeError => 'Error submitting the proposal';
+
+  @override
+  String get proposeNameRequired => 'Please enter the beach name';
+
+  @override
+  String get proposeProvinceRequired => 'Please select a province';
+
+  @override
+  String get proposePendingBadge => 'Pending review';
+
+  @override
   String get profileTitle => 'My Profile';
 
   @override

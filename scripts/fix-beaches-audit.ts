@@ -188,6 +188,7 @@ async function restFetch(pathSuffix: string, init?: RequestInit): Promise<Respon
 
 function toFirestoreValue(value: unknown): Record<string, unknown> {
   if (value === null || value === undefined) return { nullValue: null };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
   if (typeof value === "boolean") return { booleanValue: value };
   if (typeof value === "number") return { doubleValue: value };
   if (typeof value === "string") return { stringValue: value };
@@ -441,7 +442,7 @@ async function commitBatches(
   for (const update of updates) {
     await restPatchDocument(update.id, {
       ...update.fields,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: new Date(),
     });
   }
   for (const del of deletes) {

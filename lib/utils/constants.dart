@@ -11,6 +11,16 @@ class SupportEmail {
   static const String email = 'soporteplayasrd@outlook.com';
 }
 
+// Administradores de la app
+class AdminConfig {
+  static const List<String> adminEmails = [
+    'yohan201609@gmail.com',
+  ];
+
+  static bool isAdmin(String? email) =>
+      email != null && adminEmails.contains(email);
+}
+
 // Colores basados en el logo de Playas RD
 class AppColors {
   static const Color primary = Color(0xFF00BCD4); // Azul turquesa vibrante (del logo)

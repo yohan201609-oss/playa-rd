@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../models/beach.dart';
 import '../utils/notification_helper.dart';
+import '../utils/beach_image_utils.dart';
 import 'beach_service.dart';
 import 'google_places_service.dart';
 
@@ -794,9 +795,14 @@ class FirebaseService {
     return _firestore.collection('beaches').snapshots().asyncMap((
       snapshot,
     ) async {
-      final beaches = snapshot.docs
-          .map((doc) => Beach.fromFirestore(doc))
-          .toList();
+      final beaches = <Beach>[];
+      for (final doc in snapshot.docs) {
+        try {
+          beaches.add(Beach.fromFirestore(doc));
+        } catch (e) {
+          print('⚠️ Omitiendo playa ${doc.id}: $e');
+        }
+      }
 
       // Actualizar estadísticas desde reportes para todas las playas
       // Hacerlo de forma asíncrona para no bloquear el stream
@@ -851,9 +857,14 @@ class FirebaseService {
   static Future<List<Beach>> getBeachesOnce() async {
     try {
       final snapshot = await _firestore.collection('beaches').get();
-      final beaches = snapshot.docs
-          .map((doc) => Beach.fromFirestore(doc))
-          .toList();
+      final beaches = <Beach>[];
+      for (final doc in snapshot.docs) {
+        try {
+          beaches.add(Beach.fromFirestore(doc));
+        } catch (e) {
+          print('⚠️ Omitiendo playa ${doc.id}: $e');
+        }
+      }
 
       // Actualizar estadísticas desde reportes para todas las playas
       // Esto asegura que los datos estén siempre actualizados
@@ -956,8 +967,17 @@ class FirebaseService {
         .where('province', isEqualTo: province)
         .snapshots()
         .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => Beach.fromFirestore(doc)).toList(),
+          (snapshot) {
+            final beaches = <Beach>[];
+            for (final doc in snapshot.docs) {
+              try {
+                beaches.add(Beach.fromFirestore(doc));
+              } catch (e) {
+                print('⚠️ Omitiendo playa ${doc.id}: $e');
+              }
+            }
+            return beaches;
+          },
         );
   }
 
@@ -1217,6 +1237,103 @@ class FirebaseService {
   }
 
   // =======================
+  // SUBIDA DE IMÁGENES A STORAGE
+  // =======================
+
+  /// Sube una lista de imágenes a Firebase Storage bajo [folder]/{userId}/{archivo}
+  /// y devuelve las URLs de descarga. Las imágenes que fallen se omiten en lugar
+  /// de abortar toda la operación.
+  static Future<List<String>> uploadImages({
+    required List<File> images,
+    required String folder,
+    required String userId,
+  }) async {
+    final List<String> urls = [];
+    for (int i = 0; i < images.length; i++) {
+      try {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = '${timestamp}_$i.jpg';
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('$folder/$userId/$fileName');
+        final uploadTask = await ref.putFile(images[i]);
+        final url = await uploadTask.ref.getDownloadURL();
+        urls.add(url);
+      } catch (e) {
+        print('⚠️ Error subiendo imagen $i a $folder: $e');
+      }
+    }
+    return urls;
+  }
+
+  // =======================
+  // PROPUESTAS DE NUEVAS PLAYAS
+
+  static Future<String?> createBeachProposal(BeachProposal proposal) async {
+    try {
+      final doc = await _firestore
+          .collection('beach_proposals')
+          .add(proposal.toFirestore());
+      return doc.id;
+    } catch (e) {
+      print('Error creando propuesta de playa: $e');
+      return null;
+    }
+  }
+
+  static Stream<List<BeachProposal>> getPendingBeachProposals() {
+    return _firestore
+        .collection('beach_proposals')
+        .where('status', isEqualTo: 'pending')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((doc) => BeachProposal.fromFirestore(doc)).toList());
+  }
+
+  static Future<String?> approveBeachProposal(BeachProposal proposal) async {
+    try {
+      final beach = Beach(
+        id: '',
+        name: proposal.beachName,
+        province: proposal.province,
+        municipality: proposal.municipality ?? '',
+        description: proposal.description ?? '',
+        latitude: proposal.latitude ?? 0.0,
+        longitude: proposal.longitude ?? 0.0,
+        imageUrls: proposal.imageUrls,
+        currentCondition: 'Desconocido',
+      );
+
+      final beachDoc = await _firestore.collection('beaches').add(beach.toFirestore());
+
+      await _firestore.collection('beach_proposals').doc(proposal.id).update({
+        'status': 'approved',
+        'approvedBeachId': beachDoc.id,
+        'approvedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('✅ Propuesta aprobada, playa creada con id: ${beachDoc.id}');
+      return beachDoc.id;
+    } catch (e) {
+      print('Error aprobando propuesta: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> rejectBeachProposal(String proposalId) async {
+    try {
+      await _firestore.collection('beach_proposals').doc(proposalId).update({
+        'status': 'rejected',
+        'rejectedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      print('Error rechazando propuesta: $e');
+      return false;
+    }
+  }
+
   // REPORTES
   // =======================
 
@@ -1511,6 +1628,48 @@ class FirebaseService {
   // =======================
   // MIGRACIÓN DE IMÁGENES
   // =======================
+
+  /// Caché en memoria de listados Storage (evita listAll en cada apertura).
+  static final Map<String, List<String>> _storageImageCache = {};
+
+  /// Lista URLs públicas de fotos en Firebase Storage: beaches/{beachId}/
+  static Future<List<String>> listBeachStorageImageUrls(
+    String beachId, {
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh && _storageImageCache.containsKey(beachId)) {
+      return List<String>.from(_storageImageCache[beachId]!);
+    }
+
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('beaches')
+          .child(beachId);
+      final listResult = await storageRef.listAll();
+
+      if (listResult.items.isEmpty) {
+        _storageImageCache[beachId] = [];
+        return [];
+      }
+
+      final urls = <String>[];
+      for (final item in listResult.items) {
+        try {
+          urls.add(BeachImageUtils.publicStorageUrl(item.fullPath));
+        } catch (e) {
+          print('⚠️ No se pudo resolver ${item.fullPath}: $e');
+        }
+      }
+
+      _storageImageCache[beachId] = urls;
+      print('📂 Storage beaches/$beachId: ${urls.length} foto(s)');
+      return List<String>.from(urls);
+    } catch (e) {
+      print('⚠️ Error listando Storage beaches/$beachId: $e');
+      return [];
+    }
+  }
 
   /// Descarga una imagen desde Google y la sube a Firebase Storage
   /// Retorna la URL pública de Firebase para usar en la app
